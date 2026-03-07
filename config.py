@@ -1,6 +1,7 @@
 from pathlib import Path
 
-WORKSPACE_PATH = Path("workspace/projects/wawa.proj.default")
+WORKSPACE_PATH = Path("workspace/projects")
+CURRENT_PROJECT = "wawa.proj.default"
 
 COLUMNS = {
     "todos": {"name": "Todos", "color": "#6B7280"},

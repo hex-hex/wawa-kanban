@@ -11,7 +11,7 @@ def KanbanColumn(col_id: str, col_info: dict, tickets: List[dict]):
     return Div(
         Div(
             Div(
-                Span(col_info["name"], cls="font-semibold"),
+                Span(col_info["name"], cls="text-sm font-semibold"),
                 Span(
                     str(len(col_tickets)),
                     cls="ml-2 bg-gray-600 text-gray-200 text-xs px-2 py-0.5 rounded-full",
@@ -35,4 +35,4 @@ def KanbanBoard(tickets: List[dict]):
     columns = [
         KanbanColumn(col_id, col_info, tickets) for col_id, col_info in COLUMNS.items()
     ]
-    return Div(*columns, cls="flex gap-4 overflow-x-auto pb-4")
+    return Div(*columns, cls="flex gap-4 overflow-x-auto pb-4 w-full")

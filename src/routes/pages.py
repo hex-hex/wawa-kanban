@@ -3,16 +3,15 @@ from config import APP_TITLE
 from src.core.hdrs import get_hdrs
 from src.services.tickets import get_tickets
 from src.components.board import KanbanBoard
-from src.components.common import Container, PageHeader
+from src.components.common import Container, NavBar
 
 
 def index_page():
     tickets = get_tickets()
 
     return Titled(
-        APP_TITLE,
         Container(
-            PageHeader(
+            NavBar(
                 APP_TITLE,
                 Button(
                     "Refresh",

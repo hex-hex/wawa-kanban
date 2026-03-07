@@ -1,13 +1,20 @@
 from fasthtml.common import *
 
 
-def Container(*children, **kwargs):
-    return Div(*children, cls="max-w-7xl mx-auto p-6", **kwargs)
+def Title(text: str):
+    return H1(text, cls="text-lg font-bold text-gray-100")
 
 
-def PageHeader(title: str, *actions):
+def NavBar(title: str, *actions):
     return Div(
-        H1(title, cls="text-xl font-bold text-gray-100"),
-        Div(*actions, cls="flex gap-2"),
-        cls="flex justify-between items-center mb-6",
+        Div(
+            Title(title),
+            Div(*actions, cls="flex gap-2"),
+            cls="flex items-center justify-between w-full max-w-7xl mx-auto",
+        ),
+        cls="fixed top-0 left-0 right-0 bg-gray-800 px-6 py-3 z-50",
     )
+
+
+def Container(*children, **kwargs):
+    return Div(*children, cls="w-full p-6 mt-16", **kwargs)
