@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "dev:css": "node scripts/build-css.mjs --watch",
+    "build:css": "node scripts/build-css.mjs"
+  },
   "dependencies": {
     "glob": "^13.0.6",
     "unocss": "^66.6.6"
