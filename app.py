@@ -3,7 +3,7 @@ from src.core.hdrs import get_hdrs
 from src.routes.pages import index_page
 from src.routes.api import api_kanban, api_ticket, api_project_select, api_refresh
 
-app, rt = fast_app(hdrs=get_hdrs())
+app, rt = fast_app(hdrs=get_hdrs(), pico=False)
 
 
 @rt("/")

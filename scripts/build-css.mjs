@@ -9,12 +9,15 @@ const OUTPUT_FILE = join(STATIC_DIR, 'uno.css')
 
 // Column header colors: f-strings in Python are not extracted; inject so UnoCSS generates them (must match uno.config.ts safelist)
 const SAFELIST_CLASSES = [
-  'border-b-3',
-  'bg-gray-500/20', 'border-gray-500', 'text-gray-300', 'bg-gray-500/50',
-  'bg-blue-500/20', 'border-blue-500', 'text-blue-300', 'bg-blue-500/50',
-  'bg-amber-500/20', 'border-amber-500', 'text-amber-300', 'bg-amber-500/50',
-  'bg-violet-500/20', 'border-violet-500', 'text-violet-300', 'bg-violet-500/50',
-  'bg-emerald-500/20', 'border-emerald-500', 'text-emerald-300', 'bg-emerald-500/50',
+  'border-b-3', 'px-5', 'px-6',
+  'bg-gray-500/20', 'border-gray-500', 'text-gray-400', 'bg-gray-500/50',
+  'bg-blue-500/20', 'border-blue-500', 'text-blue-400', 'bg-blue-500/50',
+  'bg-amber-500/20', 'border-amber-500', 'text-amber-400', 'bg-amber-500/50',
+  'bg-violet-500/20', 'border-violet-500', 'text-violet-400', 'bg-violet-500/50',
+  'bg-emerald-500/20', 'border-emerald-500', 'text-emerald-400', 'bg-emerald-500/50',
+  'i-mdi-view-kanban', 'i-mdi-refresh',
+  'i-mdi-checkbox-blank-outline', 'i-mdi-progress-clock', 'i-mdi-clock-outline',
+  'i-mdi-check-circle-outline', 'i-mdi-check-circle',
 ]
 
 function ensureStaticDir() {

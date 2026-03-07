@@ -1,5 +1,7 @@
 """E2E tests: HTTP requests against the ASGI app."""
 
+import pathlib
+
 import httpx
 from config import COLUMN_ORDER, COLUMNS, APP_TITLE
 
@@ -92,8 +94,8 @@ async def test_column_headers_have_color_classes():
 
 
 async def test_layout_full_width_no_side_margins():
-    """Page must be set up for full-width layout with no left/right whitespace.
-    Regression: if someone re-adds max-w-7xl or mx-auto to navbar/main content, this fails.
+    """Page must be set up for full-width layout - fills viewport, no side margins.
+    Regression: if someone adds max-w-7xl or mx-auto, or removes w-full, this fails.
     """
     from app import app
 
@@ -103,13 +105,28 @@ async def test_layout_full_width_no_side_margins():
     assert r.status_code == 200
     html = r.text
 
-    assert 'id="wawa-app"' in html or "id='wawa-app'" in html, "Root must have wawa-app for layout preflights"
+    # Layout IDs required by preflights
+    assert 'id="wawa-app"' in html or "id='wawa-app'" in html, "Root must have wawa-app"
     assert "main-content" in html, "Main content area must exist"
     assert "kanban-board" in html, "Board container must exist"
 
-    assert "max-w-7xl" not in html, (
-        "Layout regression: max-w-7xl must not be used (causes large left/right margins)"
+    # Full-width: no centering or max-width constraints
+    assert "max-w-7xl" not in html, "max-w-7xl restricts width to center; must not be used"
+    assert "mx-auto" not in html, "mx-auto centers content; must not be used"
+
+    # Critical containers must have w-full for full-width
+    assert "w-full" in html, "Page must use w-full on main containers to fill viewport"
+
+    # Pico CSS must be disabled - it adds max-width/centering
+    assert "pico.min.css" not in html and "pico.css" not in html, (
+        "Pico CSS must be disabled (pico=False in fast_app) - it restricts layout width"
     )
-    assert "mx-auto" not in html, (
-        "Layout regression: mx-auto must not be used on main content (centers and adds side space)"
+
+    # Preflights must override main.container (FastHTML wraps in main.container)
+    uno_css = (pathlib.Path(__file__).parent.parent.parent / "static" / "uno.css").read_text()
+    assert "main.container" in uno_css or "main," in uno_css, (
+        "uno.css must override main.container to remove max-width/centering (full-width preflights)"
+    )
+    assert "max-width: none" in uno_css or "max-width:none" in uno_css.replace(" ", ""), (
+        "Preflights must set max-width: none on main to fill viewport"
     )

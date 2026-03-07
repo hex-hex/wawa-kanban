@@ -4,7 +4,6 @@ from src.core.hdrs import get_hdrs
 from src.services.tickets import refresh
 from src.models.repository import repository
 from src.components.board import KanbanBoard
-from src.components.common import Container
 from src.components.navbar import NavBar
 
 
@@ -20,6 +19,7 @@ def _main_content():
             repository.projects,
             current,
             Button(
+                Span(cls="i-mdi-refresh w-4 h-4 shrink-0 mr-2 text-gray-200"),
                 "Refresh",
                 hx_get="/api/refresh",
                 hx_target="#main-content",
@@ -27,10 +27,10 @@ def _main_content():
                 cls="h-8 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded text-sm transition-colors flex items-center shrink-0",
             ),
         ),
-        Container(
+        Div(
             KanbanBoard(tickets),
             id="kanban-board",
-            cls="p-0 overflow-x-auto",
+            cls="w-full overflow-x-auto",
         ),
         id="main-content",
         cls="w-full",

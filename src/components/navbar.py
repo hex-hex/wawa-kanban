@@ -26,7 +26,11 @@ def NavBar(title: str, projects: list, current_project: dict | None, *actions):
 
     return Div(
         Div(
-            Div(title, cls="text-lg font-bold text-slate-100 py-1 tracking-tight"),
+            Div(
+                Span(cls="i-mdi-view-kanban w-5 h-5 shrink-0 mr-2 text-slate-100"),
+                Span(title, cls="text-lg font-bold text-slate-100 py-1 tracking-tight"),
+                cls="flex items-center",
+            ),
             Div(
                 project_select,
                 *actions,

@@ -40,10 +40,10 @@ npm run dev:css
 
 ## Page Layout
 
-- **Root** (`index_page`): `Titled( Div( cls="bg-gray-900 min-h-screen text-gray-100" ) )` → full-page wrapper; children: `_main_content()`, `Div(id="ticket-modal")`.
-- **Main content** (`_main_content`): `Div(id="main-content" cls="w-full")` → full width; children: **NavBar**, **Container** (id="kanban-board").
-- **NavBar**: Outer `sticky top-0 bg-gray-800 py-3 z-50 w-full` (no horizontal padding on outer). Inner: `flex justify-between w-full px-4` only — **no max-w-7xl, no mx-auto**, so no centering and no large side margins; minimal gutter `px-4`.
-- **Container** (kanban wrapper): Default `w-full p-6 mt-8`; for board we add `px-0 overflow-x-auto` so the board is full width with no horizontal padding.
+- **app.py**: `fast_app(pico=False)` — Pico CSS must be disabled to avoid max-width/centering that restricts layout.
+- **Root** (`index_page`): `Titled( Div(id="wawa-app" cls="bg-gray-950 min-h-screen text-gray-100") )` → full-page wrapper; children: `_main_content()`, `Div(id="ticket-modal")`.
+- **Main content** (`_main_content`): `Div(id="main-content" cls="w-full")` → full width; children: **NavBar**, **Div**(id="kanban-board" cls="w-full overflow-x-auto").
+- **Preflights** (uno.config.ts): Override `main.container`, `html`, `body` for full viewport width; no side or top margin/padding. E2E `test_layout_full_width_no_side_margins` verifies this.
 - **KanbanBoard**: Outer `overflow-x-auto w-full max-w-full`. Inner flex row `flex flex-nowrap gap-4 pb-4 w-full min-w-[...]` so columns fill width and scroll on small screens.
 - **KanbanColumn**: Each column `flex flex-col flex-1 min-w-52`; header uses Uno color classes via `cls` (e.g. `bg-{uno_color}-500/20 border-{uno_color}-500`); body scrollable with `overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1`.
 
