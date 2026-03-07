@@ -11,6 +11,19 @@ def api_kanban():
     return KanbanBoard(tickets)
 
 
+def api_refresh():
+    """Load workspace file content and return main content (navbar + board)."""
+    from src.routes.pages import _main_content
+    return _main_content()
+
+
+def api_project_select(project: str):
+    refresh()
+    repository.set_current_by_name(project)
+    tickets = (repository.current_project or {}).get("tickets", [])
+    return KanbanBoard(tickets)
+
+
 def api_ticket(ticket_id: str):
     refresh()
     tickets = (repository.current_project or {}).get("tickets", [])

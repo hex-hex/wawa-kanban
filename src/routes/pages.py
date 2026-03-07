@@ -8,24 +8,35 @@ from src.components.common import Container
 from src.components.navbar import NavBar
 
 
-def index_page():
+def _main_content():
+    """Main content fragment: NavBar + KanbanBoard. Calls refresh() to load workspace."""
     refresh()
-    tickets = (repository.current_project or {}).get("tickets", [])
+    current = repository.current_project
+    tickets = (current or {}).get("tickets", [])
 
+    return Div(
+        NavBar(
+            APP_TITLE,
+            repository.projects,
+            current,
+            Button(
+                "Refresh",
+                hx_get="/api/refresh",
+                hx_target="#main-content",
+                hx_swap="innerHTML",
+                cls="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded text-sm transition-colors",
+            ),
+        ),
+        Container(KanbanBoard(tickets), id="kanban-board"),
+        id="main-content",
+    )
+
+
+def index_page():
     return Titled(
         Div(
-            NavBar(
-                APP_TITLE,
-                Button(
-                    "Refresh",
-                    hx_get="/api/kanban",
-                    hx_target="#kanban-board",
-                    hx_swap="innerHTML",
-                    cls="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded text-sm transition-colors",
-                ),
-            ),
-            Container(KanbanBoard(tickets)),
-        ),
-        Div(id="ticket-modal"),
-        cls="bg-gray-900 min-h-screen text-gray-100",
+            _main_content(),
+            Div(id="ticket-modal"),
+            cls="bg-gray-900 min-h-screen text-gray-100",
+        )
     )

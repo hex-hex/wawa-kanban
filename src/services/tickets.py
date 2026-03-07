@@ -105,7 +105,10 @@ def _load_agent(type_folder: str, name_folder: str, tickets_path: Path) -> Agent
 
 
 def refresh() -> None:
-    """Load workspace content into repository."""
+    """Load workspace content into repository. Preserves current project selection (hot update)."""
+    current_name = (
+        repository.current_project["name"] if repository.current_project else None
+    )
     repository.clear()
 
     # Load projects: workspace/projects/{project_id}/{status}/*.md
@@ -117,6 +120,12 @@ def refresh() -> None:
             project = _load_project(project_path)
             if project:
                 repository.projects.append(project)
+        # Restore selection: same project by name, or first if none was selected
+        if repository.projects:
+            if current_name:
+                repository.set_current_by_name(current_name)
+            if repository.current_project is None:
+                repository.set_current_by_name(repository.projects[0]["name"])
 
     # Load agents: workspace/agents/{type}/{name}/*.md
     # Rule: type folder (testers/designers/developers) -> name folder (default, ...)

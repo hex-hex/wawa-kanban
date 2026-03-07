@@ -9,4 +9,7 @@ def KanbanBoard(tickets: List[Ticket]):
     columns = [
         KanbanColumn(col_id, col_info, tickets) for col_id, col_info in COLUMNS.items()
     ]
-    return Div(*columns, cls="flex gap-4 overflow-x-auto pb-4 w-full")
+    return Div(
+        *columns,
+        cls="flex flex-nowrap gap-4 overflow-x-auto pb-4 w-full min-w-0",
+    )
