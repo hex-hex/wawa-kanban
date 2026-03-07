@@ -71,9 +71,21 @@ Use plain dictionaries instead of dataclasses (no DB ORM pattern):
     "created": "2024-01-01",
     "column": "backlog",
     "body": "description",
-    "filename": "ticket-001.md"
+    "filename": "wawa.proj.default.implementation.setup-project-structure.md"
 }
 ```
+
+### Ticket File Naming
+
+Format: `{project_id}.{phase}.{slug}.md`
+
+| Part | Example | Description |
+|------|---------|-------------|
+| project_id | wawa.proj.default | Project identifier (dot-separated) |
+| phase | implementation / design / investigation | Task phase |
+| slug | setup-project-structure | Lowercase, hyphen-separated descriptive phrase |
+
+Example: `wawa.proj.default.design.dashboard-layout.md`
 
 ## Extension Points
 

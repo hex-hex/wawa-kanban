@@ -8,7 +8,7 @@ from src.models.kanban import (
     Agent,
     AgentPosition,
 )
-from src.models.repository import PROJECTS, AGENTS
+from src.models.repository import repository
 from src.services.workspace import parse_frontmatter
 
 
@@ -49,15 +49,14 @@ def _load_tickets_from_dir(dir_path: Path, status: TicketStatus) -> list[Ticket]
 
 
 def refresh():
-    PROJECTS.clear()
-    AGENTS.clear()
+    repository.clear()
 
     project_tickets: list[Ticket] = []
     for status in COLUMNS.keys():
         col_path = WORKSPACE_PATH / CURRENT_PROJECT / status.value
         project_tickets.extend(_load_tickets_from_dir(col_path, status))
 
-    PROJECTS.append(
+    repository.projects.append(
         {
             "name": CURRENT_PROJECT,
             "tickets": project_tickets,
@@ -69,7 +68,7 @@ def refresh():
         tickets = _load_tickets_from_dir(agent_path, TicketStatus.TODOS)
 
         if tickets:
-            AGENTS.append(
+            repository.agents.append(
                 {
                     "name": agent_pos.value,
                     "position": agent_pos,
