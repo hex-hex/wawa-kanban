@@ -2,4 +2,4 @@ from fasthtml.common import *
 
 
 def Container(*children, **kwargs):
-    return Div(*children, cls="w-full p-6 mt-16", **kwargs)
+    return Div(*children, cls="w-full p-6 mt-8", **kwargs)
