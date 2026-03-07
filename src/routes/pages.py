@@ -24,10 +24,15 @@ def _main_content():
                 hx_get="/api/refresh",
                 hx_target="#main-content",
                 hx_swap="innerHTML",
-                cls="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded text-sm transition-colors",
+                cls="h-8 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded text-sm transition-colors flex items-center",
             ),
         ),
-        Container(KanbanBoard(tickets), id="kanban-board"),
+        Container(
+            KanbanBoard(tickets),
+            id="kanban-board",
+            cls="w-full p-6 mt-8 overflow-x-auto",
+            style="overflow-x: auto;",
+        ),
         id="main-content",
     )
 

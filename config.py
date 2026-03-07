@@ -15,4 +15,13 @@ COLUMNS = {
     TicketStatus.FINISHED: {"name": "Finished", "color": "#10B981"},
 }
 
+# Explicit order so all columns (incl. Finished) are always rendered
+COLUMN_ORDER = [
+    TicketStatus.TODOS,
+    TicketStatus.IN_PROGRESS,
+    TicketStatus.WAITING_FOR_VERIFICATION,
+    TicketStatus.VERIFYING,
+    TicketStatus.FINISHED,
+]
+
 APP_TITLE = "Wawa Kanban"

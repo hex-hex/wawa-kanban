@@ -14,7 +14,7 @@ def NavBar(title: str, projects: list, current_project: dict | None, *actions):
         hx_trigger="change",
         hx_target="#kanban-board",
         hx_swap="innerHTML",
-        cls="bg-gray-700 text-gray-200 rounded px-3 py-1.5 text-sm border border-gray-600 focus:border-gray-500 outline-none",
+        cls="h-8 bg-gray-700 text-gray-200 rounded px-3 py-1.5 text-sm border border-gray-600 focus:border-gray-500 outline-none leading-none cursor-pointer",
     ) if projects else Span("No projects", cls="text-gray-500 text-sm")
 
     return Div(
