@@ -3,14 +3,15 @@ from config import APP_TITLE
 from src.core.hdrs import get_hdrs
 from src.services.tickets import get_tickets
 from src.components.board import KanbanBoard
-from src.components.common import Container, NavBar
+from src.components.common import Container
+from src.components.navbar import NavBar
 
 
 def index_page():
     tickets = get_tickets()
 
     return Titled(
-        Container(
+        Div(
             NavBar(
                 APP_TITLE,
                 Button(
@@ -21,7 +22,7 @@ def index_page():
                     cls="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded text-sm transition-colors",
                 ),
             ),
-            KanbanBoard(tickets),
+            Container(KanbanBoard(tickets)),
         ),
         Div(id="ticket-modal"),
         cls="bg-gray-900 min-h-screen text-gray-100",
