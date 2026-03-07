@@ -31,4 +31,4 @@ class Project(TypedDict):
 class Agent(TypedDict):
     name: str
     position: AgentPosition
-    tickets: List[Ticket]
+    ticket: Ticket

@@ -1,8 +1,7 @@
 ---
 id: TICKET-001
 title: Setup project structure
-priority: high
-created: 2024-01-15
+mode: implementation
 ---
 
 # Setup project structure
