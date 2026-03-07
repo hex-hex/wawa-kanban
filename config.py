@@ -3,7 +3,6 @@ from src.models.kanban import TicketStatus
 
 WORKSPACE_PATH = Path("workspace/projects")
 AGENTS_WORKSPACE_PATH = Path("workspace/agents")
-CURRENT_PROJECT = "wawa.proj.default"
 
 COLUMNS = {
     TicketStatus.TODOS: {"name": "Todos", "color": "#6B7280"},

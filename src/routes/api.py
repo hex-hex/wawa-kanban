@@ -7,13 +7,13 @@ from src.components.ticket import TicketModal
 
 def api_kanban():
     refresh()
-    tickets = repository.projects[0]["tickets"] if repository.projects else []
+    tickets = (repository.current_project or {}).get("tickets", [])
     return KanbanBoard(tickets)
 
 
 def api_ticket(ticket_id: str):
     refresh()
-    tickets = repository.projects[0]["tickets"] if repository.projects else []
+    tickets = (repository.current_project or {}).get("tickets", [])
     ticket = next((t for t in tickets if t["id"] == ticket_id), None)
 
     if not ticket:

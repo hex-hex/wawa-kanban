@@ -10,7 +10,7 @@ from src.components.navbar import NavBar
 
 def index_page():
     refresh()
-    tickets = repository.projects[0]["tickets"] if repository.projects else []
+    tickets = (repository.current_project or {}).get("tickets", [])
 
     return Titled(
         Div(
