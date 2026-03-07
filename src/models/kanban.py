@@ -3,7 +3,8 @@ from enum import Enum
 
 
 class TaskMode(str, Enum):
-    CODE_DEVELOPMENT = "code_development"
+    IMPLEMENTATION = "implementation"
+    INVESTIGATION = "investigation"
     DESIGN = "design"
 
 
@@ -20,7 +21,6 @@ class Ticket(TypedDict):
     description: str
     status: str
     mode: TaskMode
-    priority: str
 
 
 class Project(TypedDict):
