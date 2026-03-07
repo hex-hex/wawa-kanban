@@ -29,9 +29,16 @@ export default defineConfig({
   preflights: [
     {
       getCSS: () => `
-        :root {
-          --un-bg: #ffffff;
-          --un-bg-reverse: #1a1a1a;
+        :root { --un-bg: #ffffff; --un-bg-reverse: #1a1a1a; }
+        body, html { margin: 0; padding: 0; box-sizing: border-box; }
+        #wawa-app, #main-content, #kanban-board {
+          margin-left: 0 !important; margin-right: 0 !important;
+          padding-left: 0 !important; padding-right: 0 !important;
+          width: 100%; max-width: 100%; box-sizing: border-box;
+        }
+        #wawa-app { overflow-x: hidden; }
+        #main-content > div:first-child, #main-content > div:first-child > div {
+          padding-left: 0 !important; padding-right: 0 !important;
         }
       `,
     },

@@ -30,9 +30,10 @@ def _main_content():
         Container(
             KanbanBoard(tickets),
             id="kanban-board",
-            cls="px-0 overflow-x-auto",
+            cls="p-0 overflow-x-auto",
         ),
         id="main-content",
+        cls="w-full",
     )
 
 
@@ -41,6 +42,7 @@ def index_page():
         Div(
             _main_content(),
             Div(id="ticket-modal"),
+            id="wawa-app",
             cls="bg-gray-900 min-h-screen text-gray-100",
         )
     )
