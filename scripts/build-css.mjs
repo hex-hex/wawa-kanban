@@ -53,7 +53,7 @@ function build() {
   writeFileSync(tempFile, `<div class="${classList}"></div>`)
   
   try {
-    execSync(`npx unocss ${tempFile} ${OUTPUT_FILE} --minify`, { 
+    execSync(`npx unocss ${tempFile} -o ${OUTPUT_FILE} --minify`, { 
       stdio: 'inherit',
       cwd: process.cwd()
     })
