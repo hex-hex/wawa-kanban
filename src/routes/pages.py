@@ -30,7 +30,7 @@ def _main_content():
         Container(
             KanbanBoard(tickets),
             id="kanban-board",
-            cls="w-full p-6 mt-8 overflow-x-auto",
+            cls="px-0 overflow-x-auto",
             style="overflow-x: auto;",
         ),
         id="main-content",

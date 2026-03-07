@@ -31,6 +31,10 @@ npm run dev:css
 
 - All text displayed on web pages must be in English
 
+## Testing
+
+- Any test that asserts page/UI display (what the user sees) must be an **e2e test** (HTTP request against the app), not a unit test (e.g. rendering a single component to string).
+
 ## Kanban Board
 
 ### Workspace Structure
