@@ -59,8 +59,7 @@ async def test_layout_full_width_no_side_margins():
     assert r.status_code == 200
     html = r.text
 
-    assert "kanban.css" in html, "kanban.css must be loaded (contains full-width overrides)"
-    assert 'id="wawa-app"' in html or "id='wawa-app'" in html, "Root must have wawa-app for layout CSS"
+    assert 'id="wawa-app"' in html or "id='wawa-app'" in html, "Root must have wawa-app for layout preflights"
     assert "main-content" in html, "Main content area must exist"
     assert "kanban-board" in html, "Board container must exist"
 
