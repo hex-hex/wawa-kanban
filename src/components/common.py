@@ -7,7 +7,7 @@ def Container(*children, **kwargs):
 
 def PageHeader(title: str, *actions):
     return Div(
-        H1(title, cls="text-xl font-bold"),
+        H1(title, cls="text-xl font-bold text-gray-100"),
         Div(*actions, cls="flex gap-2"),
         cls="flex justify-between items-center mb-6",
     )
