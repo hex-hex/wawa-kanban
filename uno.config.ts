@@ -26,6 +26,15 @@ export default defineConfig({
       },
     },
   ],
+  // Column header colors use f-strings so extractor never sees literal classes; safelist Uno preset colors
+  safelist: [
+    'border-b-3',
+    'bg-gray-500/20', 'border-gray-500',
+    'bg-blue-500/20', 'border-blue-500',
+    'bg-amber-500/20', 'border-amber-500',
+    'bg-violet-500/20', 'border-violet-500',
+    'bg-emerald-500/20', 'border-emerald-500',
+  ],
   preflights: [
     {
       getCSS: () => `

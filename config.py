@@ -4,15 +4,16 @@ from src.models.kanban import TicketStatus
 WORKSPACE_PATH = Path("workspace/projects")
 AGENTS_WORKSPACE_PATH = Path("workspace/agents")
 
+# uno_color: UnoCSS preset color name (gray, blue, amber, violet, emerald)
 COLUMNS = {
-    TicketStatus.TODOS: {"name": "Todos", "color": "#6B7280"},
-    TicketStatus.IN_PROGRESS: {"name": "In Progress", "color": "#3B82F6"},
+    TicketStatus.TODOS: {"name": "Todos", "uno_color": "gray"},
+    TicketStatus.IN_PROGRESS: {"name": "In Progress", "uno_color": "blue"},
     TicketStatus.WAITING_FOR_VERIFICATION: {
         "name": "Waiting for Verification",
-        "color": "#F59E0B",
+        "uno_color": "amber",
     },
-    TicketStatus.VERIFYING: {"name": "Verifying", "color": "#8B5CF6"},
-    TicketStatus.FINISHED: {"name": "Finished", "color": "#10B981"},
+    TicketStatus.VERIFYING: {"name": "Verifying", "uno_color": "violet"},
+    TicketStatus.FINISHED: {"name": "Finished", "uno_color": "emerald"},
 }
 
 # Explicit order so all columns (incl. Finished) are always rendered

@@ -17,7 +17,7 @@ def KanbanColumn(col_id: TicketStatus, col_info: dict, tickets: List[Ticket]):
                 ),
                 cls="flex items-center",
             ),
-            cls=f"px-4 py-3 rounded-t-lg bg-[{col_info['color']}20] border-b-3 border-[{col_info['color']}]",
+            cls=f"px-4 py-3 rounded-t-lg bg-{col_info['uno_color']}-500/20 border-b-3 border-{col_info['uno_color']}-500",
         ),
         Div(
             *[ticket_to_card(t) for t in col_tickets]
