@@ -2,9 +2,15 @@ from typing import TypedDict, List
 from enum import Enum
 
 
-class TicketMode(str, Enum):
+class TaskMode(str, Enum):
     CODE_DEVELOPMENT = "code_development"
     DESIGN = "design"
+
+
+class AgentPosition(str, Enum):
+    DEVELOPER = "developer"
+    DESIGNER = "designer"
+    TESTER = "tester"
 
 
 class Ticket(TypedDict):
@@ -13,7 +19,7 @@ class Ticket(TypedDict):
     project: str
     description: str
     status: str
-    mode: TicketMode
+    mode: TaskMode
     priority: str
 
 
@@ -24,4 +30,5 @@ class Project(TypedDict):
 
 class Agent(TypedDict):
     name: str
+    position: AgentPosition
     tickets: List[Ticket]
