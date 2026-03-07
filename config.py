@@ -4,6 +4,8 @@ WORKSPACE_PATH = Path("workspace/projects/wawa.proj.default")
 
 COLUMNS = {
     "todos": {"name": "Todos", "color": "#6B7280"},
+    "in_progress": {"name": "In Progress", "color": "#3B82F6"},
+    "verifying": {"name": "Verifying", "color": "#8B5CF6"},
     "waiting_for_test": {"name": "Waiting for Test", "color": "#F59E0B"},
     "finished": {"name": "Finished", "color": "#10B981"},
 }

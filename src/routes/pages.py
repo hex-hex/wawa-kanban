@@ -19,11 +19,11 @@ def index_page():
                     hx_get="/api/kanban",
                     hx_target="#kanban-board",
                     hx_swap="innerHTML",
-                    cls="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-sm transition-colors",
+                    cls="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded text-sm transition-colors",
                 ),
             ),
             KanbanBoard(tickets),
         ),
         Div(id="ticket-modal"),
-        cls="bg-gray-100 min-h-screen",
+        cls="bg-gray-900 min-h-screen text-gray-100",
     )

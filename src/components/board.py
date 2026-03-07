@@ -14,7 +14,7 @@ def KanbanColumn(col_id: str, col_info: dict, tickets: List[dict]):
                 Span(col_info["name"], cls="font-semibold"),
                 Span(
                     str(len(col_tickets)),
-                    cls="ml-2 bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full",
+                    cls="ml-2 bg-gray-600 text-gray-200 text-xs px-2 py-0.5 rounded-full",
                 ),
                 cls="flex items-center",
             ),
@@ -24,10 +24,10 @@ def KanbanColumn(col_id: str, col_info: dict, tickets: List[dict]):
         Div(
             *cards
             if cards
-            else [Div("No tickets", cls="text-gray-400 text-sm p-4 text-center")],
+            else [Div("No tickets", cls="text-gray-500 text-sm p-4 text-center")],
             cls="p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)]",
         ),
-        cls="flex flex-col min-w-72 w-72 bg-gray-50 rounded-lg",
+        cls="flex flex-col min-w-72 w-72 bg-gray-800 rounded-lg",
     )
 
 
