@@ -2,9 +2,10 @@ from fasthtml.common import *
 from typing import List
 from config import COLUMNS
 from src.components.column import KanbanColumn
+from src.models.kanban import Ticket
 
 
-def KanbanBoard(tickets: List[dict]):
+def KanbanBoard(tickets: List[Ticket]):
     columns = [
         KanbanColumn(col_id, col_info, tickets) for col_id, col_info in COLUMNS.items()
     ]

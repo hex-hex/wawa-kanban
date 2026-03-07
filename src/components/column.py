@@ -1,8 +1,10 @@
 from fasthtml.common import *
 from typing import List
+from src.models.kanban import Ticket
+from config import COLUMNS
 
 
-def KanbanColumn(col_id: str, col_info: dict, tickets: List[dict]):
+def KanbanColumn(col_id: str, col_info: dict, tickets: List[Ticket]):
     col_tickets = [t for t in tickets if t["column"] == col_id]
 
     return Div(
@@ -28,7 +30,7 @@ def KanbanColumn(col_id: str, col_info: dict, tickets: List[dict]):
     )
 
 
-def ticket_to_card(ticket: dict):
+def ticket_to_card(ticket: Ticket):
     from src.components.ticket import TicketCard
 
     return TicketCard(ticket)
