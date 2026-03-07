@@ -1,9 +1,17 @@
-from typing import Dict, List
+from typing import TypedDict, List
 
-Project = Dict[str, str]
 
-Ticket = Dict[str, str]
+class Ticket(TypedDict):
+    project: str
+    description: str
+    status: str
 
-Column = Dict[str, str]
 
-Kanban = Dict[str, List[Ticket]]
+class Project(TypedDict):
+    name: str
+    tickets: List[Ticket]
+
+
+class Agent(TypedDict):
+    name: str
+    tickets: List[Ticket]
