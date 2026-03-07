@@ -1,11 +1,10 @@
 from pathlib import Path
 
-WORKSPACE_PATH = Path("workspace/projects/wawa_proj_default")
+WORKSPACE_PATH = Path("workspace/projects/wawa.proj.default")
 
 COLUMNS = {
-    "backlog": {"name": "Backlog", "color": "#6B7280"},
-    "implementing": {"name": "Implementing", "color": "#3B82F6"},
-    "verifying": {"name": "Verifying", "color": "#F59E0B"},
+    "todos": {"name": "Todos", "color": "#6B7280"},
+    "waiting_for_test": {"name": "Waiting for Test", "color": "#F59E0B"},
     "finished": {"name": "Finished", "color": "#10B981"},
 }
 

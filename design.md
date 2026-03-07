@@ -18,21 +18,25 @@ wawa-kanban/
 │
 ├── src/                      # Source code
 │   ├── core/                 # App initialization
-│   │   ├── app.py           # FastHTML setup
-│   │   └── hdrs.py          # Shared headers
+│   │   └── hdrs.py          # Shared headers (CSS, JS)
+│   │
+│   ├── models/              # Data models
+│   │   └── kanban.py        # Kanban, Column, Ticket structures
 │   │
 │   ├── services/            # Business logic
 │   │   ├── workspace.py     # File operations
-│   │   └── tickets.py       # Ticket loading
+│   │   └── tickets.py      # Ticket loading
 │   │
-│   ├── components/          # UI components
+│   ├── components/         # UI components
 │   │   ├── board.py        # Kanban board
 │   │   ├── ticket.py       # Ticket card/modal
 │   │   └── common.py       # Shared components
 │   │
 │   └── routes/              # HTTP endpoints
-│       ├── pages.py        # Page routes
-│       └── api.py          # API routes
+│       ├── pages.py         # Page routes
+│       └── api.py           # API routes
+│
+├── app.py                    # Entry point (imports from src/)
 │
 ├── workspace/                # Kanban data (md files)
 ├── static/                  # CSS assets
@@ -46,11 +50,13 @@ wawa-kanban/
 
 | Layer | Responsibility |
 |-------|----------------|
+| `app.py` | Entry point, routes, app setup |
 | `config.py` | Constants only |
+| `src/core/hdrs.py` | Shared HTML headers |
+| `src/models/` | Data structures |
 | `src/services/` | File I/O, data loading |
 | `src/components/` | UI rendering (pure functions) |
 | `src/routes/` | HTTP handling |
-| `src/core/` | App setup |
 
 ## Data Structure
 
