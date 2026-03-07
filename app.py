@@ -8,16 +8,16 @@ app, rt = fast_app(
 @rt("/")
 def get():
     return Titled(
-        "计数器示例",
+        "Counter Demo",
         Div(
-            H1("计数器", cls="text-3xl font-bold text-center my-8"),
+            H1("Counter", cls="text-3xl font-bold text-center my-8"),
             Div(
                 Span("0", id="count", cls="text-5xl font-bold text-blue-600"),
                 cls="text-center my-8",
             ),
             Div(
                 Button(
-                    "点击 +1",
+                    "Click +1",
                     hx_post="/increment",
                     hx_target="#count",
                     cls="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded",

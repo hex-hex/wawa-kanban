@@ -26,3 +26,7 @@ npm run dev:css
 - `uno.config.ts` - UnoCSS configuration
 - `scripts/build-css.mjs` - Extracts cls/class from Python files and generates CSS
 - `static/uno.css` - Generated CSS file (referenced by app.py)
+
+## Coding Rules
+
+- All text displayed on web pages must be in English
