@@ -7,6 +7,16 @@ import { globSync } from 'glob'
 const STATIC_DIR = resolve('static')
 const OUTPUT_FILE = join(STATIC_DIR, 'uno.css')
 
+// Column header colors: f-strings in Python are not extracted; inject so UnoCSS generates them (must match uno.config.ts safelist)
+const SAFELIST_CLASSES = [
+  'border-b-3',
+  'bg-gray-500/20', 'border-gray-500',
+  'bg-blue-500/20', 'border-blue-500',
+  'bg-amber-500/20', 'border-amber-500',
+  'bg-violet-500/20', 'border-violet-500',
+  'bg-emerald-500/20', 'border-emerald-500',
+]
+
 function ensureStaticDir() {
   if (!existsSync(STATIC_DIR)) {
     mkdirSync(STATIC_DIR, { recursive: true })
@@ -33,10 +43,11 @@ function extractPyClasses(dir = '.') {
 function build() {
   ensureStaticDir()
   
-  const classes = extractPyClasses()
-  const classList = classes.join(' ')
+  const classes = new Set(extractPyClasses())
+  SAFELIST_CLASSES.forEach(c => classes.add(c))
+  const classList = Array.from(classes).join(' ')
   
-  console.log(`Found ${classes.length} unique classes`)
+  console.log(`Found ${classes.size} unique classes`)
   
   const tempFile = join(STATIC_DIR, 'temp.html')
   writeFileSync(tempFile, `<div class="${classList}"></div>`)
