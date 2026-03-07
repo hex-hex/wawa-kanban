@@ -17,8 +17,7 @@ def KanbanColumn(col_id: TicketStatus, col_info: dict, tickets: List[Ticket]):
                 ),
                 cls="flex items-center",
             ),
-            cls="px-4 py-3 rounded-t-lg",
-            style=f"background-color: {col_info['color']}20; border-bottom: 3px solid {col_info['color']}",
+            cls=f"px-4 py-3 rounded-t-lg col-header-{col_id.value}",
         ),
         Div(
             *[ticket_to_card(t) for t in col_tickets]
@@ -26,7 +25,7 @@ def KanbanColumn(col_id: TicketStatus, col_info: dict, tickets: List[Ticket]):
             else [Div("No tickets", cls="text-gray-500 text-sm p-4 text-center")],
             cls="p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1",
         ),
-        cls="flex flex-col min-w-52 w-52 flex-shrink-0 bg-gray-800 rounded-lg",
+        cls="flex flex-col min-w-52 flex-1 bg-gray-800 rounded-lg",
     )
 
 

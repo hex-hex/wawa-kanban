@@ -31,7 +31,6 @@ def _main_content():
             KanbanBoard(tickets),
             id="kanban-board",
             cls="px-0 overflow-x-auto",
-            style="overflow-x: auto;",
         ),
         id="main-content",
     )
