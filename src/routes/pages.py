@@ -1,14 +1,16 @@
 from fasthtml.common import *
 from config import APP_TITLE
 from src.core.hdrs import get_hdrs
-from src.services.tickets import get_tickets
+from src.services.tickets import refresh
+from src.models.repository import PROJECTS
 from src.components.board import KanbanBoard
 from src.components.common import Container
 from src.components.navbar import NavBar
 
 
 def index_page():
-    tickets = get_tickets()
+    refresh()
+    tickets = PROJECTS[0]["tickets"] if PROJECTS else []
 
     return Titled(
         Div(

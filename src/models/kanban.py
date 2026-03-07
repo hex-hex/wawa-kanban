@@ -8,6 +8,14 @@ class TaskMode(str, Enum):
     DESIGN = "design"
 
 
+class TicketStatus(str, Enum):
+    TODOS = "todos"
+    IN_PROGRESS = "in_progress"
+    WAITING_FOR_VERIFICATION = "waiting_for_verification"
+    VERIFYING = "verifying"
+    FINISHED = "finished"
+
+
 class AgentPosition(str, Enum):
     DEVELOPER = "developer"
     DESIGNER = "designer"
@@ -19,7 +27,7 @@ class Ticket(TypedDict):
     title: str
     project: str
     description: str
-    status: str
+    status: TicketStatus
     mode: TaskMode
 
 

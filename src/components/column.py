@@ -1,11 +1,11 @@
 from fasthtml.common import *
 from typing import List
-from src.models.kanban import Ticket
+from src.models.kanban import Ticket, TicketStatus
 from config import COLUMNS
 
 
-def KanbanColumn(col_id: str, col_info: dict, tickets: List[Ticket]):
-    col_tickets = [t for t in tickets if t["column"] == col_id]
+def KanbanColumn(col_id: TicketStatus, col_info: dict, tickets: List[Ticket]):
+    col_tickets = [t for t in tickets if t["status"] == col_id]
 
     return Div(
         Div(
