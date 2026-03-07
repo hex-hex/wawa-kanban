@@ -5,17 +5,17 @@ from src.models.kanban import Ticket
 def TicketCard(ticket: Ticket):
     return Div(
         Div(
-            Span(ticket["id"], cls="text-xs font-mono text-gray-400"),
+            Span(ticket["id"], cls="text-xs font-mono text-gray-500"),
             Span(
                 ticket["mode"].value.upper(),
-                cls="text-xs px-2 py-0.5 rounded bg-gray-600 text-gray-300",
+                cls="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300",
             ),
             cls="flex justify-between items-center mb-2",
         ),
         Div(
-            ticket["title"], cls="font-semibold text-sm mb-2 line-clamp-2 text-gray-200"
+            ticket["title"], cls="font-semibold text-sm mb-2 line-clamp-2 text-gray-100"
         ),
-        cls="bg-gray-600 border border-gray-500 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-200",
+        cls="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200",
         hx_get=f"/api/ticket/{ticket['id']}",
         hx_target="#ticket-modal",
         hx_swap="innerHTML",

@@ -24,7 +24,7 @@ def _main_content():
                 hx_get="/api/refresh",
                 hx_target="#main-content",
                 hx_swap="innerHTML",
-                cls="h-8 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded text-sm transition-colors flex items-center",
+                cls="h-8 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded text-sm transition-colors flex items-center shrink-0",
             ),
         ),
         Container(
@@ -43,6 +43,6 @@ def index_page():
             _main_content(),
             Div(id="ticket-modal"),
             id="wawa-app",
-            cls="bg-gray-900 min-h-screen text-gray-100",
+            cls="bg-gray-950 min-h-screen text-gray-100",
         )
     )
