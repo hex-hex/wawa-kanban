@@ -23,7 +23,7 @@ def KanbanColumn(col_id: TicketStatus, col_info: dict, tickets: List[Ticket]):
             *[ticket_to_card(t) for t in col_tickets]
             if col_tickets
             else [Div("No tickets", cls="text-gray-500 text-sm p-4 text-center")],
-            cls="p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1",
+            cls="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1",
         ),
         cls="flex flex-col min-w-52 flex-1 bg-gray-800 rounded-lg",
     )

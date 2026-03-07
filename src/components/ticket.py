@@ -15,7 +15,7 @@ def TicketCard(ticket: Ticket):
         Div(
             ticket["title"], cls="font-semibold text-sm mb-2 line-clamp-2 text-gray-200"
         ),
-        cls="bg-gray-600 border border-gray-500 rounded-lg p-3 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-200",
+        cls="bg-gray-600 border border-gray-500 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all duration-200",
         hx_get=f"/api/ticket/{ticket['id']}",
         hx_target="#ticket-modal",
         hx_swap="innerHTML",
