@@ -1,10 +1,10 @@
 import { execSync } from 'child_process'
 import { existsSync, mkdirSync, writeFileSync, readFileSync, watch } from 'fs'
-import { join } from 'path'
+import { join, resolve } from 'path'
 import process from 'process'
 import { globSync } from 'glob'
 
-const STATIC_DIR = 'static'
+const STATIC_DIR = resolve('static')
 const OUTPUT_FILE = join(STATIC_DIR, 'uno.css')
 
 function ensureStaticDir() {
