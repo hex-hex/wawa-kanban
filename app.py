@@ -31,4 +31,5 @@ def get(ticket_id: str):
     return api_ticket(ticket_id)
 
 
-serve(port=5020)
+if __name__ == "__main__":
+    serve(port=5020)
