@@ -30,3 +30,30 @@ npm run dev:css
 ## Coding Rules
 
 - All text displayed on web pages must be in English
+
+## Kanban Board
+
+### Workspace Structure
+```
+workspace/projects/wawa_proj_default/
+├── project.md
+├── backlog/        # Tickets waiting to be picked up
+├── implementing/   # Tickets currently being worked on
+├── verifying/     # Tickets awaiting verification
+└── finished/      # Completed tickets
+```
+
+### Ticket Format
+Each ticket is a markdown file with frontmatter:
+```markdown
+---
+id: TICKET-001
+title: Ticket title
+priority: high|medium|low
+created: 2024-01-01
+---
+
+# Description
+
+Ticket content here...
+```
