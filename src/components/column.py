@@ -26,7 +26,7 @@ def KanbanColumn(col_id: TicketStatus, col_info: dict, tickets: List[Ticket]):
             else [Div("No tickets", cls="text-gray-500 text-sm p-4 text-center")],
             cls="p-2 space-y-2 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1",
         ),
-        cls="flex flex-col min-w-72 w-72 flex-shrink-0 bg-gray-800 rounded-lg",
+        cls="flex flex-col min-w-52 w-52 flex-shrink-0 bg-gray-800 rounded-lg",
     )
 
 

@@ -4,8 +4,8 @@ from config import COLUMNS, COLUMN_ORDER
 from src.components.column import KanbanColumn
 from src.models.kanban import Ticket
 
-# 5 columns × 18rem + 4 gaps × 1rem — ensures horizontal scroll so Finished is visible
-BOARD_MIN_WIDTH_CSS = "calc(5 * 18rem + 4 * 1rem)"
+# 5 columns × 13rem + 4 gaps × 1rem — narrow enough that 5 columns (incl. Finished) often fit one screen
+BOARD_MIN_WIDTH_CSS = "calc(5 * 13rem + 4 * 1rem)"
 
 
 def KanbanBoard(tickets: List[Ticket]):
