@@ -1,0 +1,157 @@
+<!DOCTYPE html><html><head>
+    <title>
+      &lt;div id="wawa-app" class="bg-gray-950 min-h-screen text-gray-100"&gt;
+        &lt;div id="main-content" class="w-full"&gt;
+          &lt;div id="navbar" class="sticky top-0 bg-gray-800/95 border-b border-gray-700/80 py-3 pl-4 pr-8 z-50 w-full"&gt;
+            &lt;div class="flex items-center justify-between w-full"&gt;
+              &lt;div class="flex items-center gap-4"&gt;
+&lt;span class="i-mdi-view-kanban w-5 h-5 shrink-0 mr-2 text-slate-100"&gt;&lt;/span&gt;&lt;span class="text-lg font-bold text-slate-100 py-1 tracking-tight"&gt;Wawa Kanban&lt;/span&gt;&lt;span class="flex items-center h-8 shrink-0"&gt;&lt;select name="project" hx-get="/api/project/select" hx-include="[name='project']" hx-trigger="change" hx-swap="innerHTML" hx-target="#kanban-board" class="h-8 min-w-44 px-3 py-1.5 text-sm bg-gray-700 text-gray-200 rounded border border-gray-600 focus:border-gray-500 outline-none cursor-pointer box-border flex items-center"&gt;&lt;option value="default" selected&gt;default&lt;/option&gt;&lt;/select&gt;&lt;/span&gt;              &lt;/div&gt;
+              &lt;div class="flex items-center gap-2 mr-6"&gt;
+&lt;button type="button" id="btn-refresh" class="h-8 px-3 py-1.5 bg-gray-700 text-gray-200 rounded border border-gray-600 hover:bg-gray-600 hover:border-gray-500 text-sm transition-colors flex items-center shrink-0 outline-none cursor-pointer" name="btn-refresh"&gt;&lt;span class="i-mdi-refresh w-4 h-4 shrink-0 mr-2 text-gray-200"&gt;&lt;/span&gt;Refresh&lt;/button&gt;              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+          &lt;div id="kanban-board" class="w-full overflow-x-auto mt-4"&gt;
+            &lt;div class="overflow-x-auto w-full max-w-full"&gt;
+              &lt;div class="flex flex-nowrap gap-4 pb-4 w-full min-w-[calc(5*13rem+4*1rem)]"&gt;
+                &lt;div class="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden"&gt;
+                  &lt;div class="px-6 py-3 rounded-t-lg bg-gray-500/20 border-b-3 border-gray-500"&gt;
+                    &lt;div class="flex items-center"&gt;
+&lt;span class="i-mdi-checkbox-blank-outline w-4 h-4 shrink-0 mr-2 text-gray-400"&gt;&lt;/span&gt;&lt;span class="text-sm font-semibold text-gray-400 whitespace-nowrap"&gt;Todos&lt;/span&gt;&lt;span class="ml-2 bg-gray-500/50 text-white text-xs px-2 py-0.5 rounded-full font-medium"&gt;3&lt;/span&gt;                    &lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;div class="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1"&gt;
+                    &lt;div hx-get="/api/ticket/TICKET-004" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"&gt;
+                      &lt;div class="flex justify-between items-center mb-2"&gt;
+&lt;span class="text-xs font-mono text-gray-500"&gt;TICKET-004&lt;/span&gt;&lt;span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300"&gt;DESIGN&lt;/span&gt;                      &lt;/div&gt;
+                      &lt;div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100"&gt;Design dashboard layout&lt;/div&gt;
+                    &lt;/div&gt;
+                    &lt;div hx-get="/api/ticket/TICKET-003" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"&gt;
+                      &lt;div class="flex justify-between items-center mb-2"&gt;
+&lt;span class="text-xs font-mono text-gray-500"&gt;TICKET-003&lt;/span&gt;&lt;span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300"&gt;IMPLEMENTATION&lt;/span&gt;                      &lt;/div&gt;
+                      &lt;div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100"&gt;Add user authentication&lt;/div&gt;
+                    &lt;/div&gt;
+                    &lt;div hx-get="/api/ticket/TICKET-001" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"&gt;
+                      &lt;div class="flex justify-between items-center mb-2"&gt;
+&lt;span class="text-xs font-mono text-gray-500"&gt;TICKET-001&lt;/span&gt;&lt;span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300"&gt;IMPLEMENTATION&lt;/span&gt;                      &lt;/div&gt;
+                      &lt;div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100"&gt;Setup project structure&lt;/div&gt;
+                    &lt;/div&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden"&gt;
+                  &lt;div class="px-6 py-3 rounded-t-lg bg-blue-500/20 border-b-3 border-blue-500"&gt;
+                    &lt;div class="flex items-center"&gt;
+&lt;span class="i-mdi-progress-clock w-4 h-4 shrink-0 mr-2 text-blue-400"&gt;&lt;/span&gt;&lt;span class="text-sm font-semibold text-blue-400 whitespace-nowrap"&gt;In Progress&lt;/span&gt;&lt;span class="ml-2 bg-blue-500/50 text-white text-xs px-2 py-0.5 rounded-full font-medium"&gt;1&lt;/span&gt;                    &lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;div class="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1"&gt;
+                    &lt;div hx-get="/api/ticket/TICKET-002" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"&gt;
+                      &lt;div class="flex justify-between items-center mb-2"&gt;
+&lt;span class="text-xs font-mono text-gray-500"&gt;TICKET-002&lt;/span&gt;&lt;span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300"&gt;IMPLEMENTATION&lt;/span&gt;                      &lt;/div&gt;
+                      &lt;div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100"&gt;Implement kanban frontend&lt;/div&gt;
+                    &lt;/div&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden"&gt;
+                  &lt;div class="px-6 py-3 rounded-t-lg bg-amber-500/20 border-b-3 border-amber-500"&gt;
+                    &lt;div class="flex items-center"&gt;
+&lt;span class="i-mdi-clock-outline w-4 h-4 shrink-0 mr-2 text-amber-400"&gt;&lt;/span&gt;&lt;span class="text-sm font-semibold text-amber-400 whitespace-nowrap"&gt;Waiting for Verification&lt;/span&gt;&lt;span class="ml-2 bg-amber-500/50 text-white text-xs px-2 py-0.5 rounded-full font-medium"&gt;1&lt;/span&gt;                    &lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;div class="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1"&gt;
+                    &lt;div hx-get="/api/ticket/TICKET-006" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"&gt;
+                      &lt;div class="flex justify-between items-center mb-2"&gt;
+&lt;span class="text-xs font-mono text-gray-500"&gt;TICKET-006&lt;/span&gt;&lt;span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300"&gt;INVESTIGATION&lt;/span&gt;                      &lt;/div&gt;
+                      &lt;div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100"&gt;Optimize database queries&lt;/div&gt;
+                    &lt;/div&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden"&gt;
+                  &lt;div class="px-6 py-3 rounded-t-lg bg-violet-500/20 border-b-3 border-violet-500"&gt;
+                    &lt;div class="flex items-center"&gt;
+&lt;span class="i-mdi-check-circle-outline w-4 h-4 shrink-0 mr-2 text-violet-400"&gt;&lt;/span&gt;&lt;span class="text-sm font-semibold text-violet-400 whitespace-nowrap"&gt;Verifying&lt;/span&gt;&lt;span class="ml-2 bg-violet-500/50 text-white text-xs px-2 py-0.5 rounded-full font-medium"&gt;0&lt;/span&gt;                    &lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;div class="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1"&gt;
+                    &lt;div class="text-gray-500 text-sm p-4 text-center"&gt;No tickets&lt;/div&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div class="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden"&gt;
+                  &lt;div class="px-6 py-3 rounded-t-lg bg-emerald-500/20 border-b-3 border-emerald-500"&gt;
+                    &lt;div class="flex items-center"&gt;
+&lt;span class="i-mdi-check-circle w-4 h-4 shrink-0 mr-2 text-emerald-400"&gt;&lt;/span&gt;&lt;span class="text-sm font-semibold text-emerald-400 whitespace-nowrap"&gt;Finished&lt;/span&gt;&lt;span class="ml-2 bg-emerald-500/50 text-white text-xs px-2 py-0.5 rounded-full font-medium"&gt;1&lt;/span&gt;                    &lt;/div&gt;
+                  &lt;/div&gt;
+                  &lt;div class="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1"&gt;
+                    &lt;div hx-get="/api/ticket/TICKET-005" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"&gt;
+                      &lt;div class="flex justify-between items-center mb-2"&gt;
+&lt;span class="text-xs font-mono text-gray-500"&gt;TICKET-005&lt;/span&gt;&lt;span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300"&gt;INVESTIGATION&lt;/span&gt;                      &lt;/div&gt;
+                      &lt;div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100"&gt;Research API integration&lt;/div&gt;
+                    &lt;/div&gt;
+                  &lt;/div&gt;
+                &lt;/div&gt;
+              &lt;/div&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        &lt;/div&gt;
+        &lt;div id="ticket-modal"&gt;&lt;/div&gt;
+      &lt;/div&gt;
+    </title>
+    <link rel="canonical" href="https://127.0.0.1:5021/">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.js"></script><script src="https://cdn.jsdelivr.net/gh/answerdotai/fasthtml-js@1.0.12/fasthtml.js"></script><script src="https://cdn.jsdelivr.net/gh/answerdotai/surreal@main/surreal.js"></script><script src="https://cdn.jsdelivr.net/gh/gnat/css-scope-inline@main/script.js"></script>    <link rel="stylesheet" href="/static/uno.css" type="text/css">
+<script src="https://unpkg.com/htmx.org@2"></script><script type="text/javascript">
+document.addEventListener('DOMContentLoaded', function() {
+  var btn = document.getElementById('btn-refresh');
+  var board = document.getElementById('kanban-board');
+  if (!btn || !board) return;
+  var refreshTimerId = null;
+  var INTERVAL_MS = 5000;
+
+  function doRefresh() {
+    fetch('/api/refresh-sse', { headers: { 'Accept': 'text/event-stream' } })
+      .then(function(r) { return r.text(); })
+      .then(function(text) {
+        var data = '';
+        text.split('\n').forEach(function(line) {
+          if (line.indexOf('data: ') === 0) data += line.slice(6) + '\n';
+        });
+        data = data.trim();
+        if (!data) return;
+        try {
+          var payload = JSON.parse(data);
+          if (payload.html !== undefined) board.innerHTML = payload.html;
+        } catch (err) {}
+        refreshTimerId = setTimeout(doRefresh, INTERVAL_MS);
+      })
+      .catch(function() {
+        refreshTimerId = setTimeout(doRefresh, INTERVAL_MS);
+      });
+  }
+
+  btn.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (refreshTimerId) clearTimeout(refreshTimerId);
+    refreshTimerId = null;
+    doRefresh();
+  });
+
+  refreshTimerId = setTimeout(doRefresh, INTERVAL_MS);
+});
+</script>  <style>.htmx-indicator{opacity:0;visibility: hidden} .htmx-request .htmx-indicator, .htmx-request.htmx-indicator{opacity:1;visibility: visible;transition: opacity 200ms ease-in}</style><style>.htmx-indicator{opacity:0;visibility: hidden} .htmx-request .htmx-indicator, .htmx-request.htmx-indicator{opacity:1;visibility: visible;transition: opacity 200ms ease-in}</style></head>
+  <body>
+<main class="container">      <h1>
+        <div id="wawa-app" class="bg-gray-950 min-h-screen text-gray-100">
+          <div id="main-content" class="w-full">
+            <div id="navbar" class="sticky top-0 bg-gray-800/95 border-b border-gray-700/80 py-3 pl-4 pr-8 z-50 w-full">
+              <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-4">
+<span class="i-mdi-view-kanban w-5 h-5 shrink-0 mr-2 text-slate-100"></span><span class="text-lg font-bold text-slate-100 py-1 tracking-tight">Wawa Kanban</span><span class="flex items-center h-8 shrink-0"><select name="project" hx-get="/api/project/select" hx-include="[name='project']" hx-trigger="change" hx-swap="innerHTML" hx-target="#kanban-board" class="h-8 min-w-44 px-3 py-1.5 text-sm bg-gray-700 text-gray-200 rounded border border-gray-600 focus:border-gray-500 outline-none cursor-pointer box-border flex items-center"><option value="default" selected="">default</option></select></span>                </div>
+                <div class="flex items-center gap-2 mr-6">
+<button type="button" id="btn-refresh" class="h-8 px-3 py-1.5 bg-gray-700 text-gray-200 rounded border border-gray-600 hover:bg-gray-600 hover:border-gray-500 text-sm transition-colors flex items-center shrink-0 outline-none cursor-pointer" name="btn-refresh"><span class="i-mdi-refresh w-4 h-4 shrink-0 mr-2 text-gray-200"></span>Refresh</button>                </div>
+              </div>
+            </div>
+            <div id="kanban-board" class="w-full overflow-x-auto mt-4"><div class="overflow-x-auto w-full max-w-full"><div class="flex flex-nowrap gap-4 pb-4 w-full min-w-[calc(5*13rem+4*1rem)]"><div class="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden"><div class="px-6 py-3 rounded-t-lg bg-gray-500/20 border-b-3 border-gray-500"><div class="flex items-center"><span class="i-mdi-checkbox-blank-outline w-4 h-4 shrink-0 mr-2 text-gray-400"></span><span class="text-sm font-semibold text-gray-400 whitespace-nowrap">Todos</span><span class="ml-2 bg-gray-500/50 text-white text-xs px-2 py-0.5 rounded-full font-medium">3</span></div></div><div class="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1"><div hx-get="/api/ticket/TICKET-004" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"><div class="flex justify-between items-center mb-2"><span class="text-xs font-mono text-gray-500">TICKET-004</span><span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300">DESIGN</span></div><div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100">Design dashboard layout</div></div><div hx-get="/api/ticket/TICKET-003" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"><div class="flex justify-between items-center mb-2"><span class="text-xs font-mono text-gray-500">TICKET-003</span><span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300">IMPLEMENTATION</span></div><div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100">Add user authentication</div></div><div hx-get="/api/ticket/TICKET-001" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"><div class="flex justify-between items-center mb-2"><span class="text-xs font-mono text-gray-500">TICKET-001</span><span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300">IMPLEMENTATION</span></div><div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100">Setup project structure</div></div></div></div><div class="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden"><div class="px-6 py-3 rounded-t-lg bg-blue-500/20 border-b-3 border-blue-500"><div class="flex items-center"><span class="i-mdi-progress-clock w-4 h-4 shrink-0 mr-2 text-blue-400"></span><span class="text-sm font-semibold text-blue-400 whitespace-nowrap">In Progress</span><span class="ml-2 bg-blue-500/50 text-white text-xs px-2 py-0.5 rounded-full font-medium">1</span></div></div><div class="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1"><div hx-get="/api/ticket/TICKET-002" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"><div class="flex justify-between items-center mb-2"><span class="text-xs font-mono text-gray-500">TICKET-002</span><span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300">IMPLEMENTATION</span></div><div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100">Implement kanban frontend</div></div></div></div><div class="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden"><div class="px-6 py-3 rounded-t-lg bg-amber-500/20 border-b-3 border-amber-500"><div class="flex items-center"><span class="i-mdi-clock-outline w-4 h-4 shrink-0 mr-2 text-amber-400"></span><span class="text-sm font-semibold text-amber-400 whitespace-nowrap">Waiting for Verification</span><span class="ml-2 bg-amber-500/50 text-white text-xs px-2 py-0.5 rounded-full font-medium">1</span></div></div><div class="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1"><div hx-get="/api/ticket/TICKET-006" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"><div class="flex justify-between items-center mb-2"><span class="text-xs font-mono text-gray-500">TICKET-006</span><span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300">INVESTIGATION</span></div><div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100">Optimize database queries</div></div></div></div><div class="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden"><div class="px-6 py-3 rounded-t-lg bg-violet-500/20 border-b-3 border-violet-500"><div class="flex items-center"><span class="i-mdi-check-circle-outline w-4 h-4 shrink-0 mr-2 text-violet-400"></span><span class="text-sm font-semibold text-violet-400 whitespace-nowrap">Verifying</span><span class="ml-2 bg-violet-500/50 text-white text-xs px-2 py-0.5 rounded-full font-medium">0</span></div></div><div class="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1"><div class="text-gray-500 text-sm p-4 text-center">No tickets</div></div></div><div class="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden"><div class="px-6 py-3 rounded-t-lg bg-emerald-500/20 border-b-3 border-emerald-500"><div class="flex items-center"><span class="i-mdi-check-circle w-4 h-4 shrink-0 mr-2 text-emerald-400"></span><span class="text-sm font-semibold text-emerald-400 whitespace-nowrap">Finished</span><span class="ml-2 bg-emerald-500/50 text-white text-xs px-2 py-0.5 rounded-full font-medium">1</span></div></div><div class="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1"><div hx-get="/api/ticket/TICKET-005" hx-swap="innerHTML" hx-target="#ticket-modal" class="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200"><div class="flex justify-between items-center mb-2"><span class="text-xs font-mono text-gray-500">TICKET-005</span><span class="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300">INVESTIGATION</span></div><div class="font-semibold text-sm mb-2 line-clamp-2 text-gray-100">Research API integration</div></div></div></div></div></div></div>
+          </div>
+          <div id="ticket-modal" class="">
+</div>
+        </div>
+      </h1>
+</main>  
+
+</body></html>

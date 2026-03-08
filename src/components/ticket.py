@@ -1,0 +1,65 @@
+from fasthtml.common import *
+from src.models.kanban import Ticket
+
+
+def TicketCard(ticket: Ticket):
+    return Div(
+        Div(
+            Span(ticket["id"], cls="text-xs font-mono text-gray-500"),
+            Span(
+                ticket["mode"].value.upper(),
+                cls="text-xs px-2 py-0.5 rounded bg-gray-600/80 text-gray-300",
+            ),
+            cls="flex justify-between items-center mb-2",
+        ),
+        Div(
+            ticket["title"], cls="font-semibold text-sm mb-2 line-clamp-2 text-gray-100"
+        ),
+        cls="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200",
+        hx_get=f"/api/ticket/{ticket['id']}",
+        hx_target="#ticket-modal",
+        hx_swap="innerHTML",
+    )
+
+
+def _modal_close_script():
+    """Run dismiss animation then remove overlay. Call from close button."""
+    return (
+        "var o=this.closest('.modal-overlay');"
+        "if(o){o.classList.add('modal-animate-out');"
+        "o.addEventListener('animationend',function f(ev){"
+        "if(ev.animationName==='modalOut'){o.removeEventListener('animationend',f);o.remove();}});}"
+    )
+
+
+def TicketModal(ticket: Ticket):
+    return Div(
+        Div(
+            Div(
+                H2(ticket["title"], cls="text-xl font-bold text-gray-100 flex-1 min-w-0 pr-2"),
+                Button(
+                    "Close",
+                    type="button",
+                    aria_label="Close",
+                    cls="shrink-0 px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-gray-100 hover:bg-gray-600 rounded transition-colors outline-none cursor-pointer",
+                    onclick=_modal_close_script(),
+                ),
+                cls="flex items-center justify-between gap-2 mb-4",
+            ),
+            Div(
+                Span(
+                    ticket["mode"].value.upper(),
+                    cls="px-2 py-0.5 rounded text-xs font-medium bg-gray-600 text-gray-300",
+                ),
+                Span(ticket["id"], cls="ml-2 font-mono text-sm text-gray-400"),
+                cls="flex items-center gap-2 mb-4",
+            ),
+            Hr(cls="my-4 border-gray-600"),
+            Div(
+                ticket["description"] or "No description",
+                cls="text-gray-300 whitespace-pre-wrap",
+            ),
+            cls="bg-gray-700 border border-gray-600 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl",
+        ),
+        cls="modal-overlay bg-black/75 fixed inset-0 flex items-center justify-center z-50 modal-animate-in",
+    )
