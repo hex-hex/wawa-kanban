@@ -46,34 +46,102 @@ def _parse_filename(filename: str) -> tuple[str, TaskMode, str]:
 
 
 def _load_tickets_from_dir(dir_path: Path, status: TicketStatus) -> list[Ticket]:
-    """Load all ticket .md files from a directory."""
+    """Load all ticket .md and .md.lock files from a directory."""
     tickets: list[Ticket] = []
     if not dir_path.exists():
         return tickets
 
-    for md_file in sorted(dir_path.glob("*.md")):
-        if md_file.stem == "placeholder":
-            continue
+    seen_ids: set[str] = set()
 
+    def load_file(md_file: Path, parse_name: str, locked: bool = False) -> None:
+        if "placeholder" in md_file.name:
+            return
         content = md_file.read_text()
         frontmatter, body = parse_frontmatter(content)
-        project, mode, _ = _parse_filename(md_file.name)
-
+        project, mode, _ = _parse_filename(parse_name)
+        tid = frontmatter.get("id", Path(parse_name).stem)
+        if tid in seen_ids:
+            return
+        seen_ids.add(tid)
         tickets.append(
             {
-                "id": frontmatter.get("id", md_file.stem),
-                "title": frontmatter.get("title", md_file.stem),
+                "id": tid,
+                "title": frontmatter.get("title", Path(parse_name).stem),
                 "project": project,
                 "description": body,
                 "status": status,
                 "mode": mode,
+                "locked": locked,
             }
         )
+
+    for lock_file in sorted(dir_path.glob("*.md.lock")):
+        load_file(lock_file, lock_file.name.removesuffix(".lock"), locked=True)
+
+    for md_file in sorted(dir_path.glob("*.md")):
+        load_file(md_file, md_file.name, locked=False)
 
     return tickets
 
 
 PROJECT_NAME_PREFIX = "wawa.proj."
+
+
+def _find_ticket_file(ticket_id: str) -> Path | None:
+    """Find the .md or .md.lock file for a ticket by id (from frontmatter)."""
+    if not WORKSPACE_PATH.exists():
+        return None
+    for project_path in sorted(WORKSPACE_PATH.iterdir()):
+        if not project_path.is_dir() or project_path.name.startswith("."):
+            continue
+        for status in COLUMNS:
+            col_path = project_path / status.value
+            if not col_path.exists():
+                continue
+            for pattern in ["*.md", "*.md.lock"]:
+                for f in sorted(col_path.glob(pattern)):
+                    if "placeholder" in f.name:
+                        continue
+                    try:
+                        content = f.read_text()
+                        frontmatter, _ = parse_frontmatter(content)
+                        if frontmatter.get("id") == ticket_id:
+                            return f
+                    except OSError:
+                        continue
+    return None
+
+
+def lock_ticket(ticket_id: str) -> bool:
+    """Rename ticket .md file to .md.lock. Returns True if successful."""
+    path = _find_ticket_file(ticket_id)
+    if path is None:
+        return False
+    if path.name.endswith(".md.lock"):
+        return True  # already locked
+    if not path.name.endswith(".md"):
+        return False
+    lock_path = path.with_suffix(path.suffix + ".lock")
+    try:
+        path.rename(lock_path)
+        return True
+    except OSError:
+        return False
+
+
+def unlock_ticket(ticket_id: str) -> bool:
+    """Rename ticket .md.lock file back to .md. Returns True if successful."""
+    path = _find_ticket_file(ticket_id)
+    if path is None:
+        return False
+    if not path.name.endswith(".md.lock"):
+        return True  # already unlocked
+    md_path = path.with_suffix("")  # removes .lock, leaves .md
+    try:
+        path.rename(md_path)
+        return True
+    except OSError:
+        return False
 
 
 def _display_name(project_id: str) -> str:
