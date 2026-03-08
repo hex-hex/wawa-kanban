@@ -38,7 +38,7 @@ export default defineConfig({
     'bg-violet-500/20', 'border-violet-500', 'text-violet-400', 'bg-violet-500/50',
     'bg-emerald-500/20', 'border-emerald-500', 'text-emerald-400', 'bg-emerald-500/50',
     'bg-amber-600', 'bg-amber-500', 'text-amber-50',
-    'bg-amber-800', 'text-amber-200',
+    'bg-amber-800', 'text-amber-200', 'bg-amber-900', 'hover:bg-amber-800',
     'bg-emerald-600', 'bg-emerald-500', 'text-white',
     'active:bg-amber-600', 'active:bg-amber-500',
     'bg-red-900', 'text-red-200', 'hover:bg-red-800',

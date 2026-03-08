@@ -79,6 +79,14 @@ def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
                 hx_swap="none",
             ),
             Button(
+                "Draft",
+                type="button",
+                aria_label="Draft",
+                cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-amber-900 text-amber-200 hover:bg-amber-800 rounded transition-colors outline-none cursor-pointer",
+                hx_post=f"/api/ticket/{ticket['id']}/draft",
+                hx_swap="none",
+            ),
+            Button(
                 "Give Up",
                 type="button",
                 aria_label="Give Up",

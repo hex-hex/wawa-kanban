@@ -75,3 +75,8 @@ def api_ticket_unlock(ticket_id: str):
 def api_ticket_save(ticket_id: str):
     """Save ticket content (placeholder; edit form to be wired later)."""
     return Response(status_code=200, content="")
+
+
+def api_ticket_draft(ticket_id: str):
+    """Save as draft (placeholder; to be wired later)."""
+    return Response(status_code=200, content="")
