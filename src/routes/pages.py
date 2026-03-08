@@ -29,7 +29,7 @@ def _main_content():
         Div(
             KanbanBoard(tickets),
             id="kanban-board",
-            cls="w-full overflow-x-auto mt-4 mx-4 md:mx-0 box-border min-w-0",
+            cls="w-full overflow-x-auto mt-4 min-w-0 px-4 md:px-0 box-border",
         ),
         id="main-content",
         cls="w-full",
