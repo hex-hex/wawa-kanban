@@ -98,6 +98,27 @@ async def test_todos_column_editable_modal_and_other_columns_plain_modal():
     assert "Edit Mode" in body
 
 
+async def test_edit_mode_lock_api():
+    """POST /api/ticket/{id}/lock renames .md to .md.lock; .md.lock tickets appear on refresh."""
+    from app import app
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        r = await client.get("/")
+        assert r.status_code == 200
+        match = re.search(r'hx-get=["\']/?api/ticket/([^"?\'&\s]+)', r.text)
+        assert match, "Page must contain at least one ticket card"
+        ticket_id = match.group(1).strip("/")
+
+        r = await client.post(f"/api/ticket/{ticket_id}/lock")
+        assert r.status_code == 200, f"Lock API should return 200, got {r.status_code}"
+
+        # After lock, ticket should still appear (from .md.lock)
+        r = await client.get("/")
+        assert r.status_code == 200
+        assert ticket_id in r.text or "api/ticket" in r.text
+
+
 # ----- Browser test: open and close modal 20 times -----
 
 

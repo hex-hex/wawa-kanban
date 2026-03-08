@@ -1,6 +1,6 @@
 import json
 from fasthtml.common import *
-from src.services.tickets import refresh
+from src.services.tickets import refresh, lock_ticket, unlock_ticket
 from src.models.repository import repository
 from src.components.board import KanbanBoard
 from src.components.ticket import TicketModal
@@ -49,3 +49,24 @@ def api_ticket(ticket_id: str, editable: str = ""):
 
     show_edit_mode = editable.lower() in ("1", "true", "yes")
     return TicketModal(ticket, editable=show_edit_mode)
+
+
+def api_ticket_lock(ticket_id: str):
+    """Lock ticket: rename .md to .md.lock."""
+    ok = lock_ticket(ticket_id)
+    if not ok:
+        return Response(status_code=404, content="Ticket not found or already locked")
+    return Response(status_code=200, content="")
+
+
+def api_ticket_unlock(ticket_id: str):
+    """Unlock ticket: rename .md.lock back to .md."""
+    ok = unlock_ticket(ticket_id)
+    if not ok:
+        return Response(status_code=404, content="Ticket not found or already unlocked")
+    return Response(status_code=200, content="")
+
+
+def api_ticket_save(ticket_id: str):
+    """Save ticket content (placeholder; edit form to be wired later)."""
+    return Response(status_code=200, content="")
