@@ -48,6 +48,7 @@ export default defineConfig({
           margin: 0 !important; padding: 0 !important;
           width: 100% !important; min-width: 100vw !important;
           box-sizing: border-box;
+          font-family: Inter, ui-sans-serif, system-ui, sans-serif;
         }
         main, main.container {
           margin: 0 !important; padding: 0 !important;
