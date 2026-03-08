@@ -1,0 +1,20 @@
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+.eggs/
+*.egg-info/
+dist/
+build/
+.uv/
+.idea/
+.vscode/
+*.log
+.env
+.env.*
+static/uno.css
+node_modules/
+.DS_Store
+.claude/worktrees
+# Playwright browsers (project-local, single version)
+.playwright-browsers/
