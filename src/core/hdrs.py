@@ -9,7 +9,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var board = document.getElementById('kanban-board');
   if (!btn || !board) return;
   var refreshTimerId = null;
-  var INTERVAL_MS = 5000;
+  var INTERVAL_MS = 15000;
 
   function doRefresh() {
     if (document.body && document.body.dataset.noAutoRefresh === '1') return;
