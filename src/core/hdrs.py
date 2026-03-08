@@ -92,6 +92,21 @@ document.addEventListener('DOMContentLoaded', function() {
     doRefresh();
   });
 
+  document.addEventListener('keydown', function(ev) {
+    if (ev.key !== 'Escape') return;
+    var modal = document.getElementById('ticket-modal');
+    var o = modal ? modal.querySelector('.modal-overlay') : null;
+    if (!o) return;
+    o.classList.add('modal-animate-out');
+    o.addEventListener('animationend', function f(e) {
+      if (e.animationName === 'modalOut') {
+        o.removeEventListener('animationend', f);
+        o.remove();
+        document.dispatchEvent(new CustomEvent('modalClosed'));
+      }
+    });
+  });
+
   btn.addEventListener('click', function(e) {
     e.preventDefault();
     if (refreshTimerId) clearTimeout(refreshTimerId);
