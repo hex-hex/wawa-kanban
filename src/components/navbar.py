@@ -36,7 +36,7 @@ def NavBar(title: str, projects: list, current_project: dict | None, *actions):
                 Div(*actions, cls="flex items-center gap-2 shrink-0"),
                 cls="flex items-center justify-end shrink-0 min-w-[5rem]",
             ),
-            cls="flex flex-col md:flex-row md:items-center md:justify-between md:grid md:grid-cols-[1fr_auto_1fr] md:gap-2 gap-2 w-full",
+            cls="flex flex-col md:grid md:grid-cols-[1fr_auto_1fr] md:items-center gap-2 w-full",
         ),
         id="navbar",
         cls="sticky top-0 bg-gray-800/95 border-b border-gray-700/80 py-3 pl-4 pr-8 z-50 w-full",
