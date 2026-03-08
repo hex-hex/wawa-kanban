@@ -249,12 +249,16 @@ async def test_locked_modal_shows_easymde_editor_not_plain_textarea(app_server):
             await todos_card.wait_for(state="visible", timeout=10000)
             await todos_card.click(force=True)
             await page.wait_for_selector("#ticket-modal .modal-overlay", state="attached", timeout=10000)
+            await page.wait_for_timeout(500)
 
-            # Lock the ticket so we get the editable (EasyMDE) view
-            lock_btn = page.get_by_role("button", name="Lock & Edit")
-            await lock_btn.click()
-            # After lock, modal content is re-fetched with data-locked="1" and textarea; then JS inits EasyMDE
-            await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=5000)
+            # If not already locked, click Lock & Edit so modal is re-fetched with textarea and EasyMDE can init
+            lock_btn = page.locator("#ticket-modal button").filter(has_text=re.compile(r"Lock\s*&\s*Edit"))
+            if await lock_btn.count() > 0:
+                await lock_btn.first.click()
+                await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=10000)
+            else:
+                # Already locked (Save/Draft/Give Up visible); overlay should have data-locked="1"
+                await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=2000)
 
             # EasyMDE creates .CodeMirror and .editor-toolbar; wait for editor to appear (retry loop in app is 50ms x 20)
             try:
@@ -271,6 +275,17 @@ async def test_locked_modal_shows_easymde_editor_not_plain_textarea(app_server):
             # Also ensure toolbar is present (EasyMDE UI, not just any CodeMirror)
             toolbar = page.locator(".modal-overlay .editor-toolbar")
             assert await toolbar.count() >= 1, "EasyMDE toolbar (.editor-toolbar) should be visible in locked modal"
+
+            # Exactly one editor: no vertical stack of two editors
+            codemirror_count = await page.locator(".modal-overlay .CodeMirror").count()
+            assert codemirror_count == 1, (
+                f"Expected exactly one EasyMDE/CodeMirror in the modal, got {codemirror_count}. "
+                "Fix duplicate editor init (e.g. guard in initEasyMDEIfNeeded or single __scheduleEasyMDEInit)."
+            )
+            toolbar_count = await page.locator(".modal-overlay .editor-toolbar").count()
+            assert toolbar_count == 1, (
+                f"Expected exactly one editor toolbar in the modal, got {toolbar_count}."
+            )
         finally:
             await browser.close()
 
@@ -308,10 +323,14 @@ async def test_easymde_editing_area_has_dark_mode(app_server):
             await todos_card.wait_for(state="visible", timeout=10000)
             await todos_card.click(force=True)
             await page.wait_for_selector("#ticket-modal .modal-overlay", state="attached", timeout=10000)
+            await page.wait_for_timeout(500)
 
-            lock_btn = page.get_by_role("button", name="Lock & Edit")
-            await lock_btn.click()
-            await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=5000)
+            lock_btn = page.locator("#ticket-modal button").filter(has_text=re.compile(r"Lock\s*&\s*Edit"))
+            if await lock_btn.count() > 0:
+                await lock_btn.first.click()
+                await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=10000)
+            else:
+                await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=2000)
             await page.wait_for_selector(".modal-overlay .CodeMirror", state="attached", timeout=10000)
 
             # Check CodeMirror has dark background (preflight uses #1f2937 = rgb(31, 41, 55))
