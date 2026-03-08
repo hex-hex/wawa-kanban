@@ -107,6 +107,16 @@ export default defineConfig({
           padding-left: 0 !important; padding-right: 0 !important;
           box-sizing: border-box;
         }
+        /* EasyMDE / CodeMirror dark theme inside modal */
+        .modal-overlay .CodeMirror { background: #1f2937 !important; color: #e5e7eb !important; border-color: #4b5563; }
+        .modal-overlay .CodeMirror-gutters { background: #111827 !important; border-color: #4b5563 !important; }
+        .modal-overlay .CodeMirror-cursor { border-left-color: #e5e7eb !important; }
+        .modal-overlay .CodeMirror-linenumber { color: #6b7280 !important; }
+        .modal-overlay .CodeMirror-selected { background: #374151 !important; }
+        .modal-overlay .editor-toolbar { background: #374151 !important; border-color: #4b5563 !important; }
+        .modal-overlay .editor-toolbar button { color: #d1d5db !important; }
+        .modal-overlay .editor-toolbar button:hover { background: #4b5563 !important; color: #fff !important; }
+        .modal-overlay .editor-preview, .modal-overlay .editor-preview-side { background: #1f2937 !important; color: #e5e7eb !important; }
       `,
     },
   ],

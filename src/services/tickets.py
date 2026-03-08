@@ -1,5 +1,6 @@
 """Load workspace content (projects, agents) into repository."""
 
+from datetime import datetime
 from pathlib import Path
 
 from config import WORKSPACE_PATH, AGENTS_WORKSPACE_PATH, COLUMNS
@@ -63,6 +64,11 @@ def _load_tickets_from_dir(dir_path: Path, status: TicketStatus) -> list[Ticket]
         if tid in seen_ids:
             return
         seen_ids.add(tid)
+        st = md_file.stat()
+        created_at = datetime.fromtimestamp(
+            getattr(st, "st_birthtime", st.st_mtime)
+        ).isoformat()
+        updated_at = datetime.fromtimestamp(st.st_mtime).isoformat()
         tickets.append(
             {
                 "id": tid,
@@ -72,6 +78,8 @@ def _load_tickets_from_dir(dir_path: Path, status: TicketStatus) -> list[Ticket]
                 "status": status,
                 "mode": mode,
                 "locked": locked,
+                "created_at": created_at,
+                "updated_at": updated_at,
             }
         )
 

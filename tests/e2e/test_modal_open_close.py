@@ -212,3 +212,122 @@ async def test_modal_opens_and_closes_20_times_in_browser(app_server):
                 await page.wait_for_selector("#ticket-modal .modal-overlay", state="detached", timeout=5000)
         finally:
             await browser.close()
+
+
+@pytest.mark.asyncio
+async def test_locked_modal_shows_easymde_editor_not_plain_textarea(app_server):
+    """When a locked ticket modal is open (editable mode), EasyMDE must be visible, not just a plain textarea.
+    Fails if the markdown editor does not load and only the raw textarea is shown."""
+    _ensure_playwright_chromium()
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(_PLAYWRIGHT_BROWSERS_PATH)
+
+    from playwright.async_api import async_playwright
+
+    base_url = app_server
+
+    async with async_playwright() as p:
+        try:
+            browser = await p.chromium.launch(headless=True)
+        except Exception as e:
+            if "Executable doesn't exist" in str(e) or "playwright install" in str(e):
+                pytest.skip(
+                    "Chromium not available. Try: uv sync --extra test && uv run playwright install chromium"
+                )
+            raise
+        try:
+            page = await browser.new_page()
+            await page.goto(base_url + "/", wait_until="networkidle", timeout=20000)
+            await page.wait_for_timeout(2500)
+            await page.evaluate("""() => {
+              document.body.dataset.noAutoRefresh = '1';
+              if (window.__refreshTimerId) clearTimeout(window.__refreshTimerId);
+              window.__refreshTimerId = null;
+            }""")
+
+            # Open modal from a Todos card (editable=1)
+            todos_card = page.locator("[hx-get*='editable=1']").first
+            await todos_card.wait_for(state="visible", timeout=10000)
+            await todos_card.click(force=True)
+            await page.wait_for_selector("#ticket-modal .modal-overlay", state="attached", timeout=10000)
+
+            # Lock the ticket so we get the editable (EasyMDE) view
+            lock_btn = page.get_by_role("button", name="Lock & Edit")
+            await lock_btn.click()
+            # After lock, modal content is re-fetched with data-locked="1" and textarea; then JS inits EasyMDE
+            await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=5000)
+
+            # EasyMDE creates .CodeMirror and .editor-toolbar; wait for editor to appear (retry loop in app is 50ms x 20)
+            try:
+                await page.wait_for_selector(".modal-overlay .CodeMirror", state="attached", timeout=10000)
+            except Exception as e:
+                html_path = _PROJECT_ROOT / "tests" / "e2e" / "failure_easymde.html"
+                html_path.write_text(await page.content(), encoding="utf-8")
+                await page.screenshot(path=str(_PROJECT_ROOT / "tests" / "e2e" / "failure_easymde.png"))
+                raise AssertionError(
+                    "EasyMDE editor (.CodeMirror) did not appear in locked modal; only plain textarea may be visible. "
+                    f"Page saved to {html_path}"
+                ) from e
+
+            # Also ensure toolbar is present (EasyMDE UI, not just any CodeMirror)
+            toolbar = page.locator(".modal-overlay .editor-toolbar")
+            assert await toolbar.count() >= 1, "EasyMDE toolbar (.editor-toolbar) should be visible in locked modal"
+        finally:
+            await browser.close()
+
+
+@pytest.mark.asyncio
+async def test_easymde_editing_area_has_dark_mode(app_server):
+    """When EasyMDE is shown in the modal, the editing area (CodeMirror) must use dark theme, not white background."""
+    _ensure_playwright_chromium()
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(_PLAYWRIGHT_BROWSERS_PATH)
+
+    from playwright.async_api import async_playwright
+
+    base_url = app_server
+
+    async with async_playwright() as p:
+        try:
+            browser = await p.chromium.launch(headless=True)
+        except Exception as e:
+            if "Executable doesn't exist" in str(e) or "playwright install" in str(e):
+                pytest.skip(
+                    "Chromium not available. Try: uv sync --extra test && uv run playwright install chromium"
+                )
+            raise
+        try:
+            page = await browser.new_page()
+            await page.goto(base_url + "/", wait_until="networkidle", timeout=20000)
+            await page.wait_for_timeout(2500)
+            await page.evaluate("""() => {
+              document.body.dataset.noAutoRefresh = '1';
+              if (window.__refreshTimerId) clearTimeout(window.__refreshTimerId);
+              window.__refreshTimerId = null;
+            }""")
+
+            todos_card = page.locator("[hx-get*='editable=1']").first
+            await todos_card.wait_for(state="visible", timeout=10000)
+            await todos_card.click(force=True)
+            await page.wait_for_selector("#ticket-modal .modal-overlay", state="attached", timeout=10000)
+
+            lock_btn = page.get_by_role("button", name="Lock & Edit")
+            await lock_btn.click()
+            await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=5000)
+            await page.wait_for_selector(".modal-overlay .CodeMirror", state="attached", timeout=10000)
+
+            # Check CodeMirror has dark background (preflight uses #1f2937 = rgb(31, 41, 55))
+            codemirror = page.locator(".modal-overlay .CodeMirror").first
+            bg = await codemirror.evaluate("""el => {
+              const s = window.getComputedStyle(el);
+              return s.backgroundColor;
+            }""")
+            # Require dark background (preflight uses rgb(31, 41, 55))
+            assert bg, "CodeMirror should have a background color"
+            m = re.search(r"rgb[a]?\((\d+),\s*(\d+),\s*(\d+)", bg)
+            assert m, f"Could not parse background color: {bg}"
+            r, g, b = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            assert max(r, g, b) <= 80, (
+                f"CodeMirror should have dark background (max RGB <= 80), got rgb({r},{g},{b}). "
+                "Dark mode for EasyMDE is not applied."
+            )
+        finally:
+            await browser.close()

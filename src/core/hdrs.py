@@ -88,22 +88,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
+  function initEasyMDEIfNeeded() {
+    var overlay = document.querySelector('#ticket-modal .modal-overlay');
+    var textarea = document.getElementById('ticket-description-editor');
+    if (!overlay || overlay.getAttribute('data-locked') !== '1' || !textarea) return false;
+    if (typeof EasyMDE === 'undefined') return false;
+    window.__ticketEasyMDE = new EasyMDE({
+      element: textarea,
+      autofocus: false,
+      spellChecker: false,
+      status: false,
+      minHeight: '200px',
+      maxHeight: 'calc(80vh - 220px)',
+      toolbar: ['bold', 'italic', 'heading', '|', 'quote', 'unordered-list', 'ordered-list', '|', 'link', 'code', 'table', '|', 'preview', 'side-by-side', 'fullscreen', '|', 'guide']
+    });
+    if (window.__ticketEasyMDE.codemirror) {
+      window.__ticketEasyMDE.codemirror.getWrapperElement().classList.add('easymde-dark');
+    }
+    return true;
+  }
+
   document.addEventListener('htmx:afterSwap', function(ev) {
     if (ev.detail && ev.detail.target && ev.detail.target.id === 'ticket-modal') {
       if (refreshTimerId) { clearTimeout(refreshTimerId); refreshTimerId = null; }
-      var overlay = document.querySelector('#ticket-modal .modal-overlay');
-      var textarea = document.getElementById('ticket-description-editor');
-      if (overlay && overlay.getAttribute('data-locked') === '1' && textarea && typeof EasyMDE !== 'undefined') {
-        window.__ticketEasyMDE = new EasyMDE({
-          element: textarea,
-          autofocus: false,
-          spellChecker: false,
-          status: false,
-          minHeight: '200px',
-          maxHeight: 'calc(80vh - 220px)',
-          toolbar: ['bold', 'italic', 'heading', '|', 'quote', 'unordered-list', 'ordered-list', '|', 'link', 'code', 'table', '|', 'preview', 'side-by-side', 'fullscreen', '|', 'guide']
-        });
+      function tryInit(attempt) {
+        if (initEasyMDEIfNeeded()) return;
+        if (attempt < 20) setTimeout(function() { tryInit(attempt + 1); }, 50);
       }
+      setTimeout(function() { tryInit(0); }, 0);
     }
   });
 
