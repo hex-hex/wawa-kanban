@@ -31,7 +31,7 @@ def KanbanColumn(col_id: TicketStatus, col_info: dict, tickets: List[Ticket]):
             else [Div("No tickets", cls="text-gray-500 text-sm p-4 text-center")],
             cls="p-3 space-y-3 overflow-y-auto max-h-[calc(100vh-200px)] min-h-[120px] flex-1",
         ),
-        cls="flex flex-col min-w-52 flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden",
+        cls="flex flex-col w-full md:min-w-52 md:flex-1 mx-1 bg-gray-800/80 rounded-lg border border-gray-700/50 overflow-hidden shrink-0",
     )
 
 

@@ -26,9 +26,9 @@ def _ticket_card(ticket: Ticket, editable: bool = False):
     )
     return Div(
         Div(
-            Span(ticket["id"], cls="text-xs font-mono text-slate-500"),
+            Span(ticket["id"], cls="text-xs font-mono text-slate-500 shrink-0"),
             right_badges,
-            cls="flex justify-between items-center mb-2",
+            cls="flex flex-wrap gap-x-2 gap-y-1 items-center mb-2",
         ),
         Div(
             md_to_safe_html(ticket["title"]),
