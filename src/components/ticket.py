@@ -69,18 +69,18 @@ def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
     if locked:
         return (
             Button(
-                "Save",
+                "Confirm",
                 type="submit",
                 form="ticket-edit-form",
-                aria_label="Save",
+                aria_label="Confirm",
                 cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-emerald-700 text-emerald-50 hover:bg-emerald-600 rounded transition-colors outline-none cursor-pointer",
                 hx_post=f"/api/ticket/{ticket['id']}/save",
                 hx_swap="none",
             ),
             Button(
-                "Draft",
+                "Save Draft",
                 type="button",
-                aria_label="Draft",
+                aria_label="Save Draft",
                 cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-amber-700 text-amber-50 hover:bg-amber-600 rounded transition-colors outline-none cursor-pointer",
                 hx_post=f"/api/ticket/{ticket['id']}/draft",
                 hx_swap="none",
