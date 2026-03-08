@@ -79,9 +79,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
   document.addEventListener('refreshBoard', onRefreshBoard);
 
+  document.addEventListener('htmx:beforeSwap', function(ev) {
+    if (ev.detail && ev.detail.target && ev.detail.target.id === 'ticket-modal') {
+      if (window.__ticketEasyMDE) {
+        window.__ticketEasyMDE.toTextArea();
+        window.__ticketEasyMDE = null;
+      }
+    }
+  });
+
   document.addEventListener('htmx:afterSwap', function(ev) {
     if (ev.detail && ev.detail.target && ev.detail.target.id === 'ticket-modal') {
       if (refreshTimerId) { clearTimeout(refreshTimerId); refreshTimerId = null; }
+      var overlay = document.querySelector('#ticket-modal .modal-overlay');
+      var textarea = document.getElementById('ticket-description-editor');
+      if (overlay && overlay.getAttribute('data-locked') === '1' && textarea && typeof EasyMDE !== 'undefined') {
+        window.__ticketEasyMDE = new EasyMDE({
+          element: textarea,
+          autofocus: false,
+          spellChecker: false,
+          status: false,
+          minHeight: '200px',
+          maxHeight: 'calc(80vh - 220px)',
+          toolbar: ['bold', 'italic', 'heading', '|', 'quote', 'unordered-list', 'ordered-list', '|', 'link', 'code', 'table', '|', 'preview', 'side-by-side', 'fullscreen', '|', 'guide']
+        });
+      }
     }
   });
 
@@ -125,6 +147,12 @@ document.addEventListener('DOMContentLoaded', function() {
 def get_hdrs():
     return (
         Link(rel="stylesheet", href="/static/uno.css", type="text/css"),
+        Link(
+            rel="stylesheet",
+            href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css",
+            type="text/css",
+        ),
         Script(src="https://unpkg.com/htmx.org@2"),
+        Script(src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"),
         _refresh_via_sse_script(),
     )

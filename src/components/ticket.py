@@ -70,7 +70,8 @@ def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
         return (
             Button(
                 "Save",
-                type="button",
+                type="submit",
+                form="ticket-edit-form",
                 aria_label="Save",
                 cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-emerald-700 text-emerald-50 hover:bg-emerald-600 rounded transition-colors outline-none cursor-pointer",
                 hx_post=f"/api/ticket/{ticket['id']}/save",
@@ -107,10 +108,36 @@ def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
     )
 
 
+def _modal_body(ticket: Ticket, locked: bool):
+    """When locked: form with textarea for EasyMDE. Otherwise: read-only markdown."""
+    raw_description = ticket.get("description") or ""
+    if locked:
+        return Form(
+            CardBodyScroll(
+                Textarea(
+                    raw_description,
+                    id="ticket-description-editor",
+                    name="description",
+                    cls="w-full min-h-[200px] p-3 text-gray-100 bg-gray-800 border border-gray-600 rounded font-mono text-sm resize-y",
+                ),
+            ),
+            id="ticket-edit-form",
+            hx_post=f"/api/ticket/{ticket['id']}/save",
+            hx_swap="none",
+        )
+    return CardBodyScroll(
+        Div(
+            md_to_safe_html(raw_description or "No description"),
+            cls="text-gray-300 prose prose-invert prose-sm prose-p:text-gray-300 prose-headings:text-gray-100 max-w-none",
+        ),
+    )
+
+
 def TicketModal(ticket: Ticket, editable: bool = False):
     header_buttons = _modal_header_buttons(editable, ticket)
     if not isinstance(header_buttons, tuple):
         header_buttons = (header_buttons,)
+    locked = ticket.get("locked", False)
     return Div(
         Div(
             Div(
@@ -127,15 +154,11 @@ def TicketModal(ticket: Ticket, editable: bool = False):
                 cls="flex items-center gap-2 mb-4",
             ),
             Hr(cls="my-4 border-gray-600"),
-            CardBodyScroll(
-                Div(
-                    md_to_safe_html(ticket["description"] or "No description"),
-                    cls="text-gray-300 prose prose-invert prose-sm prose-p:text-gray-300 prose-headings:text-gray-100 max-w-none",
-                ),
-            ),
+            _modal_body(ticket, locked),
             cls="bg-gray-700 border border-gray-600 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl",
         ),
         cls="modal-overlay bg-black/75 fixed inset-0 flex items-center justify-center z-50 modal-animate-in",
         data_ticket_id=ticket["id"],
         data_editable="1" if editable else "0",
+        data_locked="1" if locked else "0",
     )
