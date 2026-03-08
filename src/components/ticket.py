@@ -1,6 +1,6 @@
 from fasthtml.common import *
 from src.models.kanban import Ticket
-from src.components.common import CardCloseButton
+from src.components.common import CardCloseButton, CardBodyScroll
 from src.utils.markdown import md_to_safe_html
 
 
@@ -124,11 +124,13 @@ def TicketModal(ticket: Ticket, editable: bool = False):
                 cls="flex items-center gap-2 mb-4",
             ),
             Hr(cls="my-4 border-gray-600"),
-            Div(
-                md_to_safe_html(ticket["description"] or "No description"),
-                cls="text-gray-300 prose prose-invert prose-sm prose-p:text-gray-300 prose-headings:text-gray-100 max-w-none",
+            CardBodyScroll(
+                Div(
+                    md_to_safe_html(ticket["description"] or "No description"),
+                    cls="text-gray-300 prose prose-invert prose-sm prose-p:text-gray-300 prose-headings:text-gray-100 max-w-none",
+                ),
             ),
-            cls="bg-gray-700 border border-gray-600 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl",
+            cls="bg-gray-700 border border-gray-600 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl",
         ),
         cls="modal-overlay bg-black/75 fixed inset-0 flex items-center justify-center z-50 modal-animate-in",
         data_ticket_id=ticket["id"],

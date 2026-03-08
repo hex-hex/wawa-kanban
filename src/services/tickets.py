@@ -152,7 +152,8 @@ def _display_name(project_id: str) -> str:
 
 
 def _load_project(project_path: Path) -> Project | None:
-    """Load a single project from workspace/projects/{project_id}/."""
+    """Load a single project from workspace/projects/{project_id}/.
+    Verifying column also includes tickets from workspace/agents/testers/*."""
     project_id = project_path.name
     if project_id.startswith("."):
         return None
@@ -161,6 +162,17 @@ def _load_project(project_path: Path) -> Project | None:
     for status in COLUMNS:
         col_path = project_path / status.value
         tickets.extend(_load_tickets_from_dir(col_path, status))
+
+    # Load testers dir tickets into Verifying column (no duplicate ids)
+    existing_ids = {t["id"] for t in tickets}
+    testers_path = AGENTS_WORKSPACE_PATH / "testers"
+    if testers_path.exists():
+        for name_path in sorted(testers_path.iterdir()):
+            if name_path.is_dir() and not name_path.name.startswith("."):
+                for t in _load_tickets_from_dir(name_path, TicketStatus.VERIFYING):
+                    if t["id"] not in existing_ids:
+                        tickets.append(t)
+                        existing_ids.add(t["id"])
 
     return {"name": _display_name(project_id), "tickets": tickets}
 
