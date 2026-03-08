@@ -37,11 +37,12 @@ def _main_content():
 
 
 def index_page():
-    return Titled(
+    return (
+        Title(APP_TITLE),
         Div(
             _main_content(),
             Div(id="ticket-modal"),
             id="wawa-app",
             cls="bg-gray-950 min-h-screen text-gray-100",
-        )
+        ),
     )
