@@ -4,13 +4,25 @@ from src.models.kanban import Ticket
 
 def _ticket_card(ticket: Ticket, editable: bool = False):
     url = f"/api/ticket/{ticket['id']}?editable=1" if editable else f"/api/ticket/{ticket['id']}"
+    locked = ticket.get("locked", False)
+    mode_badge = Span(
+        ticket["mode"].value.upper(),
+        cls="text-xs px-2 py-0.5 rounded bg-slate-600/70 text-slate-300",
+    )
+    editing_badge = (
+        Span("editing", cls="text-xs px-2 py-0.5 rounded bg-amber-800 text-amber-200")
+        if (editable and locked)
+        else None
+    )
+    right_badges = (
+        Div(mode_badge, editing_badge, cls="flex items-center gap-1.5")
+        if editing_badge
+        else mode_badge
+    )
     return Div(
         Div(
             Span(ticket["id"], cls="text-xs font-mono text-slate-500"),
-            Span(
-                ticket["mode"].value.upper(),
-                cls="text-xs px-2 py-0.5 rounded bg-slate-600/70 text-slate-300",
-            ),
+            right_badges,
             cls="flex justify-between items-center mb-2",
         ),
         Div(
@@ -75,10 +87,10 @@ def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
         )
     return (
         Button(
-            "Edit Mode",
+            "Lock & Edit",
             type="button",
-            aria_label="Edit Mode",
-            cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-500 active:bg-amber-600 active:hover:bg-amber-500 rounded transition-colors outline-none cursor-pointer",
+            aria_label="Lock & Edit",
+            cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-blue-600 text-white hover:bg-blue-500 rounded transition-colors outline-none cursor-pointer",
             hx_post=f"/api/ticket/{ticket['id']}/lock",
             hx_swap="none",
         ),

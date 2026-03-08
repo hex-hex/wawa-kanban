@@ -56,7 +56,7 @@ def api_ticket_lock(ticket_id: str):
     ok = lock_ticket(ticket_id)
     if not ok:
         return Response(status_code=404, content="Ticket not found or already locked")
-    return Response(status_code=200, content="")
+    return Response(status_code=200, content="", headers={"HX-Trigger": "refreshBoard"})
 
 
 def api_ticket_unlock(ticket_id: str):
@@ -64,7 +64,7 @@ def api_ticket_unlock(ticket_id: str):
     ok = unlock_ticket(ticket_id)
     if not ok:
         return Response(status_code=404, content="Ticket not found or already unlocked")
-    return Response(status_code=200, content="")
+    return Response(status_code=200, content="", headers={"HX-Trigger": "refreshBoard"})
 
 
 def api_ticket_save(ticket_id: str):

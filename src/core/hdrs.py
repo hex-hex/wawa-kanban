@@ -11,24 +11,28 @@ document.addEventListener('DOMContentLoaded', function() {
   var refreshTimerId = null;
   var INTERVAL_MS = 15000;
 
+  function updateBoardFromSse(text) {
+    var data = '';
+    text.split('\\n').forEach(function(line) {
+      if (line.indexOf('data: ') === 0) data += line.slice(6) + '\\n';
+    });
+    data = data.trim();
+    if (!data) return;
+    try {
+      var payload = JSON.parse(data);
+      if (payload.html !== undefined) {
+        board.innerHTML = payload.html;
+        if (typeof htmx !== 'undefined') htmx.process(board);
+      }
+    } catch (err) {}
+  }
+
   function doRefresh() {
     if (document.body && document.body.dataset.noAutoRefresh === '1') return;
     fetch('/api/refresh-sse', { headers: { 'Accept': 'text/event-stream' } })
       .then(function(r) { return r.text(); })
       .then(function(text) {
-        var data = '';
-        text.split('\\n').forEach(function(line) {
-          if (line.indexOf('data: ') === 0) data += line.slice(6) + '\\n';
-        });
-        data = data.trim();
-        if (!data) return;
-        try {
-          var payload = JSON.parse(data);
-          if (payload.html !== undefined) {
-            board.innerHTML = payload.html;
-            if (typeof htmx !== 'undefined') htmx.process(board);
-          }
-        } catch (err) {}
+        updateBoardFromSse(text);
         if (document.body && document.body.dataset.noAutoRefresh === '1') return;
         refreshTimerId = setTimeout(doRefresh, INTERVAL_MS);
         if (typeof window !== 'undefined') window.__refreshTimerId = refreshTimerId;
@@ -39,6 +43,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof window !== 'undefined') window.__refreshTimerId = refreshTimerId;
       });
   }
+
+  function refreshBoardAndCloseModal() {
+    fetch('/api/refresh-sse', { headers: { 'Accept': 'text/event-stream' } })
+      .then(function(r) { return r.text(); })
+      .then(function(text) {
+        updateBoardFromSse(text);
+        var modal = document.getElementById('ticket-modal');
+        if (modal) modal.innerHTML = '';
+      })
+      .catch(function() {});
+  }
+
+  document.addEventListener('refreshBoard', refreshBoardAndCloseModal);
 
   btn.addEventListener('click', function(e) {
     e.preventDefault();

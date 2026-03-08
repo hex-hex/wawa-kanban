@@ -58,8 +58,8 @@ async def test_modal_content_returned_20_times():
 
 
 async def test_todos_column_editable_modal_and_other_columns_plain_modal():
-    """Todos column cards request modal with editable=1 (Edit Mode button); other columns do not.
-    API: without editable param -> modal has Close only; with editable=1 -> modal has Edit Mode and Close.
+    """Todos column cards request modal with editable=1 (Lock & Edit button); other columns do not.
+    API: without editable param -> modal has Close only; with editable=1 -> modal has Lock & Edit and Close.
     """
     from app import app
 
@@ -79,23 +79,23 @@ async def test_todos_column_editable_modal_and_other_columns_plain_modal():
     ticket_id = match.group(1).strip("/")
     assert ticket_id
 
-    # Without editable: modal has Close, no Edit Mode button
+    # Without editable: modal has Close, no Lock & Edit button
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         r = await client.get(f"/api/ticket/{ticket_id}")
     assert r.status_code == 200
     body = r.text
     assert "modal-overlay" in body
     assert "Close" in body
-    assert "Edit Mode" not in body
+    assert "Lock & Edit" not in body
 
-    # With editable=1: modal has both Edit Mode and Close
+    # With editable=1: modal has Close and either (Lock & Edit) or (Save + Unlock) when locked
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         r = await client.get(f"/api/ticket/{ticket_id}", params={"editable": "1"})
     assert r.status_code == 200
     body = r.text
     assert "modal-overlay" in body
     assert "Close" in body
-    assert "Edit Mode" in body
+    assert "Lock & Edit" in body or ("Save" in body and "Unlock" in body)
 
 
 async def test_edit_mode_lock_api():
