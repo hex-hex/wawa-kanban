@@ -54,11 +54,12 @@ function build() {
   
   console.log(`Found ${classes.size} unique classes`)
   
-  const tempFile = join(STATIC_DIR, 'temp.html')
-  writeFileSync(tempFile, `<div class="${classList}"></div>`)
+  // Scaffold HTML: all extracted + safelist classes for UnoCSS to scan (generated, see .gitignore)
+  const scaffoldFile = join(STATIC_DIR, 'unocss-input.html')
+  writeFileSync(scaffoldFile, `<div class="${classList}"></div>`)
   
   try {
-    execSync(`npx unocss ${tempFile} -o ${OUTPUT_FILE} --minify`, { 
+    execSync(`npx unocss ${scaffoldFile} -o ${OUTPUT_FILE} --minify`, { 
       stdio: 'inherit',
       cwd: process.cwd()
     })
