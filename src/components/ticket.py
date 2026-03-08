@@ -12,7 +12,10 @@ def _ticket_card(ticket: Ticket, editable: bool = False):
         cls="text-xs px-2 py-0.5 rounded bg-slate-600/70 text-slate-300",
     )
     editing_badge = (
-        Span("EDITING", cls="text-xs px-2 py-0.5 rounded bg-amber-800 text-gray-300")
+        Span(
+            "EDITING",
+            cls="text-xs px-2 py-0.5 rounded bg-slate-600/90 text-blue-300 border border-blue-500/40",
+        )
         if (editable and locked)
         else None
     )

@@ -57,7 +57,8 @@ export default defineConfig({
     'bg-slate-700/95', 'border-slate-600/80', 'hover:border-slate-500', 'text-slate-100', 'text-slate-500', 'text-slate-300',
     // Markdown prose (typography preset)
     'prose', 'prose-invert', 'prose-sm', 'prose-p:text-gray-300', 'prose-headings:text-gray-100',
-    'bg-slate-600/70', 'bg-slate-600', 'hover:bg-slate-500', 'text-slate-200',
+    'bg-slate-600/70', 'bg-slate-600', 'bg-slate-600/90', 'hover:bg-slate-500', 'text-slate-200',
+    'text-blue-300', 'border-blue-500/40',
   ],
   preflights: [
     {
