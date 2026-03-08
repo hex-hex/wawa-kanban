@@ -32,15 +32,25 @@ export default defineConfig({
     'border-b-3', 'px-5', 'px-6',
     'bg-gray-500/20', 'border-gray-500', 'text-gray-400', 'bg-gray-500/50',
     'bg-blue-500/20', 'border-blue-500', 'text-blue-400', 'bg-blue-500/50',
+    'bg-blue-600', 'hover:bg-blue-500',
     'bg-amber-500/20', 'border-amber-500', 'text-amber-400', 'bg-amber-500/50',
     'bg-violet-500/20', 'border-violet-500', 'text-violet-400', 'bg-violet-500/50',
     'bg-emerald-500/20', 'border-emerald-500', 'text-emerald-400', 'bg-emerald-500/50',
+    'bg-amber-600', 'bg-amber-500', 'text-amber-50',
+    'bg-amber-800', 'text-amber-200',
+    'bg-emerald-600', 'bg-emerald-500', 'text-white',
+    'active:bg-amber-600', 'active:bg-amber-500',
+    'bg-red-900', 'text-red-200', 'hover:bg-red-800',
+    'bg-green-900', 'text-green-200', 'hover:bg-green-800',
     // Icons: ensure they compile (extractor may miss; Python uses cls)
     'i-mdi-view-kanban', 'i-mdi-refresh',
     'i-mdi-checkbox-blank-outline', 'i-mdi-progress-clock', 'i-mdi-clock-outline',
     'i-mdi-check-circle-outline', 'i-mdi-check-circle',
     'i-mdi-close',
     'hidden',
+    // Ticket card + modal actions (slate)
+    'bg-slate-700/95', 'border-slate-600/80', 'hover:border-slate-500', 'text-slate-100', 'text-slate-500', 'text-slate-300',
+    'bg-slate-600/70', 'bg-slate-600', 'hover:bg-slate-500', 'text-slate-200',
   ],
   preflights: [
     {
@@ -61,6 +71,18 @@ export default defineConfig({
           width: 100% !important; min-width: 100vw !important;
           box-sizing: border-box;
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+        }
+        button {
+          appearance: none;
+          -webkit-appearance: none;
+          background: none;
+          border: none;
+          margin: 0;
+          padding: 0;
+          font: inherit;
+          color: inherit;
+          cursor: pointer;
+          box-shadow: none;
         }
         main, main.container {
           margin: 0 !important; padding: 0 !important;

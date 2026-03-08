@@ -11,24 +11,50 @@ document.addEventListener('DOMContentLoaded', function() {
   var refreshTimerId = null;
   var INTERVAL_MS = 15000;
 
+  function applyRefresh(payload, forceCloseModal) {
+    if (payload.html !== undefined) {
+      board.innerHTML = payload.html;
+      if (typeof htmx !== 'undefined') htmx.process(board);
+    }
+    var modal = document.getElementById('ticket-modal');
+    var overlay = modal ? modal.querySelector('.modal-overlay') : null;
+    if (forceCloseModal) {
+      if (modal) { modal.innerHTML = ''; document.dispatchEvent(new CustomEvent('modalClosed')); }
+      return;
+    }
+    var ticketId = overlay ? overlay.getAttribute('data-ticket-id') : null;
+    var existingIds = payload.existing_ids || [];
+    if (ticketId && existingIds.indexOf(ticketId) >= 0) {
+      var editable = overlay ? overlay.getAttribute('data-editable') : '0';
+      fetch('/api/ticket/' + ticketId + (editable === '1' ? '?editable=1' : ''))
+        .then(function(r) { return r.text(); })
+        .then(function(html) {
+          if (modal) { modal.innerHTML = html; if (typeof htmx !== 'undefined') htmx.process(modal); }
+        })
+        .catch(function() {});
+    } else if (modal && overlay) {
+      modal.innerHTML = '';
+      document.dispatchEvent(new CustomEvent('modalClosed'));
+    }
+  }
+
+  function parseSsePayload(text) {
+    var data = '';
+    text.split('\\n').forEach(function(line) {
+      if (line.indexOf('data: ') === 0) data += line.slice(6) + '\\n';
+    });
+    data = data.trim();
+    if (!data) return null;
+    try { return JSON.parse(data); } catch (err) { return null; }
+  }
+
   function doRefresh() {
     if (document.body && document.body.dataset.noAutoRefresh === '1') return;
     fetch('/api/refresh-sse', { headers: { 'Accept': 'text/event-stream' } })
       .then(function(r) { return r.text(); })
       .then(function(text) {
-        var data = '';
-        text.split('\\n').forEach(function(line) {
-          if (line.indexOf('data: ') === 0) data += line.slice(6) + '\\n';
-        });
-        data = data.trim();
-        if (!data) return;
-        try {
-          var payload = JSON.parse(data);
-          if (payload.html !== undefined) {
-            board.innerHTML = payload.html;
-            if (typeof htmx !== 'undefined') htmx.process(board);
-          }
-        } catch (err) {}
+        var payload = parseSsePayload(text);
+        if (payload) applyRefresh(payload);
         if (document.body && document.body.dataset.noAutoRefresh === '1') return;
         refreshTimerId = setTimeout(doRefresh, INTERVAL_MS);
         if (typeof window !== 'undefined') window.__refreshTimerId = refreshTimerId;
@@ -39,6 +65,32 @@ document.addEventListener('DOMContentLoaded', function() {
         if (typeof window !== 'undefined') window.__refreshTimerId = refreshTimerId;
       });
   }
+
+  function onRefreshBoard(ev) {
+    var closeModal = ev.detail && ev.detail.closeModal;
+    fetch('/api/refresh-sse', { headers: { 'Accept': 'text/event-stream' } })
+      .then(function(r) { return r.text(); })
+      .then(function(text) {
+        var payload = parseSsePayload(text);
+        if (payload) applyRefresh(payload, !!closeModal);
+      })
+      .catch(function() {});
+  }
+
+  document.addEventListener('refreshBoard', onRefreshBoard);
+
+  document.addEventListener('htmx:afterSwap', function(ev) {
+    if (ev.detail && ev.detail.target && ev.detail.target.id === 'ticket-modal') {
+      if (refreshTimerId) { clearTimeout(refreshTimerId); refreshTimerId = null; }
+    }
+  });
+
+  document.addEventListener('modalClosed', function() {
+    if (document.body && document.body.dataset.noAutoRefresh === '1') return;
+    if (refreshTimerId) clearTimeout(refreshTimerId);
+    refreshTimerId = null;
+    doRefresh();
+  });
 
   btn.addEventListener('click', function(e) {
     e.preventDefault();

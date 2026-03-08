@@ -1,0 +1,13 @@
+---
+description: No inline styles or hand-written CSS; use cls and UnoCSS only
+alwaysApply: true
+---
+
+# Styling: cls only, no inline style or hand-written CSS
+
+- **Do not use `style=` on any element.** Use only the `cls` attribute with UnoCSS utility classes.
+- **Do not add or maintain hand-written CSS** (e.g. in `static/*.css` or any `.css` file). All styling must come from:
+  - `cls` in Python components, and
+  - Generated `static/uno.css` (run `npm run build:css` or `npm run dev:css`).
+- **Global resets or one-off rules** belong in `uno.config.ts` under `preflights` (e.g. button reset, layout overrides), not in a separate `.css` file.
+- If a class is missing from `static/uno.css`, run `npm run build:css` (or remind the user to run it).
