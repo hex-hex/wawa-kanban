@@ -73,6 +73,16 @@ def _load_tickets_from_dir(dir_path: Path, status: TicketStatus) -> list[Ticket]
     return tickets
 
 
+PROJECT_NAME_PREFIX = "wawa.proj."
+
+
+def _display_name(project_id: str) -> str:
+    """Return project name for UI: strip prefix 'wawa.proj.' if present."""
+    if project_id.startswith(PROJECT_NAME_PREFIX):
+        return project_id[len(PROJECT_NAME_PREFIX) :]
+    return project_id
+
+
 def _load_project(project_path: Path) -> Project | None:
     """Load a single project from workspace/projects/{project_id}/."""
     project_id = project_path.name
@@ -84,7 +94,7 @@ def _load_project(project_path: Path) -> Project | None:
         col_path = project_path / status.value
         tickets.extend(_load_tickets_from_dir(col_path, status))
 
-    return {"name": project_id, "tickets": tickets}
+    return {"name": _display_name(project_id), "tickets": tickets}
 
 
 def _load_agent(type_folder: str, name_folder: str, tickets_path: Path) -> Agent | None:

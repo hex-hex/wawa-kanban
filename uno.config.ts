@@ -39,6 +39,7 @@ export default defineConfig({
     'i-mdi-view-kanban', 'i-mdi-refresh',
     'i-mdi-checkbox-blank-outline', 'i-mdi-progress-clock', 'i-mdi-clock-outline',
     'i-mdi-check-circle-outline', 'i-mdi-check-circle',
+    'hidden',
   ],
   preflights: [
     {

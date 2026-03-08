@@ -1,7 +1,7 @@
 from fasthtml.common import *
 from src.core.hdrs import get_hdrs
 from src.routes.pages import index_page
-from src.routes.api import api_kanban, api_ticket, api_project_select, api_refresh
+from src.routes.api import api_kanban, api_ticket, api_project_select, api_refresh, api_refresh_sse
 
 app, rt = fast_app(hdrs=get_hdrs(), pico=False)
 
@@ -19,6 +19,11 @@ def get():
 @rt("/api/refresh")
 def get():
     return api_refresh()
+
+
+@rt("/api/refresh-sse")
+def get():
+    return api_refresh_sse()
 
 
 @rt("/api/project/select")
