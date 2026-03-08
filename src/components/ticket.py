@@ -1,5 +1,6 @@
 from fasthtml.common import *
 from src.models.kanban import Ticket
+from src.utils.markdown import md_to_safe_html
 
 
 def _ticket_card(ticket: Ticket, editable: bool = False):
@@ -26,7 +27,8 @@ def _ticket_card(ticket: Ticket, editable: bool = False):
             cls="flex justify-between items-center mb-2",
         ),
         Div(
-            ticket["title"], cls="font-semibold text-sm mb-2 line-clamp-2 text-slate-100"
+            md_to_safe_html(ticket["title"]),
+            cls="font-semibold text-sm mb-2 line-clamp-2 text-slate-100 prose prose-invert prose-sm prose-p:my-1 prose-headings:my-1 prose-headings:text-slate-100 max-w-none",
         ),
         cls="bg-slate-700/95 border border-slate-600/80 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-slate-500 cursor-pointer transition-all duration-200",
         hx_get=url,
@@ -72,7 +74,7 @@ def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
                 "Save",
                 type="button",
                 aria_label="Save",
-                cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-red-900 text-red-200 hover:bg-red-800 rounded transition-colors outline-none cursor-pointer",
+                cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-green-900 text-green-200 hover:bg-green-800 rounded transition-colors outline-none cursor-pointer",
                 hx_post=f"/api/ticket/{ticket['id']}/save",
                 hx_swap="none",
             ),
@@ -80,7 +82,7 @@ def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
                 "Give Up",
                 type="button",
                 aria_label="Give Up",
-                cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-green-900 text-green-200 hover:bg-green-800 rounded transition-colors outline-none cursor-pointer",
+                cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-red-900 text-red-200 hover:bg-red-800 rounded transition-colors outline-none cursor-pointer",
                 hx_post=f"/api/ticket/{ticket['id']}/unlock",
                 hx_swap="none",
             ),
@@ -120,8 +122,8 @@ def TicketModal(ticket: Ticket, editable: bool = False):
             ),
             Hr(cls="my-4 border-gray-600"),
             Div(
-                ticket["description"] or "No description",
-                cls="text-gray-300 whitespace-pre-wrap",
+                md_to_safe_html(ticket["description"] or "No description"),
+                cls="text-gray-300 prose prose-invert prose-sm prose-p:text-gray-300 prose-headings:text-gray-100 max-w-none",
             ),
             cls="bg-gray-700 border border-gray-600 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl",
         ),
