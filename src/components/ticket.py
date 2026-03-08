@@ -38,10 +38,10 @@ def TicketModal(ticket: Ticket):
             Div(
                 H2(ticket["title"], cls="text-xl font-bold text-gray-100 flex-1 min-w-0 pr-2"),
                 Button(
-                    "×",
+                    "Close",
                     type="button",
                     aria_label="Close",
-                    cls="shrink-0 w-8 h-8 flex items-center justify-center text-xl font-light text-gray-400 hover:text-gray-100 hover:bg-gray-600 rounded transition-colors outline-none cursor-pointer",
+                    cls="shrink-0 px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-gray-100 hover:bg-gray-600 rounded transition-colors outline-none cursor-pointer",
                     onclick=_modal_close_script(),
                 ),
                 cls="flex items-center justify-between gap-2 mb-4",

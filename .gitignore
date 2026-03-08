@@ -16,3 +16,5 @@ static/uno.css
 node_modules/
 .DS_Store
 .claude/worktrees
+# Playwright browsers (project-local, single version)
+.playwright-browsers/

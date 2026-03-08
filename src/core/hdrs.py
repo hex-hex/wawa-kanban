@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var INTERVAL_MS = 5000;
 
   function doRefresh() {
+    if (document.body && document.body.dataset.noAutoRefresh === '1') return;
     fetch('/api/refresh-sse', { headers: { 'Accept': 'text/event-stream' } })
       .then(function(r) { return r.text(); })
       .then(function(text) {
@@ -23,12 +24,19 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!data) return;
         try {
           var payload = JSON.parse(data);
-          if (payload.html !== undefined) board.innerHTML = payload.html;
+          if (payload.html !== undefined) {
+            board.innerHTML = payload.html;
+            if (typeof htmx !== 'undefined') htmx.process(board);
+          }
         } catch (err) {}
+        if (document.body && document.body.dataset.noAutoRefresh === '1') return;
         refreshTimerId = setTimeout(doRefresh, INTERVAL_MS);
+        if (typeof window !== 'undefined') window.__refreshTimerId = refreshTimerId;
       })
       .catch(function() {
+        if (document.body && document.body.dataset.noAutoRefresh === '1') return;
         refreshTimerId = setTimeout(doRefresh, INTERVAL_MS);
+        if (typeof window !== 'undefined') window.__refreshTimerId = refreshTimerId;
       });
   }
 
@@ -40,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   refreshTimerId = setTimeout(doRefresh, INTERVAL_MS);
+  if (typeof window !== 'undefined') window.__refreshTimerId = refreshTimerId;
 });
 """,
         type="text/javascript",
