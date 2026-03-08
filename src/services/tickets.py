@@ -13,7 +13,7 @@ from src.models.kanban import (
     AgentPosition,
 )
 from src.models.repository import repository
-from src.services.workspace import parse_frontmatter
+from src.services.workspace import parse_frontmatter, serialize_frontmatter_and_body
 
 # Agent type folder (plural) -> AgentPosition
 _TYPE_TO_POSITION: dict[str, AgentPosition] = {
@@ -96,27 +96,40 @@ PROJECT_NAME_PREFIX = "wawa.proj."
 
 
 def _find_ticket_file(ticket_id: str) -> Path | None:
-    """Find the .md or .md.lock file for a ticket by id (from frontmatter)."""
-    if not WORKSPACE_PATH.exists():
-        return None
-    for project_path in sorted(WORKSPACE_PATH.iterdir()):
-        if not project_path.is_dir() or project_path.name.startswith("."):
-            continue
-        for status in COLUMNS:
-            col_path = project_path / status.value
-            if not col_path.exists():
+    """Find the .md or .md.lock file for a ticket by id (from frontmatter). Searches projects and agents."""
+    def check_file(f: Path) -> bool:
+        if "placeholder" in f.name:
+            return False
+        try:
+            content = f.read_text()
+            frontmatter, _ = parse_frontmatter(content)
+            return frontmatter.get("id") == ticket_id
+        except OSError:
+            return False
+
+    if WORKSPACE_PATH.exists():
+        for project_path in sorted(WORKSPACE_PATH.iterdir()):
+            if not project_path.is_dir() or project_path.name.startswith("."):
                 continue
-            for pattern in ["*.md", "*.md.lock"]:
-                for f in sorted(col_path.glob(pattern)):
-                    if "placeholder" in f.name:
-                        continue
-                    try:
-                        content = f.read_text()
-                        frontmatter, _ = parse_frontmatter(content)
-                        if frontmatter.get("id") == ticket_id:
+            for status in COLUMNS:
+                col_path = project_path / status.value
+                if not col_path.exists():
+                    continue
+                for pattern in ["*.md", "*.md.lock"]:
+                    for f in sorted(col_path.glob(pattern)):
+                        if check_file(f):
                             return f
-                    except OSError:
-                        continue
+    if AGENTS_WORKSPACE_PATH.exists():
+        for type_folder in sorted(AGENTS_WORKSPACE_PATH.iterdir()):
+            if not type_folder.is_dir() or type_folder.name.startswith("."):
+                continue
+            for name_path in sorted(type_folder.iterdir()):
+                if not name_path.is_dir():
+                    continue
+                for pattern in ["*.md", "*.md.lock"]:
+                    for f in sorted(name_path.glob(pattern)):
+                        if check_file(f):
+                            return f
     return None
 
 
@@ -147,6 +160,21 @@ def unlock_ticket(ticket_id: str) -> bool:
     md_path = path.with_suffix("")  # removes .lock, leaves .md
     try:
         path.rename(md_path)
+        return True
+    except OSError:
+        return False
+
+
+def save_ticket_body(ticket_id: str, body: str) -> bool:
+    """Write new body to the ticket file. File must be .md.lock (locked). Returns True if successful."""
+    path = _find_ticket_file(ticket_id)
+    if path is None or not path.name.endswith(".md.lock"):
+        return False
+    try:
+        content = path.read_text()
+        frontmatter, _ = parse_frontmatter(content)
+        new_content = serialize_frontmatter_and_body(frontmatter, body)
+        path.write_text(new_content)
         return True
     except OSError:
         return False

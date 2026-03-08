@@ -47,13 +47,13 @@ def post(ticket_id: str):
 
 
 @rt("/api/ticket/{ticket_id}/save")
-def post(ticket_id: str):
-    return api_ticket_save(ticket_id)
+def post(ticket_id: str, description: str = ""):
+    return api_ticket_save(ticket_id, description)
 
 
 @rt("/api/ticket/{ticket_id}/draft")
-def post(ticket_id: str):
-    return api_ticket_draft(ticket_id)
+def post(ticket_id: str, description: str = ""):
+    return api_ticket_draft(ticket_id, description)
 
 
 if __name__ == "__main__":

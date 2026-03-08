@@ -83,6 +83,7 @@ def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
                 aria_label="Save Draft",
                 cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-amber-700 text-amber-50 hover:bg-amber-600 rounded transition-colors outline-none cursor-pointer",
                 hx_post=f"/api/ticket/{ticket['id']}/draft",
+                hx_include="#ticket-edit-form",
                 hx_swap="none",
             ),
             Button(
