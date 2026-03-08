@@ -11,7 +11,7 @@ def KanbanBoard(tickets: List[Ticket]):
     return Div(
         Div(
             *columns,
-            cls="flex flex-col md:flex-row md:flex-nowrap gap-4 pb-4 w-full md:min-w-[calc(5*13rem+4*1rem)]",
+            cls="flex flex-col md:flex-row md:flex-nowrap gap-4 pb-4 w-full min-w-0 md:min-w-[calc(5*13rem+4*1rem)]",
         ),
-        cls="overflow-x-auto w-full max-w-full",
+        cls="overflow-x-auto w-full max-w-full min-w-0",
     )

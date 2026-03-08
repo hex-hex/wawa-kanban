@@ -76,8 +76,9 @@ export default defineConfig({
         :root { --un-bg: #ffffff; --un-bg-reverse: #1a1a1a; }
         html, body {
           margin: 0 !important; padding: 0 !important;
-          width: 100% !important; min-width: 100vw !important;
+          width: 100% !important; max-width: 100% !important;
           box-sizing: border-box;
+          overflow-x: hidden;
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
         }
         button {
@@ -98,14 +99,14 @@ export default defineConfig({
         }
         main.container h1 { margin: 0 !important; padding: 0 !important; }
         #wawa-app {
-          width: 100%; min-width: 100vw; max-width: 100%;
+          width: 100%; max-width: 100%; min-width: 0;
           margin: 0; padding: 0; box-sizing: border-box; overflow-x: hidden;
         }
-        #main-content, #kanban-board {
-          width: 100%; max-width: 100%;
-          margin-left: 0 !important; margin-right: 0 !important;
-          padding-left: 0 !important; padding-right: 0 !important;
-          box-sizing: border-box;
+        #main-content {
+          width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
+        }
+        #kanban-board {
+          width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
         }
         /* EasyMDE / CodeMirror dark theme inside modal */
         .modal-overlay .CodeMirror { background: #1f2937 !important; color: #e5e7eb !important; border-color: #4b5563; }
