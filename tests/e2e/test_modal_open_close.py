@@ -342,3 +342,100 @@ async def test_easymde_editing_area_has_dark_mode(app_server):
             )
         finally:
             await browser.close()
+
+
+@pytest.mark.asyncio
+async def test_save_draft_writes_to_file_then_restore(app_server):
+    """Save Draft: edit in EasyMDE, click Save Draft, verify file content changed, then restore original."""
+    from src.services.tickets import _find_ticket_file, lock_ticket, unlock_ticket
+    from src.services.workspace import parse_frontmatter, serialize_frontmatter_and_body
+
+    _ensure_playwright_chromium()
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(_PLAYWRIGHT_BROWSERS_PATH)
+
+    # Find a Todos ticket file (any editable ticket)
+    transport = httpx.ASGITransport(app=__import__("app", fromlist=["app"]).app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        r = await client.get("/")
+    assert r.status_code == 200
+    match = re.search(r"hx-get=['\"]/?api/ticket/([^'\"\s?]+)", r.text)
+    assert match, "Page must have at least one ticket card"
+    ticket_id = match.group(1).strip("/")
+    path = _find_ticket_file(ticket_id)
+    assert path, f"Cannot find file for ticket {ticket_id}"
+    if not path.name.endswith(".md.lock"):
+        lock_ticket(ticket_id)
+        path = _find_ticket_file(ticket_id)
+    assert path and path.name.endswith(".md.lock"), f"Ticket {ticket_id} must be locked for this test"
+
+    # Cache original content
+    original_content = path.read_text()
+    frontmatter, _ = parse_frontmatter(original_content)
+    test_body = "E2E_SAVE_DRAFT_TEST_content_xyz_123"
+
+    from playwright.async_api import async_playwright
+
+    base_url = app_server
+    try:
+        async with async_playwright() as p:
+            try:
+                browser = await p.chromium.launch(headless=True)
+            except Exception as e:
+                if "Executable doesn't exist" in str(e) or "playwright install" in str(e):
+                    pytest.skip("Chromium not available")
+                raise
+            try:
+                page = await browser.new_page()
+                await page.goto(base_url + "/", wait_until="networkidle", timeout=20000)
+                await page.wait_for_timeout(2500)
+                await page.evaluate("""() => {
+                  document.body.dataset.noAutoRefresh = '1';
+                  if (window.__refreshTimerId) clearTimeout(window.__refreshTimerId);
+                  window.__refreshTimerId = null;
+                }""")
+
+                todos_card = page.locator(f'[hx-get*="/api/ticket/{ticket_id}"]').first
+                await todos_card.wait_for(state="visible", timeout=10000)
+                await todos_card.click(force=True)
+                await page.wait_for_selector("#ticket-modal .modal-overlay", state="attached", timeout=10000)
+                await page.wait_for_timeout(500)
+
+                lock_btn = page.locator("#ticket-modal button").filter(has_text=re.compile(r"Lock\s*&\s*Edit"))
+                if await lock_btn.count() > 0:
+                    await lock_btn.first.click()
+                    await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=10000)
+                else:
+                    await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=2000)
+                await page.wait_for_selector(".modal-overlay .CodeMirror", state="attached", timeout=10000)
+
+                # Set new content via EasyMDE API
+                await page.evaluate(
+                    f"""() => {{
+                  if (window.__ticketEasyMDE) window.__ticketEasyMDE.value({repr(test_body)});
+                }}"""
+                )
+
+                # Click Save Draft
+                save_draft_btn = page.get_by_role("button", name="Save Draft")
+                await save_draft_btn.click()
+
+                # Wait for modal to close (HX-Trigger refreshBoard + closeModal)
+                await page.wait_for_selector("#ticket-modal .modal-overlay", state="detached", timeout=10000)
+                await page.wait_for_timeout(500)
+
+                # Verify file content changed
+                path = _find_ticket_file(ticket_id)
+                assert path, "File should still exist after Save Draft"
+                new_content = path.read_text()
+                _, new_body = parse_frontmatter(new_content)
+                assert test_body in new_body, (
+                    f"File content should contain {test_body} after Save Draft. Got body: {new_body[:200]}"
+                )
+            finally:
+                await browser.close()
+    finally:
+        # Restore original content
+        path = _find_ticket_file(ticket_id)
+        if path and path.exists():
+            path.write_text(original_content)
+        unlock_ticket(ticket_id)

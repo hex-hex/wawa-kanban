@@ -82,6 +82,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
   document.addEventListener('refreshBoard', onRefreshBoard);
 
+  function syncEasyMDEToTextarea() {
+    if (window.__ticketEasyMDE) {
+      var ta = document.getElementById('ticket-description-editor');
+      if (ta) ta.value = window.__ticketEasyMDE.value();
+    }
+  }
+
+  /* Sync EasyMDE to textarea BEFORE HTMX collects form data. Use capturing phase so we run first. */
+  document.addEventListener('click', function(ev) {
+    var btn = ev.target && ev.target.closest && ev.target.closest(
+      'button[aria-label="Save Draft"], button[aria-label="Confirm"], button[form="ticket-edit-form"]'
+    );
+    if (btn) syncEasyMDEToTextarea();
+  }, true);
+
+  document.addEventListener('htmx:beforeRequest', function(ev) {
+    var path = (ev.detail && ev.detail.pathInfo && ev.detail.pathInfo.requestPath) || '';
+    if (path.indexOf('/draft') >= 0 || path.indexOf('/save') >= 0) syncEasyMDEToTextarea();
+  });
+
   document.addEventListener('htmx:beforeSwap', function(ev) {
     if (ev.detail && ev.detail.target && ev.detail.target.id === 'ticket-modal') {
       if (window.__ticketEasyMDE) {
