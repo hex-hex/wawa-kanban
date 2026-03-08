@@ -1,6 +1,6 @@
 import json
 from fasthtml.common import *
-from src.services.tickets import refresh, lock_ticket, unlock_ticket
+from src.services.tickets import refresh, lock_ticket, unlock_ticket, save_ticket_body
 from src.models.repository import repository
 from src.components.board import KanbanBoard
 from src.components.ticket import TicketModal
@@ -72,6 +72,23 @@ def api_ticket_unlock(ticket_id: str):
     )
 
 
-def api_ticket_save(ticket_id: str):
-    """Save ticket content (placeholder; edit form to be wired later)."""
-    return Response(status_code=200, content="")
+def _ticket_save_response(close_modal: bool = True):
+    """HX-Trigger to refresh board and optionally close modal."""
+    payload = json.dumps({"refreshBoard": {"closeModal": close_modal}})
+    return Response(status_code=200, content="", headers={"HX-Trigger": payload})
+
+
+def api_ticket_save(ticket_id: str, description: str = ""):
+    """Confirm: save editor content to .lock file, rename to .md (unlock), dismiss modal."""
+    if not save_ticket_body(ticket_id, description):
+        return Response(status_code=404, content="Ticket not found or not locked")
+    if not unlock_ticket(ticket_id):
+        return Response(status_code=500, content="Failed to unlock")
+    return _ticket_save_response(close_modal=True)
+
+
+def api_ticket_draft(ticket_id: str, description: str = ""):
+    """Save Draft: save editor content to .lock file, dismiss modal (stay locked)."""
+    if not save_ticket_body(ticket_id, description):
+        return Response(status_code=404, content="Ticket not found or not locked")
+    return _ticket_save_response(close_modal=True)

@@ -49,9 +49,13 @@ npm run dev:css
 
 ## Kanban Board
 
+### Workspace
+- Default: `fixtures/workspace` (projects + agents). All tests and dev use this by default.
+- Override via env: `WAWA_WORKSPACE_PATH=/path/to/your/workspace` (must contain `projects/` and `agents/` subdirs).
+
 ### Workspace Structure
 ```
-workspace/projects/wawa_proj_default/
+fixtures/workspace/projects/wawa_proj_default/   # or $WAWA_WORKSPACE_PATH/projects/
 ├── project.md
 ├── backlog/        # Tickets waiting to be picked up
 ├── implementing/   # Tickets currently being worked on

@@ -88,14 +88,14 @@ async def test_todos_column_editable_modal_and_other_columns_plain_modal():
     assert "Close" in body
     assert "Lock & Edit" not in body
 
-    # With editable=1: modal has Close and either (Lock & Edit) or (Save + Give Up) when locked
+    # With editable=1: modal has Close and either (Lock & Edit) or (Confirm + Give Up) when locked
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         r = await client.get(f"/api/ticket/{ticket_id}", params={"editable": "1"})
     assert r.status_code == 200
     body = r.text
     assert "modal-overlay" in body
     assert "Close" in body
-    assert ("Lock & Edit" in body or "Lock &amp; Edit" in body) or ("Save" in body and "Give Up" in body)
+    assert ("Lock & Edit" in body or "Lock &amp; Edit" in body) or ("Confirm" in body and "Give Up" in body)
 
 
 async def test_edit_mode_lock_api():
@@ -212,3 +212,230 @@ async def test_modal_opens_and_closes_20_times_in_browser(app_server):
                 await page.wait_for_selector("#ticket-modal .modal-overlay", state="detached", timeout=5000)
         finally:
             await browser.close()
+
+
+@pytest.mark.asyncio
+async def test_locked_modal_shows_easymde_editor_not_plain_textarea(app_server):
+    """When a locked ticket modal is open (editable mode), EasyMDE must be visible, not just a plain textarea.
+    Fails if the markdown editor does not load and only the raw textarea is shown."""
+    _ensure_playwright_chromium()
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(_PLAYWRIGHT_BROWSERS_PATH)
+
+    from playwright.async_api import async_playwright
+
+    base_url = app_server
+
+    async with async_playwright() as p:
+        try:
+            browser = await p.chromium.launch(headless=True)
+        except Exception as e:
+            if "Executable doesn't exist" in str(e) or "playwright install" in str(e):
+                pytest.skip(
+                    "Chromium not available. Try: uv sync --extra test && uv run playwright install chromium"
+                )
+            raise
+        try:
+            page = await browser.new_page()
+            await page.goto(base_url + "/", wait_until="networkidle", timeout=20000)
+            await page.wait_for_timeout(2500)
+            # Do NOT set noAutoRefresh - run with real SSE flow to catch double-editor race
+
+            # Open modal from a Todos card (editable=1)
+            todos_card = page.locator("[hx-get*='editable=1']").first
+            await todos_card.wait_for(state="visible", timeout=10000)
+            await todos_card.click(force=True)
+            await page.wait_for_selector("#ticket-modal .modal-overlay", state="attached", timeout=10000)
+            await page.wait_for_timeout(500)
+
+            # If not already locked, click Lock & Edit so modal is re-fetched with textarea and EasyMDE can init
+            lock_btn = page.locator("#ticket-modal button").filter(has_text=re.compile(r"Lock\s*&\s*Edit"))
+            if await lock_btn.count() > 0:
+                await lock_btn.first.click()
+                await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=10000)
+            else:
+                # Already locked (Save/Draft/Give Up visible); overlay should have data-locked="1"
+                await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=2000)
+
+            # EasyMDE creates .CodeMirror and .editor-toolbar; wait for editor to appear (retry loop in app is 50ms x 20)
+            try:
+                await page.wait_for_selector(".modal-overlay .CodeMirror", state="attached", timeout=10000)
+            except Exception as e:
+                html_path = _PROJECT_ROOT / "tests" / "e2e" / "failure_easymde.html"
+                html_path.write_text(await page.content(), encoding="utf-8")
+                await page.screenshot(path=str(_PROJECT_ROOT / "tests" / "e2e" / "failure_easymde.png"))
+                raise AssertionError(
+                    "EasyMDE editor (.CodeMirror) did not appear in locked modal; only plain textarea may be visible. "
+                    f"Page saved to {html_path}"
+                ) from e
+
+            # Also ensure toolbar is present (EasyMDE UI, not just any CodeMirror)
+            toolbar = page.locator(".modal-overlay .editor-toolbar")
+            assert await toolbar.count() >= 1, "EasyMDE toolbar (.editor-toolbar) should be visible in locked modal"
+
+            # Exactly one editor: no vertical stack of two editors
+            codemirror_count = await page.locator(".modal-overlay .CodeMirror").count()
+            assert codemirror_count == 1, (
+                f"Expected exactly one EasyMDE/CodeMirror in the modal, got {codemirror_count}. "
+                "Fix duplicate editor init (e.g. guard in initEasyMDEIfNeeded or single __scheduleEasyMDEInit)."
+            )
+            toolbar_count = await page.locator(".modal-overlay .editor-toolbar").count()
+            assert toolbar_count == 1, (
+                f"Expected exactly one editor toolbar in the modal, got {toolbar_count}."
+            )
+        finally:
+            await browser.close()
+
+
+@pytest.mark.asyncio
+async def test_easymde_editing_area_has_dark_mode(app_server):
+    """When EasyMDE is shown in the modal, the editing area (CodeMirror) must use dark theme, not white background."""
+    _ensure_playwright_chromium()
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(_PLAYWRIGHT_BROWSERS_PATH)
+
+    from playwright.async_api import async_playwright
+
+    base_url = app_server
+
+    async with async_playwright() as p:
+        try:
+            browser = await p.chromium.launch(headless=True)
+        except Exception as e:
+            if "Executable doesn't exist" in str(e) or "playwright install" in str(e):
+                pytest.skip(
+                    "Chromium not available. Try: uv sync --extra test && uv run playwright install chromium"
+                )
+            raise
+        try:
+            page = await browser.new_page()
+            await page.goto(base_url + "/", wait_until="networkidle", timeout=20000)
+            await page.wait_for_timeout(2500)
+            # Do NOT set noAutoRefresh - run with real SSE flow
+
+            todos_card = page.locator("[hx-get*='editable=1']").first
+            await todos_card.wait_for(state="visible", timeout=10000)
+            await todos_card.click(force=True)
+            await page.wait_for_selector("#ticket-modal .modal-overlay", state="attached", timeout=10000)
+            await page.wait_for_timeout(500)
+
+            lock_btn = page.locator("#ticket-modal button").filter(has_text=re.compile(r"Lock\s*&\s*Edit"))
+            if await lock_btn.count() > 0:
+                await lock_btn.first.click()
+                await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=10000)
+            else:
+                await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=2000)
+            await page.wait_for_selector(".modal-overlay .CodeMirror", state="attached", timeout=10000)
+
+            # Check CodeMirror has dark background (preflight uses #1f2937 = rgb(31, 41, 55))
+            codemirror = page.locator(".modal-overlay .CodeMirror").first
+            bg = await codemirror.evaluate("""el => {
+              const s = window.getComputedStyle(el);
+              return s.backgroundColor;
+            }""")
+            # Require dark background (preflight uses rgb(31, 41, 55))
+            assert bg, "CodeMirror should have a background color"
+            m = re.search(r"rgb[a]?\((\d+),\s*(\d+),\s*(\d+)", bg)
+            assert m, f"Could not parse background color: {bg}"
+            r, g, b = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            assert max(r, g, b) <= 80, (
+                f"CodeMirror should have dark background (max RGB <= 80), got rgb({r},{g},{b}). "
+                "Dark mode for EasyMDE is not applied."
+            )
+        finally:
+            await browser.close()
+
+
+@pytest.mark.asyncio
+async def test_save_draft_writes_to_file_then_restore(app_server):
+    """Save Draft: edit in EasyMDE, click Save Draft, verify file content changed, then restore original."""
+    from src.services.tickets import _find_ticket_file, lock_ticket, unlock_ticket
+    from src.services.workspace import parse_frontmatter, serialize_frontmatter_and_body
+
+    _ensure_playwright_chromium()
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(_PLAYWRIGHT_BROWSERS_PATH)
+
+    # Find a Todos ticket file (any editable ticket)
+    transport = httpx.ASGITransport(app=__import__("app", fromlist=["app"]).app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        r = await client.get("/")
+    assert r.status_code == 200
+    match = re.search(r"hx-get=['\"]/?api/ticket/([^'\"\s?]+)", r.text)
+    assert match, "Page must have at least one ticket card"
+    ticket_id = match.group(1).strip("/")
+    path = _find_ticket_file(ticket_id)
+    assert path, f"Cannot find file for ticket {ticket_id}"
+    if not path.name.endswith(".md.lock"):
+        lock_ticket(ticket_id)
+        path = _find_ticket_file(ticket_id)
+    assert path and path.name.endswith(".md.lock"), f"Ticket {ticket_id} must be locked for this test"
+
+    # Cache original content
+    original_content = path.read_text()
+    frontmatter, _ = parse_frontmatter(original_content)
+    test_body = "E2E_SAVE_DRAFT_TEST_content_xyz_123"
+
+    from playwright.async_api import async_playwright
+
+    base_url = app_server
+    try:
+        async with async_playwright() as p:
+            try:
+                browser = await p.chromium.launch(headless=True)
+            except Exception as e:
+                if "Executable doesn't exist" in str(e) or "playwright install" in str(e):
+                    pytest.skip("Chromium not available")
+                raise
+            try:
+                page = await browser.new_page()
+                await page.goto(base_url + "/", wait_until="networkidle", timeout=20000)
+                await page.wait_for_timeout(2500)
+                await page.evaluate("""() => {
+                  document.body.dataset.noAutoRefresh = '1';
+                  if (window.__refreshTimerId) clearTimeout(window.__refreshTimerId);
+                  window.__refreshTimerId = null;
+                }""")
+
+                todos_card = page.locator(f'[hx-get*="/api/ticket/{ticket_id}"]').first
+                await todos_card.wait_for(state="visible", timeout=10000)
+                await todos_card.click(force=True)
+                await page.wait_for_selector("#ticket-modal .modal-overlay", state="attached", timeout=10000)
+                await page.wait_for_timeout(500)
+
+                lock_btn = page.locator("#ticket-modal button").filter(has_text=re.compile(r"Lock\s*&\s*Edit"))
+                if await lock_btn.count() > 0:
+                    await lock_btn.first.click()
+                    await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=10000)
+                else:
+                    await page.wait_for_selector("#ticket-modal .modal-overlay[data-locked='1']", state="attached", timeout=2000)
+                await page.wait_for_selector(".modal-overlay .CodeMirror", state="attached", timeout=10000)
+
+                # Set new content via EasyMDE API
+                await page.evaluate(
+                    f"""() => {{
+                  if (window.__ticketEasyMDE) window.__ticketEasyMDE.value({repr(test_body)});
+                }}"""
+                )
+
+                # Click Save Draft
+                save_draft_btn = page.get_by_role("button", name="Save Draft")
+                await save_draft_btn.click()
+
+                # Wait for modal to close (HX-Trigger refreshBoard + closeModal)
+                await page.wait_for_selector("#ticket-modal .modal-overlay", state="detached", timeout=10000)
+                await page.wait_for_timeout(500)
+
+                # Verify file content changed
+                path = _find_ticket_file(ticket_id)
+                assert path, "File should still exist after Save Draft"
+                new_content = path.read_text()
+                _, new_body = parse_frontmatter(new_content)
+                assert test_body in new_body, (
+                    f"File content should contain {test_body} after Save Draft. Got body: {new_body[:200]}"
+                )
+            finally:
+                await browser.close()
+    finally:
+        # Restore original content
+        path = _find_ticket_file(ticket_id)
+        if path and path.exists():
+            path.write_text(original_content)
+        unlock_ticket(ticket_id)

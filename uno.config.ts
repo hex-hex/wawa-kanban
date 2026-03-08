@@ -38,10 +38,14 @@ export default defineConfig({
     'bg-violet-500/20', 'border-violet-500', 'text-violet-400', 'bg-violet-500/50',
     'bg-emerald-500/20', 'border-emerald-500', 'text-emerald-400', 'bg-emerald-500/50',
     'bg-amber-600', 'bg-amber-500', 'text-amber-50',
-    'bg-amber-800', 'text-amber-200',
-    'bg-emerald-600', 'bg-emerald-500', 'text-white',
+    'bg-amber-800', 'text-amber-200', 'bg-amber-900', 'hover:bg-amber-800', 'text-stone-300',
+    'bg-amber-700', 'text-amber-50', 'hover:bg-amber-600',
+    'bg-orange-900', 'hover:bg-orange-800',
+    'bg-emerald-600', 'bg-emerald-500', 'bg-emerald-700', 'text-emerald-50', 'hover:bg-emerald-600',
+    'text-white',
     'active:bg-amber-600', 'active:bg-amber-500',
     'bg-red-900', 'text-red-200', 'hover:bg-red-800',
+    'bg-red-800', 'text-red-100', 'hover:bg-red-700',
     'bg-green-900', 'text-green-200', 'hover:bg-green-800',
     // Icons: ensure they compile (extractor may miss; Python uses cls)
     'i-mdi-view-kanban', 'i-mdi-refresh',
@@ -53,7 +57,8 @@ export default defineConfig({
     'bg-slate-700/95', 'border-slate-600/80', 'hover:border-slate-500', 'text-slate-100', 'text-slate-500', 'text-slate-300',
     // Markdown prose (typography preset)
     'prose', 'prose-invert', 'prose-sm', 'prose-p:text-gray-300', 'prose-headings:text-gray-100',
-    'bg-slate-600/70', 'bg-slate-600', 'hover:bg-slate-500', 'text-slate-200',
+    'bg-slate-600/70', 'bg-slate-600', 'bg-slate-600/90', 'hover:bg-slate-500', 'text-slate-200',
+    'text-blue-300', 'border-blue-500/40',
   ],
   preflights: [
     {
@@ -102,6 +107,16 @@ export default defineConfig({
           padding-left: 0 !important; padding-right: 0 !important;
           box-sizing: border-box;
         }
+        /* EasyMDE / CodeMirror dark theme inside modal */
+        .modal-overlay .CodeMirror { background: #1f2937 !important; color: #e5e7eb !important; border-color: #4b5563; }
+        .modal-overlay .CodeMirror-gutters { background: #111827 !important; border-color: #4b5563 !important; }
+        .modal-overlay .CodeMirror-cursor { border-left-color: #e5e7eb !important; }
+        .modal-overlay .CodeMirror-linenumber { color: #6b7280 !important; }
+        .modal-overlay .CodeMirror-selected { background: #374151 !important; }
+        .modal-overlay .editor-toolbar { background: #374151 !important; border-color: #4b5563 !important; }
+        .modal-overlay .editor-toolbar button { color: #d1d5db !important; }
+        .modal-overlay .editor-toolbar button:hover { background: #4b5563 !important; color: #fff !important; }
+        .modal-overlay .editor-preview, .modal-overlay .editor-preview-side { background: #1f2937 !important; color: #e5e7eb !important; }
       `,
     },
   ],

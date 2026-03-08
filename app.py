@@ -1,7 +1,7 @@
 from fasthtml.common import *
 from src.core.hdrs import get_hdrs
 from src.routes.pages import index_page
-from src.routes.api import api_kanban, api_ticket, api_ticket_lock, api_ticket_unlock, api_ticket_save, api_project_select, api_refresh, api_refresh_sse
+from src.routes.api import api_kanban, api_ticket, api_ticket_lock, api_ticket_unlock, api_ticket_save, api_ticket_draft, api_project_select, api_refresh, api_refresh_sse
 
 app, rt = fast_app(hdrs=get_hdrs(), pico=False)
 
@@ -47,8 +47,13 @@ def post(ticket_id: str):
 
 
 @rt("/api/ticket/{ticket_id}/save")
-def post(ticket_id: str):
-    return api_ticket_save(ticket_id)
+def post(ticket_id: str, description: str = ""):
+    return api_ticket_save(ticket_id, description)
+
+
+@rt("/api/ticket/{ticket_id}/draft")
+def post(ticket_id: str, description: str = ""):
+    return api_ticket_draft(ticket_id, description)
 
 
 if __name__ == "__main__":

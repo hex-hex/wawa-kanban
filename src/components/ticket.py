@@ -1,5 +1,6 @@
 from fasthtml.common import *
 from src.models.kanban import Ticket
+from src.components.common import CardCloseButton, CardBodyScroll
 from src.utils.markdown import md_to_safe_html
 
 
@@ -11,7 +12,10 @@ def _ticket_card(ticket: Ticket, editable: bool = False):
         cls="text-xs px-2 py-0.5 rounded bg-slate-600/70 text-slate-300",
     )
     editing_badge = (
-        Span("EDITING", cls="text-xs px-2 py-0.5 rounded bg-amber-800 text-gray-300")
+        Span(
+            "EDITING",
+            cls="text-xs px-2 py-0.5 rounded bg-slate-600/90 text-blue-300 border border-blue-500/40",
+        )
         if (editable and locked)
         else None
     )
@@ -58,31 +62,35 @@ def _modal_close_script():
 
 
 def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
-    close_btn = Button(
-        "Close",
-        type="button",
-        aria_label="Close",
-        cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-gray-700 text-gray-300 hover:text-gray-100 hover:bg-gray-600 rounded transition-colors outline-none cursor-pointer",
-        onclick=_modal_close_script(),
-    )
+    close_btn = CardCloseButton(onclick=_modal_close_script())
     if not editable or not ticket:
         return close_btn
     locked = ticket.get("locked", False)
     if locked:
         return (
             Button(
-                "Save",
-                type="button",
-                aria_label="Save",
-                cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-green-900 text-green-200 hover:bg-green-800 rounded transition-colors outline-none cursor-pointer",
+                "Confirm",
+                type="submit",
+                form="ticket-edit-form",
+                aria_label="Confirm",
+                cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-emerald-700 text-emerald-50 hover:bg-emerald-600 rounded transition-colors outline-none cursor-pointer",
                 hx_post=f"/api/ticket/{ticket['id']}/save",
+                hx_swap="none",
+            ),
+            Button(
+                "Save Draft",
+                type="button",
+                aria_label="Save Draft",
+                cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-amber-700 text-amber-50 hover:bg-amber-600 rounded transition-colors outline-none cursor-pointer",
+                hx_post=f"/api/ticket/{ticket['id']}/draft",
+                hx_include="#ticket-edit-form",
                 hx_swap="none",
             ),
             Button(
                 "Give Up",
                 type="button",
                 aria_label="Give Up",
-                cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-red-900 text-red-200 hover:bg-red-800 rounded transition-colors outline-none cursor-pointer",
+                cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-red-800 text-red-100 hover:bg-red-700 rounded transition-colors outline-none cursor-pointer",
                 hx_post=f"/api/ticket/{ticket['id']}/unlock",
                 hx_swap="none",
             ),
@@ -101,10 +109,36 @@ def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
     )
 
 
+def _modal_body(ticket: Ticket, locked: bool):
+    """When locked: form with textarea for EasyMDE. Otherwise: read-only markdown."""
+    raw_description = ticket.get("description") or ""
+    if locked:
+        return Form(
+            CardBodyScroll(
+                Textarea(
+                    raw_description,
+                    id="ticket-description-editor",
+                    name="description",
+                    cls="w-full min-h-[200px] p-3 text-gray-100 bg-gray-800 border border-gray-600 rounded font-mono text-sm resize-y",
+                ),
+            ),
+            id="ticket-edit-form",
+            hx_post=f"/api/ticket/{ticket['id']}/save",
+            hx_swap="none",
+        )
+    return CardBodyScroll(
+        Div(
+            md_to_safe_html(raw_description or "No description"),
+            cls="text-gray-300 prose prose-invert prose-sm prose-p:text-gray-300 prose-headings:text-gray-100 max-w-none",
+        ),
+    )
+
+
 def TicketModal(ticket: Ticket, editable: bool = False):
     header_buttons = _modal_header_buttons(editable, ticket)
     if not isinstance(header_buttons, tuple):
         header_buttons = (header_buttons,)
+    locked = ticket.get("locked", False)
     return Div(
         Div(
             Div(
@@ -121,13 +155,11 @@ def TicketModal(ticket: Ticket, editable: bool = False):
                 cls="flex items-center gap-2 mb-4",
             ),
             Hr(cls="my-4 border-gray-600"),
-            Div(
-                md_to_safe_html(ticket["description"] or "No description"),
-                cls="text-gray-300 prose prose-invert prose-sm prose-p:text-gray-300 prose-headings:text-gray-100 max-w-none",
-            ),
-            cls="bg-gray-700 border border-gray-600 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl",
+            _modal_body(ticket, locked),
+            cls="bg-gray-700 border border-gray-600 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] flex flex-col shadow-2xl",
         ),
         cls="modal-overlay bg-black/75 fixed inset-0 flex items-center justify-center z-50 modal-animate-in",
         data_ticket_id=ticket["id"],
         data_editable="1" if editable else "0",
+        data_locked="1" if locked else "0",
     )

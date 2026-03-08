@@ -8,5 +8,5 @@ def md_to_safe_html(text: str | None) -> Safe:
     """Convert markdown text to HTML, wrapped in Safe for unescaped rendering."""
     if not text or not text.strip():
         return Safe("")
-    html = markdown.markdown(text, extensions=["nl2br"])
+    html = markdown.markdown(text, extensions=["nl2br", "tables"])
     return Safe(html)
