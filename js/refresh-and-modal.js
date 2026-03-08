@@ -112,14 +112,27 @@ document.addEventListener('DOMContentLoaded', function() {
     return true;
   }
 
+  var __easyMDEInitTimeoutId = null;
+
   function tryInitEasyMDE(attempt) {
     if (initEasyMDEIfNeeded()) return;
     if (typeof attempt === 'undefined') attempt = 0;
-    if (attempt < 30) setTimeout(function() { tryInitEasyMDE(attempt + 1); }, 50);
+    if (attempt < 30) {
+      __easyMDEInitTimeoutId = setTimeout(function() { tryInitEasyMDE(attempt + 1); }, 50);
+    } else {
+      __easyMDEInitTimeoutId = null;
+    }
   }
 
   window.__scheduleEasyMDEInit = function() {
-    setTimeout(function() { tryInitEasyMDE(0); }, 0);
+    if (__easyMDEInitTimeoutId) {
+      clearTimeout(__easyMDEInitTimeoutId);
+      __easyMDEInitTimeoutId = null;
+    }
+    __easyMDEInitTimeoutId = setTimeout(function() {
+      __easyMDEInitTimeoutId = null;
+      tryInitEasyMDE(0);
+    }, 0);
   };
 
   document.addEventListener('htmx:afterSwap', function(ev) {

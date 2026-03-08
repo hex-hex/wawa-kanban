@@ -238,11 +238,7 @@ async def test_locked_modal_shows_easymde_editor_not_plain_textarea(app_server):
             page = await browser.new_page()
             await page.goto(base_url + "/", wait_until="networkidle", timeout=20000)
             await page.wait_for_timeout(2500)
-            await page.evaluate("""() => {
-              document.body.dataset.noAutoRefresh = '1';
-              if (window.__refreshTimerId) clearTimeout(window.__refreshTimerId);
-              window.__refreshTimerId = null;
-            }""")
+            # Do NOT set noAutoRefresh - run with real SSE flow to catch double-editor race
 
             # Open modal from a Todos card (editable=1)
             todos_card = page.locator("[hx-get*='editable=1']").first
@@ -313,11 +309,7 @@ async def test_easymde_editing_area_has_dark_mode(app_server):
             page = await browser.new_page()
             await page.goto(base_url + "/", wait_until="networkidle", timeout=20000)
             await page.wait_for_timeout(2500)
-            await page.evaluate("""() => {
-              document.body.dataset.noAutoRefresh = '1';
-              if (window.__refreshTimerId) clearTimeout(window.__refreshTimerId);
-              window.__refreshTimerId = null;
-            }""")
+            # Do NOT set noAutoRefresh - run with real SSE flow
 
             todos_card = page.locator("[hx-get*='editable=1']").first
             await todos_card.wait_for(state="visible", timeout=10000)
