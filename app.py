@@ -32,8 +32,8 @@ def get(project: str):
 
 
 @rt("/api/ticket/{ticket_id}")
-def get(ticket_id: str):
-    return api_ticket(ticket_id)
+def get(ticket_id: str, editable: str = ""):
+    return api_ticket(ticket_id, editable)
 
 
 if __name__ == "__main__":

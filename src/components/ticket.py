@@ -2,7 +2,8 @@ from fasthtml.common import *
 from src.models.kanban import Ticket
 
 
-def TicketCard(ticket: Ticket):
+def _ticket_card(ticket: Ticket, editable: bool = False):
+    url = f"/api/ticket/{ticket['id']}?editable=1" if editable else f"/api/ticket/{ticket['id']}"
     return Div(
         Div(
             Span(ticket["id"], cls="text-xs font-mono text-gray-500"),
@@ -16,10 +17,19 @@ def TicketCard(ticket: Ticket):
             ticket["title"], cls="font-semibold text-sm mb-2 line-clamp-2 text-gray-100"
         ),
         cls="bg-gray-700/90 border border-gray-600 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-gray-500 cursor-pointer transition-all duration-200",
-        hx_get=f"/api/ticket/{ticket['id']}",
+        hx_get=url,
         hx_target="#ticket-modal",
         hx_swap="innerHTML",
     )
+
+
+def TicketCard(ticket: Ticket):
+    return _ticket_card(ticket, editable=False)
+
+
+def EditableTicketCard(ticket: Ticket):
+    """Same as TicketCard but requests modal with Edit Mode button."""
+    return _ticket_card(ticket, editable=True)
 
 
 def _modal_close_script():
@@ -32,18 +42,36 @@ def _modal_close_script():
     )
 
 
-def TicketModal(ticket: Ticket):
+def _modal_header_buttons(editable: bool):
+    close_btn = Button(
+        "Close",
+        type="button",
+        aria_label="Close",
+        cls="shrink-0 px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-gray-100 hover:bg-gray-600 rounded transition-colors outline-none cursor-pointer",
+        onclick=_modal_close_script(),
+    )
+    if not editable:
+        return close_btn
+    return (
+        Button(
+            "Edit Mode",
+            type="button",
+            aria_label="Edit Mode",
+            cls="shrink-0 px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-gray-100 hover:bg-gray-600 rounded transition-colors outline-none cursor-pointer",
+        ),
+        close_btn,
+    )
+
+
+def TicketModal(ticket: Ticket, editable: bool = False):
+    header_buttons = _modal_header_buttons(editable)
+    if not isinstance(header_buttons, tuple):
+        header_buttons = (header_buttons,)
     return Div(
         Div(
             Div(
                 H2(ticket["title"], cls="text-xl font-bold text-gray-100 flex-1 min-w-0 pr-2"),
-                Button(
-                    "Close",
-                    type="button",
-                    aria_label="Close",
-                    cls="shrink-0 px-3 py-1.5 text-sm font-medium text-gray-400 hover:text-gray-100 hover:bg-gray-600 rounded transition-colors outline-none cursor-pointer",
-                    onclick=_modal_close_script(),
-                ),
+                Div(*header_buttons, cls="flex items-center gap-2 shrink-0"),
                 cls="flex items-center justify-between gap-2 mb-4",
             ),
             Div(

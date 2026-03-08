@@ -57,6 +57,47 @@ async def test_modal_content_returned_20_times():
             assert 'aria-label="Close"' in body or "aria-label='Close'" in body, f"iteration {i + 1}/{n}"
 
 
+async def test_todos_column_editable_modal_and_other_columns_plain_modal():
+    """Todos column cards request modal with editable=1 (Edit Mode button); other columns do not.
+    API: without editable param -> modal has Close only; with editable=1 -> modal has Edit Mode and Close.
+    """
+    from app import app
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        r = await client.get("/")
+    assert r.status_code == 200
+    html = r.text
+
+    # Page must contain at least one Todos card (editable=1) and one non-Todos card (no editable)
+    has_editable_card = "editable=1" in html and "api/ticket/" in html
+    assert has_editable_card, "Page must contain at least one ticket card with hx-get to /api/ticket/{id}?editable=1 (Todos column)"
+
+    # Get any ticket id from a card (e.g. first match without editable)
+    match = re.search(r'hx-get=["\']/?api/ticket/([^"?\'&\s]+)', html)
+    assert match, "Page must contain at least one ticket card with hx-get to /api/ticket/{id}"
+    ticket_id = match.group(1).strip("/")
+    assert ticket_id
+
+    # Without editable: modal has Close, no Edit Mode button
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        r = await client.get(f"/api/ticket/{ticket_id}")
+    assert r.status_code == 200
+    body = r.text
+    assert "modal-overlay" in body
+    assert "Close" in body
+    assert "Edit Mode" not in body
+
+    # With editable=1: modal has both Edit Mode and Close
+    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+        r = await client.get(f"/api/ticket/{ticket_id}", params={"editable": "1"})
+    assert r.status_code == 200
+    body = r.text
+    assert "modal-overlay" in body
+    assert "Close" in body
+    assert "Edit Mode" in body
+
+
 # ----- Browser test: open and close modal 20 times -----
 
 

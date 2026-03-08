@@ -39,7 +39,7 @@ def api_project_select(project: str):
     return KanbanBoard(tickets)
 
 
-def api_ticket(ticket_id: str):
+def api_ticket(ticket_id: str, editable: str = ""):
     refresh()
     tickets = (repository.current_project or {}).get("tickets", [])
     ticket = next((t for t in tickets if t["id"] == ticket_id), None)
@@ -47,4 +47,5 @@ def api_ticket(ticket_id: str):
     if not ticket:
         return Div("Ticket not found", cls="p-8 text-center")
 
-    return TicketModal(ticket)
+    show_edit_mode = editable.lower() in ("1", "true", "yes")
+    return TicketModal(ticket, editable=show_edit_mode)

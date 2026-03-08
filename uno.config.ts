@@ -62,6 +62,18 @@ export default defineConfig({
           box-sizing: border-box;
           font-family: Inter, ui-sans-serif, system-ui, sans-serif;
         }
+        button {
+          appearance: none;
+          -webkit-appearance: none;
+          background: none;
+          border: none;
+          margin: 0;
+          padding: 0;
+          font: inherit;
+          color: inherit;
+          cursor: pointer;
+          box-shadow: none;
+        }
         main, main.container {
           margin: 0 !important; padding: 0 !important;
           width: 100% !important; max-width: none !important;
