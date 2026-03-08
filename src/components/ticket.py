@@ -22,10 +22,30 @@ def TicketCard(ticket: Ticket):
     )
 
 
+def _modal_close_script():
+    """Run dismiss animation then remove overlay. Call from close button."""
+    return (
+        "var o=this.closest('.modal-overlay');"
+        "if(o){o.classList.add('modal-animate-out');"
+        "o.addEventListener('animationend',function f(ev){"
+        "if(ev.animationName==='modalOut'){o.removeEventListener('animationend',f);o.remove();}});}"
+    )
+
+
 def TicketModal(ticket: Ticket):
     return Div(
         Div(
-            H2(ticket["title"], cls="text-xl font-bold mb-4 text-gray-100"),
+            Div(
+                H2(ticket["title"], cls="text-xl font-bold text-gray-100 flex-1 min-w-0 pr-2"),
+                Button(
+                    "×",
+                    type="button",
+                    aria_label="Close",
+                    cls="shrink-0 w-8 h-8 flex items-center justify-center text-xl font-light text-gray-400 hover:text-gray-100 hover:bg-gray-600 rounded transition-colors outline-none cursor-pointer",
+                    onclick=_modal_close_script(),
+                ),
+                cls="flex items-center justify-between gap-2 mb-4",
+            ),
             Div(
                 Span(
                     ticket["mode"].value.upper(),
@@ -41,6 +61,5 @@ def TicketModal(ticket: Ticket):
             ),
             cls="bg-gray-700 border border-gray-600 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl",
         ),
-        cls="bg-black/75 fixed inset-0 flex items-center justify-center z-50",
-        onclick="if(event.target === this) this.remove()",
+        cls="modal-overlay bg-black/75 fixed inset-0 flex items-center justify-center z-50 modal-animate-in",
     )

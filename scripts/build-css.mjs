@@ -18,6 +18,7 @@ const SAFELIST_CLASSES = [
   'i-mdi-view-kanban', 'i-mdi-refresh',
   'i-mdi-checkbox-blank-outline', 'i-mdi-progress-clock', 'i-mdi-clock-outline',
   'i-mdi-check-circle-outline', 'i-mdi-check-circle',
+  'i-mdi-close',
   'hidden',
 ]
 

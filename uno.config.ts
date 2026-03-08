@@ -39,11 +39,22 @@ export default defineConfig({
     'i-mdi-view-kanban', 'i-mdi-refresh',
     'i-mdi-checkbox-blank-outline', 'i-mdi-progress-clock', 'i-mdi-clock-outline',
     'i-mdi-check-circle-outline', 'i-mdi-check-circle',
+    'i-mdi-close',
     'hidden',
   ],
   preflights: [
     {
       getCSS: () => `
+        @keyframes modalIn {
+          from { opacity: 0; transform: scale(0.96); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes modalOut {
+          from { opacity: 1; transform: scale(1); }
+          to { opacity: 0; transform: scale(0.96); }
+        }
+        .modal-animate-in { animation: modalIn 0.2s ease-out; }
+        .modal-animate-out { animation: modalOut 0.15s ease-in forwards; }
         :root { --un-bg: #ffffff; --un-bg-reverse: #1a1a1a; }
         html, body {
           margin: 0 !important; padding: 0 !important;
