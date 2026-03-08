@@ -10,7 +10,7 @@ def _ticket_card(ticket: Ticket, editable: bool = False):
         cls="text-xs px-2 py-0.5 rounded bg-slate-600/70 text-slate-300",
     )
     editing_badge = (
-        Span("editing", cls="text-xs px-2 py-0.5 rounded bg-amber-800 text-amber-200")
+        Span("EDITING", cls="text-xs px-2 py-0.5 rounded bg-amber-800 text-gray-300")
         if (editable and locked)
         else None
     )
@@ -50,7 +50,8 @@ def _modal_close_script():
         "var o=this.closest('.modal-overlay');"
         "if(o){o.classList.add('modal-animate-out');"
         "o.addEventListener('animationend',function f(ev){"
-        "if(ev.animationName==='modalOut'){o.removeEventListener('animationend',f);o.remove();}});}"
+        "if(ev.animationName==='modalOut'){o.removeEventListener('animationend',f);o.remove();"
+        "document.dispatchEvent(new CustomEvent('modalClosed'));}});}"
     )
 
 
@@ -76,9 +77,9 @@ def _modal_header_buttons(editable: bool, ticket: Ticket | None = None):
                 hx_swap="none",
             ),
             Button(
-                "Unlock",
+                "Give Up",
                 type="button",
-                aria_label="Unlock",
+                aria_label="Give Up",
                 cls="shrink-0 px-3 py-1.5 text-sm font-medium bg-green-900 text-green-200 hover:bg-green-800 rounded transition-colors outline-none cursor-pointer",
                 hx_post=f"/api/ticket/{ticket['id']}/unlock",
                 hx_swap="none",
@@ -125,4 +126,6 @@ def TicketModal(ticket: Ticket, editable: bool = False):
             cls="bg-gray-700 border border-gray-600 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto shadow-2xl",
         ),
         cls="modal-overlay bg-black/75 fixed inset-0 flex items-center justify-center z-50 modal-animate-in",
+        data_ticket_id=ticket["id"],
+        data_editable="1" if editable else "0",
     )

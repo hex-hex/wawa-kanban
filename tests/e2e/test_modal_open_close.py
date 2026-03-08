@@ -88,14 +88,14 @@ async def test_todos_column_editable_modal_and_other_columns_plain_modal():
     assert "Close" in body
     assert "Lock & Edit" not in body
 
-    # With editable=1: modal has Close and either (Lock & Edit) or (Save + Unlock) when locked
+    # With editable=1: modal has Close and either (Lock & Edit) or (Save + Give Up) when locked
     async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
         r = await client.get(f"/api/ticket/{ticket_id}", params={"editable": "1"})
     assert r.status_code == 200
     body = r.text
     assert "modal-overlay" in body
     assert "Close" in body
-    assert "Lock & Edit" in body or ("Save" in body and "Unlock" in body)
+    assert ("Lock & Edit" in body or "Lock &amp; Edit" in body) or ("Save" in body and "Give Up" in body)
 
 
 async def test_edit_mode_lock_api():

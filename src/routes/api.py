@@ -7,12 +7,13 @@ from src.components.ticket import TicketModal
 
 
 def _refresh_sse_events():
-    """Yield one SSE event with fresh board HTML (no full page reload)."""
+    """Yield one SSE event with fresh board HTML and existing ticket IDs (by frontmatter id)."""
     refresh()
     tickets = (repository.current_project or {}).get("tickets", [])
     board = KanbanBoard(tickets)
     html = str(board)
-    yield sse_message(json.dumps({"html": html}))
+    existing_ids = [t["id"] for t in tickets]
+    yield sse_message(json.dumps({"html": html, "existing_ids": existing_ids}))
 
 
 def api_kanban():
@@ -64,7 +65,11 @@ def api_ticket_unlock(ticket_id: str):
     ok = unlock_ticket(ticket_id)
     if not ok:
         return Response(status_code=404, content="Ticket not found or already unlocked")
-    return Response(status_code=200, content="", headers={"HX-Trigger": "refreshBoard"})
+    return Response(
+        status_code=200,
+        content="",
+        headers={"HX-Trigger": json.dumps({"refreshBoard": {"closeModal": True}})},
+    )
 
 
 def api_ticket_save(ticket_id: str):
