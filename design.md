@@ -18,92 +18,166 @@ wawa-kanban/
 │
 ├── src/                      # Source code
 │   ├── core/                 # App initialization
-│   │   └── hdrs.py          # Shared headers (CSS, JS)
+│   │   └── hdrs.py           # Shared headers (CSS, JS)
 │   │
-│   ├── models/              # Data models
-│   │   └── kanban.py        # Kanban, Column, Ticket structures
+│   ├── models/               # Data models
+│   │   └── kanban.py         # Kanban, Ticket, Project, Agent structures
 │   │
-│   ├── services/            # Business logic
-│   │   ├── workspace.py     # File operations
-│   │   └── tickets.py      # Ticket loading
+│   ├── services/             # Business logic
+│   │   ├── workspace.py      # Frontmatter parse/serialize
+│   │   └── tickets.py        # Ticket loading
 │   │
-│   ├── components/         # UI components
-│   │   ├── board.py        # Kanban board
-│   │   ├── ticket.py       # Ticket card/modal
-│   │   └── common.py       # Shared components
+│   ├── components/           # UI components
+│   │   ├── board.py          # Kanban board
+│   │   ├── column.py         # Kanban column
+│   │   ├── ticket.py         # Ticket card/modal
+│   │   └── common.py         # Shared components
 │   │
-│   └── routes/              # HTTP endpoints
-│       ├── pages.py         # Page routes
-│       └── api.py           # API routes
+│   └── routes/               # HTTP endpoints
+│       ├── pages.py          # Page routes
+│       └── api.py            # API routes
 │
-├── app.py                    # Entry point (imports from src/)
+├── workspace/                # Kanban data (env: WAWA_WORKSPACE_PATH, default: fixtures/workspace)
+│   ├── projects/             # Project tickets
+│   └── agents/               # Agent tickets (In Progress, Verifying)
 │
-├── workspace/                # Kanban data (md files)
-├── static/                  # CSS assets
-├── scripts/                 # Build scripts
+├── static/                   # CSS assets (uno.css)
+├── scripts/                  # Build scripts (build-css.mjs)
 │
 ├── design.md
 └── claude.md
 ```
 
-## Layer Responsibilities
+## Workspace Structure
 
-| Layer | Responsibility |
-|-------|----------------|
-| `app.py` | Entry point, routes, app setup |
-| `config.py` | Constants only |
-| `src/core/hdrs.py` | Shared HTML headers |
-| `src/models/` | Data structures |
-| `src/services/` | File I/O, data loading |
-| `src/components/` | UI rendering (pure functions) |
-| `src/routes/` | HTTP handling |
+```
+workspace/
+├── projects/                         # Project tickets
+│   └── {project_id}/                 # e.g. wawa.proj.default
+│       ├── todos/                    # TODOS column
+│       ├── waiting_for_verification/ # Waiting for Verification column
+│       ├── verifying/                # Verifying column (+ merged from agents/testers)
+│       └── finished/                 # Finished column
+│
+└── agents/                           # Agent tickets (flat dirs, no status subfolders)
+    ├── developers/
+    │   └── {name}/                   # e.g. default
+    │       └── *.md                  # → In Progress column
+    ├── designers/
+    │   └── {name}/
+    │       └── *.md                  # → In Progress column
+    └── testers/
+        └── {name}/
+            └── *.md                  # → Verifying column
+```
+
+**Column loading rules:**
+
+| Column | Source |
+|--------|--------|
+| TODOS | projects/{project_id}/todos/ |
+| IN_PROGRESS | agents/developers/{name}/ + agents/designers/{name}/ (not from projects) |
+| WAITING_FOR_VERIFICATION | projects/{project_id}/waiting_for_verification/ |
+| VERIFYING | projects/{project_id}/verifying/ + agents/testers/{name}/ |
+| FINISHED | projects/{project_id}/finished/ |
+
+Agent tickets show a badge (Position + Agent name, e.g. "Developer: default") derived from the ticket file path at render time.
 
 ## Data Structure
 
-Use plain dictionaries instead of dataclasses (no DB ORM pattern):
+### Ticket
+
+Plain dict, no DB. Fields come from frontmatter and file metadata:
 
 ```python
-# ticket as dict
 {
-    "id": "TICKET-001",
-    "title": "Task name",
-    "priority": "high",
-    "created": "2024-01-01",
-    "column": "backlog",
-    "body": "description",
-    "filename": "wawa.proj.default.implementation.setup-project-structure.md"
+    "id": str,           # frontmatter["id"] or filename stem
+    "title": str,        # frontmatter["title"] or filename stem
+    "project": str,      # parsed from filename (project_id)
+    "description": str,  # markdown body
+    "status": TicketStatus,
+    "mode": TaskMode,    # implementation / design / investigation
+    "locked": bool,      # True if .md.lock
+    "created_at": str,   # ISO from file birthtime
+    "updated_at": str,   # ISO from file mtime
 }
 ```
 
 ### Ticket File Naming
 
-Format: `{project_id}.{phase}.{slug}.md`
+Two formats supported:
+
+**1. Project tickets** (`workspace/projects/{project_id}/{status}/`)
+
+Format: `{project_id}.{mode}.{slug}.md`
 
 | Part | Example | Description |
 |------|---------|-------------|
 | project_id | wawa.proj.default | Project identifier (dot-separated) |
-| phase | implementation / design / investigation | Task phase |
-| slug | setup-project-structure | Lowercase, hyphen-separated descriptive phrase |
+| mode | implementation / design / investigation | Task mode |
+| slug | setup-project-structure | Lowercase, hyphen-separated phrase |
 
-Example: `wawa.proj.default.design.dashboard-layout.md`
+Example: `wawa.proj.default.implementation.setup-project-structure.md`
+
+**2. Agent tickets** (`workspace/agents/{type}/{name}/`)
+
+Format: `wawa.agent.{type}.{mode}.{slug}.md`
+
+| Part | Example | Description |
+|------|---------|-------------|
+| prefix | wawa.agent | Fixed prefix |
+| type | developer / designer / tester | Agent position |
+| mode | implementation / design / investigation | Task mode |
+| slug | fix-login-bug | Lowercase, hyphen-separated phrase |
+
+Example: `wawa.agent.developer.implementation.fix-login-bug.md`
+
+### Ticket Frontmatter
+
+```yaml
+---
+id: TICKET-001              # optional; fallback: filename stem
+title: Task name            # optional; fallback: filename stem
+mode: implementation        # implementation | design | investigation
+---
+
+# Markdown body
+
+Description content...
+```
+
+- **id**: Used for lookup. If missing, filename stem is used.
+- **title**: Display title. If missing, filename stem is used.
+- **mode**: Task mode; must match one of the parts in filename for parsing.
+
+## Layer Responsibilities
+
+| Layer | Responsibility |
+|-------|----------------|
+| app.py | Entry point, routes, app setup |
+| config.py | Constants (WORKSPACE_PATH, COLUMNS, etc.) |
+| src/core/hdrs.py | Shared HTML headers |
+| src/models/ | Data structures (TypedDict, Enum) |
+| src/services/ | File I/O, ticket loading |
+| src/components/ | UI rendering (pure functions) |
+| src/routes/ | HTTP handling |
 
 ## Extension Points
 
 ### Add Column
-1. Add to `config.COLUMNS`
-2. Create directory in `workspace/`
+
+1. Add `TicketStatus` enum value and entry in `config.COLUMNS`
+2. Add to `config.COLUMN_ORDER`
+3. Create directory in `workspace/projects/{project_id}/` if project-specific
 
 ### Add Ticket Field
-1. Update `src/services/tickets.py` → add key to dict
-2. Update `src/components/ticket.py` → display field
+
+1. Update `src/models/kanban.py` Ticket TypedDict
+2. Update `src/services/tickets.py` → load and add to ticket dict
+3. Update `src/components/ticket.py` → display field
 
 ### Add Feature
+
 1. Component in `src/components/`
 2. Service in `src/services/`
 3. Route in `src/routes/`
-
-## Next Steps
-
-Confirm this structure, then I will:
-1. Delete any created src files
-2. Rebuild app.py with clean structure
