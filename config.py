@@ -1,8 +1,14 @@
+import os
 from pathlib import Path
+
 from src.models.kanban import TicketStatus
 
-WORKSPACE_PATH = Path("workspace/projects")
-AGENTS_WORKSPACE_PATH = Path("workspace/agents")
+_PROJECT_ROOT = Path(__file__).resolve().parent
+_DEFAULT_WORKSPACE = _PROJECT_ROOT / "fixtures" / "workspace"
+_WORKSPACE_BASE = Path(os.environ.get("WAWA_WORKSPACE_PATH", str(_DEFAULT_WORKSPACE)))
+
+WORKSPACE_PATH = _WORKSPACE_BASE / "projects"
+AGENTS_WORKSPACE_PATH = _WORKSPACE_BASE / "agents"
 
 # uno_color: UnoCSS preset color; icon: mdi icon class (e.g. mdi-checkbox-blank-outline)
 COLUMNS = {

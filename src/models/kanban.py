@@ -1,4 +1,4 @@
-from typing import TypedDict, List
+from typing import TypedDict, List, NotRequired
 from enum import Enum
 
 
@@ -29,10 +29,13 @@ class Ticket(TypedDict):
     description: str
     status: TicketStatus
     mode: TaskMode
+    created_at: NotRequired[str]  # ISO format from file birthtime or mtime
+    updated_at: NotRequired[str]  # ISO format from file mtime
 
 
 class Project(TypedDict):
     name: str
+    project_id: str  # Folder name, e.g. wawa.proj.default (for path lookup)
     tickets: List[Ticket]
 
 
