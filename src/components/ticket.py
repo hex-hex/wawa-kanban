@@ -1,10 +1,10 @@
 from fasthtml.common import *
-from src.models.kanban import Ticket
+from src.models.kanban import Ticket, TicketStatus
 from src.components.common import CardCloseButton, CardBodyScroll
 from src.utils.markdown import md_to_safe_html
 
 
-def _ticket_card(ticket: Ticket, editable: bool = False):
+def _ticket_card(ticket: Ticket, editable: bool = False, agent_badge=None):
     url = f"/api/ticket/{ticket['id']}?editable=1" if editable else f"/api/ticket/{ticket['id']}"
     locked = ticket.get("locked", False)
     mode_badge = Span(
@@ -19,11 +19,8 @@ def _ticket_card(ticket: Ticket, editable: bool = False):
         if (editable and locked)
         else None
     )
-    right_badges = (
-        Div(mode_badge, editing_badge, cls="flex items-center gap-1.5")
-        if editing_badge
-        else mode_badge
-    )
+    badges = [b for b in (mode_badge, editing_badge, agent_badge) if b is not None]
+    right_badges = Div(*badges, cls="flex items-center gap-1.5 flex-wrap") if len(badges) > 1 else badges[0]
     return Div(
         Div(
             Span(ticket["id"], cls="text-xs font-mono text-slate-500 shrink-0"),
@@ -48,6 +45,21 @@ def TicketCard(ticket: Ticket):
 def EditableTicketCard(ticket: Ticket):
     """Same as TicketCard but requests modal with Edit Mode button."""
     return _ticket_card(ticket, editable=True)
+
+
+def UnderGoingTicket(ticket: Ticket, col_id):
+    """Card for In Progress / Verifying: shows Position + Agent name as badge when ticket is from agent directory."""
+    from src.services.tickets import get_agent_info
+
+    info = get_agent_info(ticket["id"])
+    label = f"{info[0].value.title()}: {info[1]}" if info else None
+    if col_id == TicketStatus.IN_PROGRESS and label:
+        agent_badge = Span(label, cls="text-xs px-2 py-0.5 rounded bg-blue-500/50 text-blue-300 border border-blue-500/40")
+    elif col_id == TicketStatus.VERIFYING and label:
+        agent_badge = Span(label, cls="text-xs px-2 py-0.5 rounded bg-violet-500/50 text-violet-300 border border-violet-500/40")
+    else:
+        agent_badge = None
+    return _ticket_card(ticket, editable=False, agent_badge=agent_badge)
 
 
 def _modal_close_script():

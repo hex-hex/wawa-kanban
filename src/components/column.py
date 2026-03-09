@@ -40,8 +40,10 @@ def KanbanColumn(col_id: TicketStatus, col_info: dict, tickets: List[Ticket]):
 
 
 def ticket_to_card(ticket: Ticket, col_id: TicketStatus):
-    from src.components.ticket import TicketCard, EditableTicketCard
+    from src.components.ticket import TicketCard, EditableTicketCard, UnderGoingTicket
 
     if col_id == TicketStatus.TODOS:
         return EditableTicketCard(ticket)
+    if col_id in (TicketStatus.IN_PROGRESS, TicketStatus.VERIFYING):
+        return UnderGoingTicket(ticket, col_id)
     return TicketCard(ticket)

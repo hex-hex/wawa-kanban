@@ -69,19 +69,18 @@ def _load_tickets_from_dir(dir_path: Path, status: TicketStatus) -> list[Ticket]
             getattr(st, "st_birthtime", st.st_mtime)
         ).isoformat()
         updated_at = datetime.fromtimestamp(st.st_mtime).isoformat()
-        tickets.append(
-            {
-                "id": tid,
-                "title": frontmatter.get("title", Path(parse_name).stem),
-                "project": project,
-                "description": body,
-                "status": status,
-                "mode": mode,
-                "locked": locked,
-                "created_at": created_at,
-                "updated_at": updated_at,
-            }
-        )
+        t: Ticket = {
+            "id": tid,
+            "title": frontmatter.get("title", Path(parse_name).stem),
+            "project": project,
+            "description": body,
+            "status": status,
+            "mode": mode,
+            "locked": locked,
+            "created_at": created_at,
+            "updated_at": updated_at,
+        }
+        tickets.append(t)
 
     for lock_file in sorted(dir_path.glob("*.md.lock")):
         load_file(lock_file, lock_file.name.removesuffix(".lock"), locked=True)
@@ -131,6 +130,25 @@ def _find_ticket_file(ticket_id: str) -> Path | None:
                         if check_file(f):
                             return f
     return None
+
+
+def get_agent_info(ticket_id: str) -> tuple[AgentPosition, str] | None:
+    """If ticket file is under agents/{type}/{name}/, return (position, agent_name)."""
+    path = _find_ticket_file(ticket_id)
+    if path is None:
+        return None
+    try:
+        rel = path.relative_to(AGENTS_WORKSPACE_PATH)
+    except ValueError:
+        return None
+    parts = rel.parts
+    if len(parts) < 2:
+        return None
+    type_folder, agent_name = parts[0], parts[1]
+    position = _TYPE_TO_POSITION.get(type_folder)
+    if position is None:
+        return None
+    return (position, agent_name)
 
 
 def lock_ticket(ticket_id: str) -> bool:
@@ -196,11 +214,25 @@ def _load_project(project_path: Path) -> Project | None:
 
     tickets: list[Ticket] = []
     for status in COLUMNS:
+        if status == TicketStatus.IN_PROGRESS:
+            continue  # In Progress comes from developers/designers agents only, not projects
         col_path = project_path / status.value
         tickets.extend(_load_tickets_from_dir(col_path, status))
 
-    # Load testers dir tickets into Verifying column (no duplicate ids)
     existing_ids = {t["id"] for t in tickets}
+
+    # Merge In Progress from agents/developers and agents/designers (flat dirs)
+    for type_folder in ("developers", "designers"):
+        type_path = AGENTS_WORKSPACE_PATH / type_folder
+        if type_path.exists():
+            for name_path in sorted(type_path.iterdir()):
+                if name_path.is_dir() and not name_path.name.startswith("."):
+                    for t in _load_tickets_from_dir(name_path, TicketStatus.IN_PROGRESS):
+                        if t["id"] not in existing_ids:
+                            tickets.append(t)
+                            existing_ids.add(t["id"])
+
+    # Merge Verifying from agents/testers (flat dir)
     testers_path = AGENTS_WORKSPACE_PATH / "testers"
     if testers_path.exists():
         for name_path in sorted(testers_path.iterdir()):
