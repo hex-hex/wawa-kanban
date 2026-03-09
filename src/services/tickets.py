@@ -24,9 +24,8 @@ _TYPE_TO_POSITION: dict[str, AgentPosition] = {
 
 
 def _parse_filename(filename: str) -> tuple[str, TaskMode, str]:
-    """Parse ticket filename: {project_id}.{phase}.{slug}.md -> (project_id, mode, slug).
-    Both formats supported: wawa.proj.default.implementation.setup-project-structure
-    and wawa.agent.developer.implementation.fix-login-bug
+    """Parse ticket filename: {project_id}.{mode}.{slug}.md -> (project_id, mode, slug).
+    One format only. Slug is hyphen-separated (no dots). E.g. wawa.proj.default.implementation.setup-project-structure
     """
     stem = filename.replace(".md", "")
     parts = stem.split(".")
@@ -215,34 +214,36 @@ def _load_project(project_path: Path) -> Project | None:
     tickets: list[Ticket] = []
     for status in COLUMNS:
         if status == TicketStatus.IN_PROGRESS:
-            continue  # In Progress comes from developers/designers agents only, not projects
+            continue  # In Progress comes from developers/designers agents only
+        if status == TicketStatus.VERIFYING:
+            continue  # Verifying comes from agents/testers only, not projects
         col_path = project_path / status.value
         tickets.extend(_load_tickets_from_dir(col_path, status))
 
     existing_ids = {t["id"] for t in tickets}
 
-    # Merge In Progress from agents/developers and agents/designers (flat dirs)
+    # Merge In Progress from agents/developers and agents/designers (only tickets belonging to this project)
     for type_folder in ("developers", "designers"):
         type_path = AGENTS_WORKSPACE_PATH / type_folder
         if type_path.exists():
             for name_path in sorted(type_path.iterdir()):
                 if name_path.is_dir() and not name_path.name.startswith("."):
                     for t in _load_tickets_from_dir(name_path, TicketStatus.IN_PROGRESS):
-                        if t["id"] not in existing_ids:
+                        if t.get("project") == project_id and t["id"] not in existing_ids:
                             tickets.append(t)
                             existing_ids.add(t["id"])
 
-    # Merge Verifying from agents/testers (flat dir)
+    # Merge Verifying from agents/testers (only tickets belonging to this project)
     testers_path = AGENTS_WORKSPACE_PATH / "testers"
     if testers_path.exists():
         for name_path in sorted(testers_path.iterdir()):
             if name_path.is_dir() and not name_path.name.startswith("."):
                 for t in _load_tickets_from_dir(name_path, TicketStatus.VERIFYING):
-                    if t["id"] not in existing_ids:
+                    if t.get("project") == project_id and t["id"] not in existing_ids:
                         tickets.append(t)
                         existing_ids.add(t["id"])
 
-    return {"name": _display_name(project_id), "tickets": tickets}
+    return {"name": _display_name(project_id), "project_id": project_id, "tickets": tickets}
 
 
 def _load_agent(type_folder: str, name_folder: str, tickets_path: Path) -> Agent | None:
@@ -263,39 +264,59 @@ def _load_agent(type_folder: str, name_folder: str, tickets_path: Path) -> Agent
 
 
 def refresh() -> None:
-    """Load workspace content into repository. Preserves current project selection (hot update)."""
-    current_name = (
-        repository.current_project["name"] if repository.current_project else None
-    )
-    repository.clear()
-
-    # Load projects: workspace/projects/{project_id}/{status}/*.md
+    """Load workspace. If projects exist: sync project list (re-scan), update current project's tickets. Otherwise: full load."""
+    if not repository.projects:
+        # Initial load: projects + agents
+        _refresh_full()
+        return
+    # Hot update: re-scan project list (add/remove), preserve selection, reload current project's tickets only
+    current_name = repository.current_project["name"] if repository.current_project else None
+    current_project_id = repository.current_project.get("project_id") if repository.current_project else None
+    by_id = {p["project_id"]: p for p in repository.projects}
     if WORKSPACE_PATH.exists():
-        project_dirs = sorted(
+        for project_path in sorted(
+            p for p in WORKSPACE_PATH.iterdir() if p.is_dir() and not p.name.startswith(".")
+        ):
+            pid = project_path.name
+            if pid in by_id and pid == current_project_id:
+                fresh = _load_project(project_path)
+                if fresh:
+                    by_id[pid]["tickets"] = fresh["tickets"]
+            elif pid not in by_id:
+                project = _load_project(project_path)
+                if project:
+                    by_id[pid] = project
+        kept_ids = {project_path.name for project_path in WORKSPACE_PATH.iterdir()
+                    if project_path.is_dir() and not project_path.name.startswith(".")}
+        for pid in list(by_id):
+            if pid not in kept_ids:
+                del by_id[pid]
+    repository._projects[:] = [by_id[pid] for pid in sorted(by_id)]
+    if repository.projects:
+        if current_name:
+            repository.set_current_by_name(current_name)
+        if repository.current_project is None:
+            repository.set_current_by_name(repository.projects[0]["name"])
+
+
+def _refresh_full() -> None:
+    """Full load: all projects and agents. Clears repository."""
+    repository.clear()
+    if WORKSPACE_PATH.exists():
+        for project_path in sorted(
             p for p in WORKSPACE_PATH.iterdir() if p.is_dir()
-        )
-        for project_path in project_dirs:
+        ):
             project = _load_project(project_path)
             if project:
                 repository.projects.append(project)
-        # Restore selection: same project by name, or first if none was selected
         if repository.projects:
-            if current_name:
-                repository.set_current_by_name(current_name)
-            if repository.current_project is None:
-                repository.set_current_by_name(repository.projects[0]["name"])
-
-    # Load agents: workspace/agents/{type}/{name}/*.md
-    # Rule: type folder (testers/designers/developers) -> name folder (default, ...)
+            repository.set_current_by_name(repository.projects[0]["name"])
     if AGENTS_WORKSPACE_PATH.exists():
         for type_folder in sorted(AGENTS_WORKSPACE_PATH.iterdir()):
             if not type_folder.is_dir() or type_folder.name not in _TYPE_TO_POSITION:
                 continue
-
             for name_path in sorted(type_folder.iterdir()):
                 if name_path.is_dir() and not name_path.name.startswith("."):
-                    agent = _load_agent(
-                        type_folder.name, name_path.name, name_path
-                    )
+                    agent = _load_agent(type_folder.name, name_path.name, name_path)
                     if agent:
                         repository.agents.append(agent)

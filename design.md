@@ -56,7 +56,6 @@ workspace/
 │   └── {project_id}/                 # e.g. wawa.proj.default
 │       ├── todos/                    # TODOS column
 │       ├── waiting_for_verification/ # Waiting for Verification column
-│       ├── verifying/                # Verifying column (+ merged from agents/testers)
 │       └── finished/                 # Finished column
 │
 └── agents/                           # Agent tickets (flat dirs, no status subfolders)
@@ -78,7 +77,7 @@ workspace/
 | TODOS | projects/{project_id}/todos/ |
 | IN_PROGRESS | agents/developers/{name}/ + agents/designers/{name}/ (not from projects) |
 | WAITING_FOR_VERIFICATION | projects/{project_id}/waiting_for_verification/ |
-| VERIFYING | projects/{project_id}/verifying/ + agents/testers/{name}/ |
+| VERIFYING | agents/testers/{name}/ only (not from projects) |
 | FINISHED | projects/{project_id}/finished/ |
 
 Agent tickets show a badge (Position + Agent name, e.g. "Developer: default") derived from the ticket file path at render time.
@@ -105,32 +104,21 @@ Plain dict, no DB. Fields come from frontmatter and file metadata:
 
 ### Ticket File Naming
 
-Two formats supported:
-
-**1. Project tickets** (`workspace/projects/{project_id}/{status}/`)
+**One global rule** (all tickets, same format):
 
 Format: `{project_id}.{mode}.{slug}.md`
 
-| Part | Example | Description |
-|------|---------|-------------|
-| project_id | wawa.proj.default | Project identifier (dot-separated) |
-| mode | implementation / design / investigation | Task mode |
-| slug | setup-project-structure | Lowercase, hyphen-separated phrase |
+| Part | Description |
+|------|-------------|
+| project_id | wawa.proj.{project_name} (e.g. wawa.proj.default) |
+| mode | implementation / design / investigation |
+| slug | Lowercase, **hyphen-separated** phrase (no dots) |
 
 Example: `wawa.proj.default.implementation.setup-project-structure.md`
 
-**2. Agent tickets** (`workspace/agents/{type}/{name}/`)
+Agent tickets use the same format (agent info comes from file path `agents/{type}/{name}/`).
 
-Format: `wawa.agent.{type}.{mode}.{slug}.md`
-
-| Part | Example | Description |
-|------|---------|-------------|
-| prefix | wawa.agent | Fixed prefix |
-| type | developer / designer / tester | Agent position |
-| mode | implementation / design / investigation | Task mode |
-| slug | fix-login-bug | Lowercase, hyphen-separated phrase |
-
-Example: `wawa.agent.developer.implementation.fix-login-bug.md`
+Ticket files can be moved (e.g. via `mv`) between `projects/` and `agents/` folders; the filename stays unchanged. The same file parsed in projects yields project-column status; in agents yields In Progress or Verifying. Parsing logic is identical.
 
 ### Ticket Frontmatter
 
