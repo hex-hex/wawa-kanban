@@ -30,13 +30,9 @@ _EASYMDE_DARK_CSS = """
 def get_hdrs():
     return (
         Link(rel="stylesheet", href="/static/uno.css", type="text/css"),
-        Link(
-            rel="stylesheet",
-            href="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.css",
-            type="text/css",
-        ),
+        Link(rel="stylesheet", href="/static/easymde.min.css", type="text/css"),
         Style(Safe(_EASYMDE_DARK_CSS)),
         Script(src="https://unpkg.com/htmx.org@2"),
-        Script(src="https://cdn.jsdelivr.net/npm/easymde@2.18.0/dist/easymde.min.js"),
+        Script(src="/static/easymde.min.js"),
         _refresh_via_sse_script(),
     )

@@ -439,3 +439,110 @@ async def test_save_draft_writes_to_file_then_restore(app_server):
         if path and path.exists():
             path.write_text(original_content)
         unlock_ticket(ticket_id)
+
+
+@pytest.mark.asyncio
+async def test_mobile_select_rendered_styles_debug(app_server):
+    """Mobile viewport: capture actual computed styles of #navbar select and compare with hand-written CSS.
+    Outputs to tests/e2e/mobile_select_styles_debug.txt for analysis.
+    Hand-written CSS (that worked): max-width: calc(100vw - 2rem); width: 100%; min-width: 0; box-sizing: border-box
+    UnoCSS classes: w-full max-w-full min-w-0 -> width: 100%; max-width: 100%; min-width: 0
+    """
+    _ensure_playwright_chromium()
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(_PLAYWRIGHT_BROWSERS_PATH)
+
+    from playwright.async_api import async_playwright
+
+    base_url = app_server
+    output_path = _PROJECT_ROOT / "tests" / "e2e" / "mobile_select_styles_debug.txt"
+    lines = []
+
+    async with async_playwright() as p:
+        try:
+            browser = await p.chromium.launch(headless=True)
+        except Exception as e:
+            if "Executable doesn't exist" in str(e) or "playwright install" in str(e):
+                pytest.skip("Chromium not available")
+            raise
+        try:
+            page = await browser.new_page()
+            # Mobile viewport: iPhone SE
+            await page.set_viewport_size({"width": 375, "height": 667})
+            await page.goto(base_url + "/", wait_until="networkidle", timeout=20000)
+            await page.wait_for_timeout(500)
+
+            # Get select element, parent chain, and navbar
+            result = await page.evaluate("""() => {
+              const select = document.querySelector('#navbar select');
+              if (!select) return { error: 'select not found' };
+              const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+              const handWrittenMaxWidth = vw - 32; // calc(100vw - 2rem)
+              const cs = window.getComputedStyle(select);
+              const parent = select.parentElement;
+              const parentCs = parent ? window.getComputedStyle(parent) : null;
+              const grandparent = parent ? parent.parentElement : null;
+              const grandparentCs = grandparent ? window.getComputedStyle(grandparent) : null;
+              const navbar = document.getElementById('navbar');
+              const navbarCs = navbar ? window.getComputedStyle(navbar) : null;
+              return {
+                viewport: { width: vw },
+                navbar: navbar ? {
+                  width: navbarCs.width,
+                  paddingLeft: navbarCs.paddingLeft,
+                  paddingRight: navbarCs.paddingRight,
+                  boxSizing: navbarCs.boxSizing,
+                } : null,
+                select: {
+                  width: cs.width,
+                  maxWidth: cs.maxWidth,
+                  minWidth: cs.minWidth,
+                  boxSizing: cs.boxSizing,
+                },
+                selectClientWidth: select.clientWidth,
+                selectOffsetWidth: select.offsetWidth,
+                handWrittenWouldGive: { maxWidth: handWrittenMaxWidth + 'px' },
+                parent: parent ? {
+                  tagName: parent.tagName,
+                  width: parentCs.width,
+                  maxWidth: parentCs.maxWidth,
+                  minWidth: parentCs.minWidth,
+                } : null,
+                grandparent: grandparent ? {
+                  tagName: grandparent.tagName,
+                  width: grandparentCs.width,
+                  maxWidth: grandparentCs.maxWidth,
+                  minWidth: grandparentCs.minWidth,
+                } : null,
+              };
+            }""")
+
+            lines.append("=== Mobile Select Rendered Styles Debug ===\n")
+            lines.append(f"Viewport width: {result.get('viewport', {}).get('width', '?')}px\n")
+            lines.append(f"Hand-written max-width would be: {result.get('handWrittenWouldGive', {}).get('maxWidth', '?')}\n\n")
+            if result.get("navbar"):
+                lines.append("Navbar:")
+                for k, v in result["navbar"].items():
+                    lines.append(f"  {k}: {v}")
+                lines.append("")
+            if result.get("error"):
+                lines.append(f"Error: {result['error']}\n")
+            else:
+                lines.append("Select computed styles:")
+                for k, v in result.get("select", {}).items():
+                    lines.append(f"  {k}: {v}")
+                lines.append(f"\nSelect clientWidth: {result.get('selectClientWidth', '?')}")
+                lines.append(f"Select offsetWidth: {result.get('selectOffsetWidth', '?')}")
+                lines.append("\nParent (select wrapper):")
+                for k, v in (result.get("parent") or {}).items():
+                    lines.append(f"  {k}: {v}")
+                lines.append("\nGrandparent (select row div):")
+                for k, v in (result.get("grandparent") or {}).items():
+                    lines.append(f"  {k}: {v}")
+                lines.append("\n=== KEY DIFFERENCE ===")
+                lines.append("max-w-full = max-width: 100% (of containing block). Parent chain is 375px = viewport.")
+                lines.append("Navbar has px-4 (16px each side) but parent/grandparent still 375px -> navbar content area not constraining.")
+                lines.append("Hand-written calc(100vw - 2rem) = 343px forces select to fit inside navbar padding.")
+        finally:
+            await browser.close()
+
+    output_path.write_text("\n".join(lines), encoding="utf-8")

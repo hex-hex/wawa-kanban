@@ -35,6 +35,7 @@ class Ticket(TypedDict):
 
 class Project(TypedDict):
     name: str
+    project_id: str  # Folder name, e.g. wawa.proj.default (for path lookup)
     tickets: List[Ticket]
 
 

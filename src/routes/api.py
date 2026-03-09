@@ -34,10 +34,11 @@ def api_refresh_sse():
 
 
 def api_project_select(project: str):
-    refresh()
+    """Switch project, refresh, and return full main content so navbar select shows all projects."""
     repository.set_current_by_name(project)
-    tickets = (repository.current_project or {}).get("tickets", [])
-    return KanbanBoard(tickets)
+    refresh()
+    from src.routes.pages import _main_content
+    return _main_content()
 
 
 def api_ticket(ticket_id: str, editable: str = ""):

@@ -1,0 +1,38 @@
+=== Mobile Select Rendered Styles Debug ===
+
+Viewport width: 375px
+
+Hand-written max-width would be: 343px
+
+
+Navbar:
+  width: 375px
+  paddingLeft: 16px
+  paddingRight: 16px
+  boxSizing: border-box
+
+Select computed styles:
+  width: 343px
+  maxWidth: 100%
+  minWidth: 0px
+  boxSizing: border-box
+
+Select clientWidth: 341
+Select offsetWidth: 343
+
+Parent (select wrapper):
+  tagName: DIV
+  width: 343px
+  maxWidth: 100%
+  minWidth: 0px
+
+Grandparent (select row div):
+  tagName: DIV
+  width: 343px
+  maxWidth: none
+  minWidth: 0px
+
+=== KEY DIFFERENCE ===
+max-w-full = max-width: 100% (of containing block). Parent chain is 375px = viewport.
+Navbar has px-4 (16px each side) but parent/grandparent still 375px -> navbar content area not constraining.
+Hand-written calc(100vw - 2rem) = 343px forces select to fit inside navbar padding.

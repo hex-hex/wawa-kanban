@@ -29,9 +29,9 @@ npm run dev:css
 
 ## Coding Rules
 
-- **以不手写 inline style 为准。** No inline styles: do not use `style=` on any element. Use only `cls` (UnoCSS utility classes) for styling.
+- **No inline styles:** Do not use `style=` on any element. Use only `cls` (UnoCSS utility classes) for styling.
 - All text displayed on web pages must be in English.
-- **禁止使用手写的 CSS。** Do not add or maintain hand-written CSS (e.g. in `static/kanban.css` or any `.css` file). All styling must come from `cls` in Python and the generated `static/uno.css` (run `npm run build:css` or `npm run dev:css`).
+- **No hand-written CSS:** Do not add or maintain hand-written CSS (e.g. in `static/kanban.css` or any `.css` file). All styling must come from `cls` in Python and the generated `static/uno.css` (run `npm run build:css` or `npm run dev:css`).
 - **CSS not applied or class missing from `static/uno.css`?** The CSS build may not have run. Remind the user to run `npm run build:css` (one-off) or `npm run dev:css` (watch), or run it for them: `npm run build:css`.
 
 ## Testing
