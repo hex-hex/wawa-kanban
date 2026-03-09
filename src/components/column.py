@@ -5,7 +5,11 @@ from config import COLUMNS
 
 
 def KanbanColumn(col_id: TicketStatus, col_info: dict, tickets: List[Ticket]):
-    col_tickets = [t for t in tickets if t["status"] == col_id]
+    col_tickets = sorted(
+        [t for t in tickets if t["status"] == col_id],
+        key=lambda t: t.get("updated_at", ""),
+        reverse=True,
+    )
 
     return Div(
         Div(

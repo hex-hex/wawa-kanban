@@ -4,6 +4,6 @@ title: Design dashboard layout
 mode: design
 ---
 
-# Design dashboard layout & 中文
+# Design dashboard layout
 
 Create wireframes for the main dashboard.
