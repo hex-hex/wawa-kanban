@@ -18,6 +18,11 @@ Before doing anything else:
 1. **Check this agent’s folder** (see TOOLS.md). If it contains no ticket file → **no op**; you are done for this run.
 
 2. **If there is a ticket file:**
+   - **Prepare a dedicated worktree:** In the git repository of the current project, ensure there is a per-developer worktree named `dev-{your_name}`:
+     - If a worktree with that name already exists, switch into it and continue development there.
+     - If it does not exist, create it (branch name and location should follow the project’s conventions; do not reuse or modify shared branches directly).
+   - **Sync with main:** Before you start coding in `dev-{your_name}`, update the main branch from remote (e.g. `origin/main`) and bring those changes into your worktree branch using the project’s standard workflow (rebase/merge as appropriate). Do not develop on a stale branch.
+   - All code changes for this ticket must be made **inside this `dev-{your_name}` worktree**, not on the main working copy.
    - Read the full ticket (description, implementation approach, file/layout norms, context). Follow the ticket’s guidance.
    - **Scope of work:** Implement whatever the ticket describes — e.g. new features, bug fixes, refactors, code investigation/spikes, performance work, dependency upgrades, or any other development task. If the ticket is unclear, document assumptions in the ticket before coding.
 
@@ -26,12 +31,17 @@ Before doing anything else:
    - If it is complex (large surface area, unclear design, many files) → use the **Claude code skill** to implement.
 
 4. **Quality:**
-   - Code must have **sufficient unit tests**. For complex or user-facing behavior, add **e2e tests** where the project supports them.
-   - After implementation, **run the test suite** and confirm all relevant tests pass.
+   - For every feature or bugfix you work on, ensure there are **explicit automated tests** that cover it:
+     - If relevant tests already exist, update them to match the new or changed behavior described in the ticket.
+     - If no tests exist, add new ones (unit tests; and for complex or user-facing behavior, also add e2e tests where the project supports them).
+   - During development, you may refine or adjust tests as your understanding of the ticket’s requirements improves, but keep them aligned with the ticket’s acceptance criteria.
+   - The implementation is considered **done** only when **all tests related to this feature (existing and newly added) pass**.
+   - If tests fail, you may iterate on debugging and code changes, but **do not exceed 5 rounds** of “run tests → debug/fix → re-run tests” for the same ticket; if you reach this limit, treat it as a signal that the model or ticket definition may be the bottleneck and surface this to the user or lead/PM instead of blindly continuing.
 
 5. **Before handoff:**
+   - **Commit your work:** Once all tests for this feature pass and you are satisfied with the implementation, create a git commit in your `dev-{your_name}` worktree with a clear, descriptive message that reflects the ticket’s intent (what and why, not line-by-line details).
    - **Append to the ticket file** a short summary: what was implemented, key decisions, file/layout changes, and how to run/verify. Do not remove or overwrite the original ticket content.
-   - **Self-review** the changes (read the diff, check tests and edge cases). When satisfied, **move the ticket file** to the corresponding project’s `waiting_for_verification/` directory (path in TOOLS.md). Do not move until tests pass and the summary is written.
+   - **Self-review** the changes (read the diff, check tests and edge cases). When satisfied, **move the ticket file** to the corresponding project’s `waiting_for_verification/` directory (path in TOOLS.md). Do not move until tests pass, the commit is created, and the summary is written.
 
 ## Red Lines
 

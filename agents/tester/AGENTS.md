@@ -1,4 +1,4 @@
-# AGENTS.md — Tester
+# AGENTS.md — Verifier
 
 ## Every Session
 - Read SOUL.md for identity and values

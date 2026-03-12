@@ -1,4 +1,4 @@
-# HEARTBEAT.md — Tester
+# HEARTBEAT.md — Verifier
 
 - [ ] Check `verifying/` for newly arrived tickets
 - [ ] Review any developer notes on tickets under test

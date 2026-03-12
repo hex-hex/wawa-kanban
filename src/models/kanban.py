@@ -19,7 +19,7 @@ class TicketStatus(str, Enum):
 class AgentPosition(str, Enum):
     DEVELOPER = "developer"
     DESIGNER = "designer"
-    TESTER = "tester"
+    VERIFIER = "verifier"
 
 
 class Ticket(TypedDict):

@@ -17,7 +17,7 @@ from src.services.workspace import parse_frontmatter, serialize_frontmatter_and_
 
 # Agent type folder (plural) -> AgentPosition
 _TYPE_TO_POSITION: dict[str, AgentPosition] = {
-    "testers": AgentPosition.TESTER,
+    "verifiers": AgentPosition.VERIFIER,
     "designers": AgentPosition.DESIGNER,
     "developers": AgentPosition.DEVELOPER,
 }
@@ -206,7 +206,7 @@ def _display_name(project_id: str) -> str:
 
 def _load_project(project_path: Path) -> Project | None:
     """Load a single project from workspace/projects/{project_id}/.
-    Verifying column also includes tickets from workspace/agents/testers/*."""
+    Verifying column also includes tickets from workspace/agents/verifiers/*."""
     project_id = project_path.name
     if project_id.startswith("."):
         return None
@@ -216,7 +216,7 @@ def _load_project(project_path: Path) -> Project | None:
         if status == TicketStatus.IN_PROGRESS:
             continue  # In Progress comes from developers/designers agents only
         if status == TicketStatus.VERIFYING:
-            continue  # Verifying comes from agents/testers only, not projects
+            continue  # Verifying comes from agents/verifiers only, not projects
         col_path = project_path / status.value
         tickets.extend(_load_tickets_from_dir(col_path, status))
 
@@ -233,10 +233,10 @@ def _load_project(project_path: Path) -> Project | None:
                             tickets.append(t)
                             existing_ids.add(t["id"])
 
-    # Merge Verifying from agents/testers (only tickets belonging to this project)
-    testers_path = AGENTS_WORKSPACE_PATH / "testers"
-    if testers_path.exists():
-        for name_path in sorted(testers_path.iterdir()):
+    # Merge Verifying from agents/verifiers (only tickets belonging to this project)
+    verifiers_path = AGENTS_WORKSPACE_PATH / "verifiers"
+    if verifiers_path.exists():
+        for name_path in sorted(verifiers_path.iterdir()):
             if name_path.is_dir() and not name_path.name.startswith("."):
                 for t in _load_tickets_from_dir(name_path, TicketStatus.VERIFYING):
                     if t.get("project") == project_id and t["id"] not in existing_ids:

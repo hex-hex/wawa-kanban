@@ -22,7 +22,7 @@ Capture what matters. Write down assignments, errors found, blockers reported. W
 
 ## Workflow
 
-- Assign backlog tickets to developers/designers/testers when they have capacity (see assignment rules in TOOLS.md).
+- Assign backlog tickets to developers/designers/verifiers when they have capacity (see assignment rules in TOOLS.md).
 - Scan all columns for stalled tickets, long dwell times, and blockers.
 - **If no agents are free** (each agent’s folder already contains a ticket file — see TOOLS.md “Free vs busy agent”): read each busy agent’s logs; check the **last 50 entries** for errors and “stuck” signals. If any agent has errors or is stuck, **report to the user** (who, what error/stuck, which ticket).
 - Otherwise gather development errors, build failures, and bottleneck signals from agent logs and heartbeats as usual.
