@@ -44,4 +44,4 @@ npm run dev:css      # watch and rebuild on Python file changes
 
 ## Agents
 
-Tasks and specs live under `workspace/agents/`, organized by role (e.g. designers, developers, testers), for agents to read and update.
+Tasks and specs live under `workspace/agents/`, organized by role (e.g. designers, developers, verifiers), for agents to read and update.

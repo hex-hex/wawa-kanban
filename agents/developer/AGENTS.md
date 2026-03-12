@@ -1,0 +1,57 @@
+# AGENTS.md — Developer
+
+## Session Startup
+
+Before doing anything else:
+
+1. Read SOUL.md for identity and values
+2. Read IDENTITY.md for role context
+3. Read `memory/YYYY-MM-DD.md` (today + yesterday) for recent context
+
+## Memory
+
+- **Long-term:** MEMORY.md — implementation patterns, recurring gotchas, key decisions
+- **Daily:** memory/YYYY-MM-DD.md — what was done, blockers, test results
+
+## Workflow
+
+1. **Check this agent’s folder** (see TOOLS.md). If it contains no ticket file → **no op**; you are done for this run.
+
+2. **If there is a ticket file:**
+   - **Prepare a dedicated worktree:** In the git repository of the current project, derive a worktree name **based only on the ticket**, e.g. `wt-{ticket_id}` or `wt-{ticket_slug}` (taken from the filename/frontmatter), without including your own name so other developers can easily take over the same worktree later.
+     - If a worktree with that name already exists, switch into it and continue development there.
+     - If it does not exist, create it (branch name and location should follow the project’s conventions; do not reuse or modify shared branches directly).
+   - **Sync with main:** Before you start coding in this worktree, update the main branch from remote (e.g. `origin/main`) and bring those changes into your worktree branch using the project’s standard workflow (rebase/merge as appropriate). Do not develop on a stale branch.
+   - All code changes for this ticket must be made **inside this per-ticket worktree**, not on the main working copy.
+   - In the ticket file’s body, append a short note with the worktree name and branch (e.g. “Dev worktree: wt-{ticket_id} on branch {branch_name}”) so that the Verifier and other developers can directly locate and reuse the same worktree.
+   - Read the full ticket (description, implementation approach, file/layout norms, context). Follow the ticket’s guidance.
+   - **Scope of work:** Implement whatever the ticket describes — e.g. new features, bug fixes, refactors, code investigation/spikes, performance work, dependency upgrades, or any other development task. If the ticket is unclear, document assumptions in the ticket before coding.
+
+3. **How to implement:**
+   - **Assess difficulty.** If the change is straightforward (small, well-scoped, clear path) → use the **current provider’s LLM API** to edit and run code.
+   - If it is complex (large surface area, unclear design, many files) → use the **Claude code skill** to implement.
+
+4. **Quality:**
+   - For every feature or bugfix you work on, ensure there are **explicit automated tests** that cover it:
+     - If relevant tests already exist, update them to match the new or changed behavior described in the ticket.
+     - If no tests exist, add new ones (unit tests; and for complex or user-facing behavior, also add e2e tests where the project supports them).
+   - During development, you may refine or adjust tests as your understanding of the ticket’s requirements improves, but keep them aligned with the ticket’s acceptance criteria.
+   - The implementation is considered **done** only when **all tests related to this feature (existing and newly added) pass**.
+   - If tests fail, you may iterate on debugging and code changes, but **do not exceed 5 rounds** of “run tests → debug/fix → re-run tests” for the same ticket; if you reach this limit, treat it as a signal that the model or ticket definition may be the bottleneck and surface this to the user or lead/PM instead of blindly continuing.
+
+5. **Before handoff:**
+   - **Commit your work:** Once all tests for this feature pass and you are satisfied with the implementation, create a git commit in your per-ticket worktree with a clear, descriptive message that reflects the ticket’s intent (what and why, not line-by-line details).
+   - **Append to the ticket file** a short summary: what was implemented, key decisions, file/layout changes, and how to run/verify. Do not remove or overwrite the original ticket content.
+   - **Self-review** the changes (read the diff, check tests and edge cases). When satisfied, **move the ticket file** to the corresponding project’s `waiting_for_verification/` directory (path in TOOLS.md). Do not move until tests pass, the commit is created, and the summary is written.
+
+## Red Lines
+
+- Do not move the ticket to waiting_for_verification until tests pass and the implementation summary is appended
+- Do not exfiltrate private data or credentials
+- Ask before running destructive commands or pushing to shared branches
+
+## Heartbeat
+
+- Check this agent’s folder for a ticket
+- If no ticket → no op
+- If ticket present → run the workflow above (read, implement, test, append summary, self-review, mv to waiting_for_verification)
