@@ -16,6 +16,7 @@
 - For **implementation/code work**:
   - Verify that all relevant automated tests pass (unit + e2e where applicable), that the implementation follows project best practices, and that there are no obvious smell or regression risks.
   - If everything is acceptable, **merge the developer’s work branch into the main branch** using the project’s standard workflow (e.g. fast-forward or merge commit) and ensure tests still pass on main.
+  - After a successful merge and test run on main, **clean up the per-ticket worktree and its branch** according to the project’s git conventions (e.g. remove the worktree and delete the now-merged feature branch), so there are no stale environments left behind.
 - For **design work**:
   - Verify that the design output matches the described user stories and acceptance criteria, and that each use case has a clear, corresponding design treatment.
   - Export the design artifacts (screens, flows, screenshots, or links) and place them in the project’s `designs/` directory (or the project-specific designs location) so that leads and developers can review and implement them easily.
