@@ -27,6 +27,22 @@ The image uses Debian Bookworm (slim). Use the bundled `fixtures/workspace` by d
 docker run -p 5020:5020 -e WAWA_WORKSPACE_PATH=/data -v /path/to/workspace:/data wawa-kanban
 ```
 
+**Bootstrap (one-shot install)**
+
+This runs `install.sh` directly from GitHub raw, which installs the `wkanban` bootstrap script and then runs `wkanban init`.
+
+Prerequisites:
+- `docker` must be available and Docker Engine must be reachable
+- `openclaw` must be available in your `PATH`
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/install.sh | sh
+# or
+wget -qO- https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/install.sh | sh
+```
+
+After it finishes, open http://localhost:5020.
+
 **Frontend styles (optional)**
 
 To change styles and regenerate CSS:
@@ -44,4 +60,4 @@ npm run dev:css      # watch and rebuild on Python file changes
 
 ## Agents
 
-Tasks and specs live under `workspace/agents/`, organized by role (e.g. designers, developers, testers), for agents to read and update.
+Tasks and specs live under `workspace/agents/`, organized by role (e.g. designers, developers, verifiers), for agents to read and update.
