@@ -1,0 +1,109 @@
+#!/usr/bin/env sh
+set -eu
+
+log() {
+  echo "[wkanban] $*"
+}
+
+die() {
+  echo "[wkanban][ERROR] $*" >&2
+  exit 1
+}
+
+have_container() {
+  # Return 0 if container exists, 1 otherwise.
+  docker inspect "$1" >/dev/null 2>&1
+}
+
+WORKSPACE_DIR="${HOME}/.wawa-kanban/workspace"
+BIN_DIR="${HOME}/.wawa-kanban/bin"
+LOCAL_BIN_DIR="${HOME}/.local/bin"
+
+DEFAULT_PROJECT_DIR="${WORKSPACE_DIR}/projects/wawa.proj.default"
+AGENTS_DIR="${WORKSPACE_DIR}/agents"
+
+DEFAULT_TODOS_DIR="${DEFAULT_PROJECT_DIR}/todos"
+DEFAULT_WAITING_DIR="${DEFAULT_PROJECT_DIR}/waiting_for_verification"
+DEFAULT_FINISHED_DIR="${DEFAULT_PROJECT_DIR}/finished"
+
+DEFAULT_DESIGNERS_DIR="${AGENTS_DIR}/designers/default"
+DEFAULT_DEVELOPERS_DIR="${AGENTS_DIR}/developers/default"
+DEFAULT_VERIFYERS_DIR="${AGENTS_DIR}/verifiers/default"
+
+CONTAINER_NAME="wawa-kanban"
+IMAGE="wawaassistant/wawa-kanban:latest"
+PORT="5020"
+
+ensure_dirs() {
+  mkdir -p \
+    "$WORKSPACE_DIR" \
+    "$DEFAULT_TODOS_DIR" \
+    "$DEFAULT_WAITING_DIR" \
+    "$DEFAULT_FINISHED_DIR" \
+    "$DEFAULT_DESIGNERS_DIR" \
+    "$DEFAULT_DEVELOPERS_DIR" \
+    "$DEFAULT_VERIFYERS_DIR"
+}
+
+docker_start() {
+  ensure_dirs
+
+  log "Pulling image (if needed): $IMAGE"
+  docker pull "$IMAGE" >/dev/null 2>&1 || true
+
+  if have_container "$CONTAINER_NAME"; then
+    log "Found existing container: $CONTAINER_NAME. Removing and recreating it."
+    docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+  fi
+
+  log "Starting container..."
+  docker run -d \
+    --name "$CONTAINER_NAME" \
+    --restart unless-stopped \
+    -p "${PORT}:${PORT}" \
+    -e "WAWA_WORKSPACE_PATH=/workspace" \
+    -v "${WORKSPACE_DIR}:/workspace" \
+    "$IMAGE" >/dev/null
+
+  log "Done. Open http://localhost:${PORT}"
+}
+
+docker_stop_remove() {
+  if have_container "$CONTAINER_NAME"; then
+    docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+  fi
+}
+
+uninstall() {
+  log "Uninstalling..."
+  docker_stop_remove
+
+  # Remove command links + installed script.
+  rm -f "${LOCAL_BIN_DIR}/wkanban" >/dev/null 2>&1 || true
+  rm -f "${BIN_DIR}/wkanban" >/dev/null 2>&1 || true
+
+  # Remove workspace tree.
+  rm -rf "$WORKSPACE_DIR" >/dev/null 2>&1 || true
+
+  log "Uninstalled. Workspace removed."
+}
+
+init() {
+  # Do not perform docker/openclaw prerequisite checks here.
+  docker_start
+}
+
+cmd="${1:-}"
+
+case "$cmd" in
+  init)
+    init
+    ;;
+  uninstall)
+    uninstall
+    ;;
+  *)
+    die "Usage: wkanban {init|uninstall}"
+    ;;
+esac
+

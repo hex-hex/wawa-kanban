@@ -14,96 +14,91 @@ have_cmd() {
   command -v "$1" >/dev/null 2>&1
 }
 
-require_cmd() {
-  if ! have_cmd "$1"; then
-    die "Command not found: $1. Please install it and make sure it is available in your PATH."
+WORKSPACE_DIR="${HOME}/.wawa-kanban/workspace"
+BIN_DIR="${HOME}/.wawa-kanban/bin"
+LOCAL_BIN_DIR="${HOME}/.local/bin"
+
+WAWA_WKANBAN_URL_DEFAULT="https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/wkanban"
+WAWA_WKANBAN_URL="${WAWA_WKANBAN_URL:-$WAWA_WKANBAN_URL_DEFAULT}"
+
+have_required_tool_or_die() {
+  tool="$1"
+  if ! have_cmd "$tool"; then
+    die "Command not found: $tool. Please install it and ensure it is in your PATH."
   fi
 }
 
-# Resolve repo root (directory where this script lives)
-SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-REPO_ROOT="$SCRIPT_DIR"
-FIXTURES_WS="$REPO_ROOT/fixtures/workspace"
+require_curl_or_wget() {
+  if have_cmd curl; then
+    DOWNLOADER="curl"
+    return 0
+  fi
+  if have_cmd wget; then
+    DOWNLOADER="wget"
+    return 0
+  fi
+  die "Neither 'curl' nor 'wget' is available. Please install one of them and ensure it is in your PATH."
+}
 
-WORKSPACE_DIR="${HOME}/.wawa-kanban/workspace"
+download_to() {
+  url="$1"
+  out_path="$2"
 
-IMAGE="wawaassistant/wawa-kanban:latest"
-CONTAINER_NAME="wawa-kanban"
-PORT="5020"
+  if [ "$DOWNLOADER" = "curl" ]; then
+    # -f: fail on HTTP errors, -s: silent, -S: show errors
+    curl -fsSL "$url" -o "$out_path"
+  else
+    # -q: quiet, -O- would write to stdout, but we need a file path
+    wget -q "$url" -O "$out_path"
+  fi
+}
 
-require_cmd docker
+WORKSPACE_PROJECTS_DIR="${WORKSPACE_DIR}/projects"
+WORKSPACE_AGENTS_DIR="${WORKSPACE_DIR}/agents"
+DEFAULT_PROJECT_DIR="${WORKSPACE_PROJECTS_DIR}/wawa.proj.default"
+
+AGENTS_DEFAULT_DESIGNERS_DIR="${WORKSPACE_AGENTS_DIR}/designers/default"
+AGENTS_DEFAULT_DEVELOPERS_DIR="${WORKSPACE_AGENTS_DIR}/developers/default"
+AGENTS_DEFAULT_VERIFIERS_DIR="${WORKSPACE_AGENTS_DIR}/verifiers/default"
+
+require_curl_or_wget
+
+have_required_tool_or_die docker
 if ! docker info >/dev/null 2>&1; then
   die "Docker CLI is available, but the Docker engine is not reachable. Please start Docker Desktop / Docker Engine."
 fi
 
-require_cmd openclaw
-
-if [ ! -d "$FIXTURES_WS" ]; then
-  die "Missing fixtures workspace directory: $FIXTURES_WS"
-fi
+have_required_tool_or_die openclaw
 
 log "Preparing workspace directory: $WORKSPACE_DIR"
 mkdir -p "$WORKSPACE_DIR"
 
-log "Creating fixtures default directory structure (no placeholder files)"
+log "Creating base directory tree (directories only)"
+mkdir -p \
+  "$DEFAULT_PROJECT_DIR/todos" \
+  "$DEFAULT_PROJECT_DIR/waiting_for_verification" \
+  "$DEFAULT_PROJECT_DIR/finished" \
+  "$AGENTS_DEFAULT_DESIGNERS_DIR" \
+  "$AGENTS_DEFAULT_DEVELOPERS_DIR" \
+  "$AGENTS_DEFAULT_VERIFIERS_DIR"
 
-PROJECT_ID_DIR="$WORKSPACE_DIR/projects/wawa.proj.default"
-AGENTS_DIR="$WORKSPACE_DIR/agents"
+log "Installing wkanban from GitHub raw: $WAWA_WKANBAN_URL"
+mkdir -p "$BIN_DIR"
 
-mkdir -p "$PROJECT_ID_DIR/todos" \
-  "$PROJECT_ID_DIR/waiting_for_verification" \
-  "$PROJECT_ID_DIR/finished"
+TMP_WKANBAN="${TMPDIR:-/tmp}/wkanban.$$"
+trap 'rm -f "$TMP_WKANBAN" >/dev/null 2>&1 || true' EXIT HUP INT TERM
 
-mkdir -p "$AGENTS_DIR/designers/default" \
-  "$AGENTS_DIR/developers/default" \
-  "$AGENTS_DIR/verifiers/default"
+download_to "$WAWA_WKANBAN_URL" "$TMP_WKANBAN"
+sh -n "$TMP_WKANBAN" >/dev/null 2>&1 || die "Downloaded wkanban failed a syntax check."
 
-copy_md_no_clobber() {
-  src_dir="$1"
-  dst_dir="$2"
+install_path="${BIN_DIR}/wkanban"
+mv -f "$TMP_WKANBAN" "$install_path"
+chmod +x "$install_path"
 
-# Copy only *.md as ticket files; skip any possible placeholder files
-  if [ -d "$src_dir" ]; then
-    for f in "$src_dir"/*.md; do
-      [ -e "$f" ] || continue
-      base="$(basename -- "$f")"
-      case "$base" in
-        *placeholder*.md)
-          continue
-          ;;
-      esac
-      cp -n "$f" "$dst_dir"/
-    done
-  fi
-}
+log "Linking wkanban into ~/.local/bin"
+mkdir -p "$LOCAL_BIN_DIR"
+ln -sf "$install_path" "$LOCAL_BIN_DIR/wkanban"
 
-# projects/wawa.proj.default
-copy_md_no_clobber "$FIXTURES_WS/projects/wawa.proj.default/todos" "$PROJECT_ID_DIR/todos"
-copy_md_no_clobber "$FIXTURES_WS/projects/wawa.proj.default/waiting_for_verification" "$PROJECT_ID_DIR/waiting_for_verification"
-copy_md_no_clobber "$FIXTURES_WS/projects/wawa.proj.default/finished" "$PROJECT_ID_DIR/finished"
-
-# agents/*/default（来自 fixtures）
-copy_md_no_clobber "$FIXTURES_WS/agents/designers/default" "$AGENTS_DIR/designers/default"
-copy_md_no_clobber "$FIXTURES_WS/agents/developers/default" "$AGENTS_DIR/developers/default"
-copy_md_no_clobber "$FIXTURES_WS/agents/verifiers/default" "$AGENTS_DIR/verifiers/default"
-
-log "Pull image (if needed) and start container"
-docker pull "$IMAGE" >/dev/null 2>&1 || true
-
-if docker inspect "$CONTAINER_NAME" >/dev/null 2>&1; then
-  log "Found existing container: $CONTAINER_NAME. Removing and recreating it."
-  docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
-fi
-
-docker run -d \
-  --name "$CONTAINER_NAME" \
-  --restart unless-stopped \
-  -p "${PORT}:${PORT}" \
-  -e "WAWA_WORKSPACE_PATH=/workspace" \
-  -v "${WORKSPACE_DIR}:/workspace" \
-  "$IMAGE" >/dev/null
-
-log "Done. Open http://localhost:${PORT}"
-log "Container: $CONTAINER_NAME"
-log "Mounted workspace: ${WORKSPACE_DIR} -> /workspace"
+log "Running: wkanban init"
+"$install_path" init
 
