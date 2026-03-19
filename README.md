@@ -4,44 +4,9 @@ Wawa Kanban is a set of software development agents with a kanban UI and workflo
 
 ## Installation
 
-### Prerequisites
+The usual way to get the app running is the **bootstrap** script below. **Clone the repo** if you want to run from source or work on the code (see [Development](#development)).
 
-- Python 3.13+
-- [uv](https://docs.astral.sh/uv/) (dependencies and running the app)
-- Optional: **Node/npm** if you will change styles and regenerate CSS (see [Development](#development))
-
-### From source (clone and sync)
-
-```bash
-git clone https://github.com/hex-hex/wawa-kanban.git
-cd wawa-kanban
-uv sync
-```
-
-Start the app:
-
-```bash
-uv run app.py
-```
-
-The app listens at http://localhost:5020.
-
-### Docker
-
-Build and run:
-
-```bash
-docker build -t wawa-kanban .
-docker run -p 5020:5020 wawa-kanban
-```
-
-The image uses Debian Bookworm (slim) and the bundled `fixtures/workspace` by default. Use your own workspace:
-
-```bash
-docker run -p 5020:5020 -e WAWA_WORKSPACE_PATH=/data -v /path/to/workspace:/data wawa-kanban
-```
-
-### Bootstrap (one-shot installer)
+### Quick install (bootstrap)
 
 Runs `install.sh` from this repo: installs the `wkanban` bootstrap script and runs `wkanban init`.
 
@@ -58,6 +23,23 @@ wget -qO- https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/install.sh 
 
 When it finishes, open http://localhost:5020.
 
+### From source (development)
+
+**Prerequisites**
+
+- Python 3.13+
+- [uv](https://docs.astral.sh/uv/) (dependencies and running the app)
+- Optional: **Node/npm** if you will change styles and regenerate CSS (see [Development](#development))
+
+```bash
+git clone https://github.com/hex-hex/wawa-kanban.git
+cd wawa-kanban
+uv sync
+uv run app.py
+```
+
+The app listens at http://localhost:5020.
+
 ---
 
 ## Development
@@ -68,6 +50,21 @@ When it finishes, open http://localhost:5020.
 - **Override:** set `WAWA_WORKSPACE_PATH` to a directory that includes `projects/` and `agents/` (same layout as the fixture).
 - **Tickets:** markdown files with frontmatter under each project’s column folders (`backlog/`, `implementing/`, etc.) and under agent folders for in-progress work.
 - **Agent instructions:** role docs live in this repo under `agents/` (e.g. designer, developer, verifier). They describe how agents cooperate on the same workspace.
+
+### Running with Docker
+
+If you need to **build and run your own image** while developing (e.g. to verify the Dockerfile or run in an isolated environment), from the repo root:
+
+```bash
+docker build -t wawa-kanban .
+docker run -p 5020:5020 wawa-kanban
+```
+
+The image uses Debian Bookworm (slim) and the bundled `fixtures/workspace` by default. Mount a custom workspace:
+
+```bash
+docker run -p 5020:5020 -e WAWA_WORKSPACE_PATH=/data -v /path/to/workspace:/data wawa-kanban
+```
 
 ### UI styles (UnoCSS)
 
