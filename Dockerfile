@@ -25,7 +25,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock* ./
+COPY pyproject.toml README.md uv.lock* ./
+COPY wawa_openclaw/ wawa_openclaw/
 RUN uv sync --frozen --no-dev
 
 COPY . .

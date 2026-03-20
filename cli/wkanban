@@ -93,6 +93,22 @@ init() {
   docker_start
 }
 
+openclaw_via_uv() {
+  subcmd="$1"
+  shift
+  if ! command -v uv >/dev/null 2>&1; then
+    die "Command not found: uv. Install from https://docs.astral.sh/uv/ — required for ${subcmd}."
+  fi
+  root="${WAWA_KANBAN_ROOT:-}"
+  if [ -z "$root" ]; then
+    die "Set WAWA_KANBAN_ROOT to your wawa-kanban git clone, then run: wkanban ${subcmd} ..."
+  fi
+  if [ ! -d "$root" ]; then
+    die "WAWA_KANBAN_ROOT is not a directory: $root"
+  fi
+  (cd "$root" && uv run "$subcmd" "$@")
+}
+
 cmd="${1:-}"
 
 case "$cmd" in
@@ -102,8 +118,16 @@ case "$cmd" in
   uninstall)
     uninstall
     ;;
+  openclaw-agent-add)
+    shift
+    openclaw_via_uv openclaw-agent-add "$@"
+    ;;
+  openclaw-agent-remove)
+    shift
+    openclaw_via_uv openclaw-agent-remove "$@"
+    ;;
   *)
-    die "Usage: wkanban {init|uninstall}"
+    die "Usage: wkanban {init|uninstall|openclaw-agent-add|openclaw-agent-remove} ..."
     ;;
 esac
 
