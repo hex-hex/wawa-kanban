@@ -28,7 +28,8 @@ DEFAULT_FINISHED_DIR="${DEFAULT_PROJECT_DIR}/finished"
 
 DEFAULT_DESIGNERS_DIR="${AGENTS_DIR}/designers/default"
 DEFAULT_DEVELOPERS_DIR="${AGENTS_DIR}/developers/default"
-DEFAULT_VERIFYERS_DIR="${AGENTS_DIR}/verifiers/default"
+DEFAULT_VERIFIER_CODE_DIR="${AGENTS_DIR}/verifiers/code-verifier"
+DEFAULT_VERIFIER_GENERAL_DIR="${AGENTS_DIR}/verifiers/general-verifier"
 
 CONTAINER_NAME="wawa-kanban"
 IMAGE="wawaassistant/wawa-kanban:latest"
@@ -42,7 +43,8 @@ ensure_dirs() {
     "$DEFAULT_FINISHED_DIR" \
     "$DEFAULT_DESIGNERS_DIR" \
     "$DEFAULT_DEVELOPERS_DIR" \
-    "$DEFAULT_VERIFYERS_DIR"
+    "$DEFAULT_VERIFIER_CODE_DIR" \
+    "$DEFAULT_VERIFIER_GENERAL_DIR"
 }
 
 docker_start() {

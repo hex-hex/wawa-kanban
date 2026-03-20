@@ -66,8 +66,10 @@ workspace/
     │   └── {name}/
     │       └── *.md                  # → In Progress column
     └── verifiers/
-        └── {name}/
-            └── *.md                  # → Verifying column
+        ├── code-verifier/            # implementation tickets in Verifying
+        │   └── *.md
+        └── general-verifier/         # design / investigation tickets in Verifying
+            └── *.md
 ```
 
 **Column loading rules:**
@@ -77,7 +79,7 @@ workspace/
 | TODOS | projects/{project_id}/todos/ |
 | IN_PROGRESS | agents/developers/{name}/ + agents/designers/{name}/ (not from projects) |
 | WAITING_FOR_VERIFICATION | projects/{project_id}/waiting_for_verification/ |
-| VERIFYING | agents/verifiers/{name}/ only (not from projects) |
+| VERIFYING | agents/verifiers/code-verifier/ (implementation) and agents/verifiers/general-verifier/ (design, investigation, other) — not from projects |
 | FINISHED | projects/{project_id}/finished/ |
 
 Agent tickets show a badge (Position + Agent name, e.g. "Developer: default") derived from the ticket file path at render time.

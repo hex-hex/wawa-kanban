@@ -8,7 +8,14 @@ from typing import Any
 from wawa_openclaw.paths import openclaw_state_dir, repo_root, to_config_path
 
 ALLOWED_ROLES = frozenset(
-    {"designer", "developer", "verifier", "lead", "project-manager"}
+    {
+        "designer",
+        "developer",
+        "code-verifier",
+        "general-verifier",
+        "lead",
+        "project-manager",
+    }
 )
 
 _SLUG = re.compile(r"[^a-z0-9-]+")

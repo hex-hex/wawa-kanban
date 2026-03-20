@@ -49,7 +49,7 @@ The app listens at http://localhost:5020.
 - **Default workspace:** `fixtures/workspace` (contains `projects/` and `agents/`). Tests and local dev use it unless you override.
 - **Override:** set `WAWA_WORKSPACE_PATH` to a directory that includes `projects/` and `agents/` (same layout as the fixture).
 - **Tickets:** markdown files with frontmatter under each project’s column folders (`backlog/`, `implementing/`, etc.) and under agent folders for in-progress work.
-- **Agent instructions:** role docs live in this repo under `agents/` (e.g. designer, developer, verifier). They describe how agents cooperate on the same workspace.
+- **Agent instructions:** role docs live in this repo under `agents/` (e.g. designer, developer, code-verifier, general-verifier). They describe how agents cooperate on the same workspace.
 
 ### OpenClaw agent helpers
 
@@ -63,7 +63,7 @@ uv run openclaw-agent-remove "Alex" --purge --yes   # also delete workspace + ag
 
 - **Config:** `~/.openclaw/openclaw.json` (JSON5 read/write). Override with `OPENCLAW_CONFIG_PATH`.
 - **State / workspaces:** under `~/.openclaw/` unless `OPENCLAW_STATE_DIR` is set. Each add creates `workspace-wawa-<slug>/` and `agents/<slug>/agent/`, and appends one entry to `agents.list`.
-- **Templates:** `--role` is one of `designer`, `developer`, `verifier`, `lead`, `project-manager` (must match a folder under this repo’s `agents/`). Repo root defaults to the parent of `wawa_openclaw/`; override with `WAWA_KANBAN_ROOT`.
+- **Templates:** `--role` is one of `designer`, `developer`, `code-verifier`, `general-verifier`, `lead`, `project-manager` (must match a folder under this repo’s `agents/`). Repo root defaults to the parent of `wawa_openclaw/`; override with `WAWA_KANBAN_ROOT`.
 
 If you use the installed `wkanban` script instead of `cd` into the clone, set `WAWA_KANBAN_ROOT` and run e.g. `wkanban openclaw-agent-add "Alex" --role developer`.
 
