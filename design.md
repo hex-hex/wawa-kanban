@@ -37,7 +37,7 @@ wawa-kanban/
 │       ├── pages.py          # Page routes
 │       └── api.py            # API routes
 │
-├── workspace/                # Kanban data (env: WAWA_WORKSPACE_PATH, default: fixtures/workspace)
+├── workspace/                # Kanban data (env: WAWA_WORKSPACE_PATH; local default: fixtures/workspace; Docker image: /app/.workspace)
 │   ├── projects/             # Project tickets
 │   └── agents/               # Agent tickets (In Progress, Verifying)
 │

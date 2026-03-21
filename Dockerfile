@@ -31,14 +31,17 @@ RUN uv sync --frozen --no-dev
 COPY . .
 COPY --from=css-builder /build/static/uno.css static/uno.css
 
+# Seed runtime workspace at /app/.workspace (not fixtures/ in production use).
+RUN mkdir -p /app/.workspace && cp -a /app/fixtures/workspace/. /app/.workspace/
+
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash appuser && chown -R appuser:appuser /app
 USER appuser
 
 ENV PATH="/app/.venv/bin:$PATH"
+ENV WAWA_WORKSPACE_PATH=/app/.workspace
 
 EXPOSE 5020
 
-# Use bundled fixtures/workspace by default. Override:
-#   docker run -e WAWA_WORKSPACE_PATH=/data -v /host/workspace:/data ...
+# Override workspace: mount your own tree at /app/.workspace or set WAWA_WORKSPACE_PATH.
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "5020"]
