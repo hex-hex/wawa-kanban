@@ -21,7 +21,13 @@ docker build -t wawa-kanban .
 docker run -p 5020:5020 wawa-kanban
 ```
 
-The image uses Debian Bookworm (slim). Use the bundled `fixtures/workspace` by default. Override with your own workspace:
+The image uses Debian Bookworm (slim). Inside the container the app uses **`/app/.workspace`** by default (`WAWA_WORKSPACE_PATH=/app/.workspace`), seeded at build time from the repo template. Use your own workspace:
+
+```bash
+docker run -p 5020:5020 -v /path/to/your/workspace:/app/.workspace wawa-kanban
+```
+
+Or point at another mount path:
 
 ```bash
 docker run -p 5020:5020 -e WAWA_WORKSPACE_PATH=/data -v /path/to/workspace:/data wawa-kanban

@@ -21,3 +21,5 @@ node_modules/
 .claude/worktrees
 # Playwright browsers (project-local, single version)
 .playwright-browsers/
+# Optional local workspace (same layout as Docker /app/.workspace)
+.workspace/
