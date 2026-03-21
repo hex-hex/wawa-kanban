@@ -28,7 +28,8 @@ DEFAULT_FINISHED_DIR="${DEFAULT_PROJECT_DIR}/finished"
 
 DEFAULT_DESIGNERS_DIR="${AGENTS_DIR}/designers/default"
 DEFAULT_DEVELOPERS_DIR="${AGENTS_DIR}/developers/default"
-DEFAULT_VERIFIERS_DIR="${AGENTS_DIR}/verifiers/default"
+DEFAULT_VERIFIER_CODE_DIR="${AGENTS_DIR}/verifiers/code-verifier"
+DEFAULT_VERIFIER_GENERAL_DIR="${AGENTS_DIR}/verifiers/general-verifier"
 
 CONTAINER_NAME="wawa-kanban"
 IMAGE="wawaassistant/wawa-kanban:latest"
@@ -42,7 +43,8 @@ ensure_dirs() {
     "$DEFAULT_FINISHED_DIR" \
     "$DEFAULT_DESIGNERS_DIR" \
     "$DEFAULT_DEVELOPERS_DIR" \
-    "$DEFAULT_VERIFIERS_DIR"
+    "$DEFAULT_VERIFIER_CODE_DIR" \
+    "$DEFAULT_VERIFIER_GENERAL_DIR"
 }
 
 docker_start() {
@@ -93,6 +95,22 @@ init() {
   docker_start
 }
 
+openclaw_via_uv() {
+  subcmd="$1"
+  shift
+  if ! command -v uv >/dev/null 2>&1; then
+    die "Command not found: uv. Install from https://docs.astral.sh/uv/ — required for ${subcmd}."
+  fi
+  root="${WAWA_KANBAN_ROOT:-}"
+  if [ -z "$root" ]; then
+    die "Set WAWA_KANBAN_ROOT to your wawa-kanban git clone, then run: wkanban ${subcmd} ..."
+  fi
+  if [ ! -d "$root" ]; then
+    die "WAWA_KANBAN_ROOT is not a directory: $root"
+  fi
+  (cd "$root" && uv run "$subcmd" "$@")
+}
+
 cmd="${1:-}"
 
 case "$cmd" in
@@ -102,8 +120,16 @@ case "$cmd" in
   uninstall)
     uninstall
     ;;
+  openclaw-agent-add)
+    shift
+    openclaw_via_uv openclaw-agent-add "$@"
+    ;;
+  openclaw-agent-remove)
+    shift
+    openclaw_via_uv openclaw-agent-remove "$@"
+    ;;
   *)
-    die "Usage: wkanban {init|uninstall}"
+    die "Usage: wkanban {init|uninstall|openclaw-agent-add|openclaw-agent-remove} ..."
     ;;
 esac
 

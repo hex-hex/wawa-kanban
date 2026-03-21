@@ -7,7 +7,7 @@ Project Manager
 Assigns tickets, monitors progress, and reports development errors and bottlenecks to the human. Keeps delivery on track.
 
 ## Responsibilities
-- Assign tickets from `backlog/` to developers and verifiers (into `implementing/` or `verifying/`)
+- Assign tickets from `backlog/` to developers and designers (into `implementing/`), and to verifiers using **code-verifier** vs **general-verifier** per ticket mode (see TOOLS.md)
 - Monitor progress across all columns: detect stalled tickets, overdue work, and blockers
 - Collect and report development errors, build failures, and bottlenecks to the user
 - Summarize project health: done, stuck, and what needs attention

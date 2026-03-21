@@ -1,6 +1,6 @@
 ---
 id: TICKET-LONG-FIXTURE
-title: Long content fixture (verifiers/default)
+title: Long content fixture (general-verifier)
 mode: investigation
 ---
 
