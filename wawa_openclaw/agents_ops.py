@@ -120,3 +120,26 @@ def purge_agent_paths(agent_id: str, state: Path | None = None) -> None:
         shutil.rmtree(workspace)
     if agent_tree.is_dir():
         shutil.rmtree(agent_tree)
+
+
+def find_wawa_agents(cfg: dict[str, Any], wawa_workspace_dir: Path) -> list[str]:
+    """Return agent IDs that pass both cross-validation criteria:
+    1. id starts with 'wawa-'
+    2. workspace path is under wawa_workspace_dir
+    """
+    wawa_workspace_dir = wawa_workspace_dir.expanduser().resolve()
+    result = []
+    for agent in cfg.get("agents", {}).get("list", []):
+        if not isinstance(agent, dict):
+            continue
+        agent_id = agent.get("id", "")
+        if not agent_id.startswith("wawa-"):
+            continue
+        raw_ws = agent.get("workspace", "")
+        ws_path = Path(raw_ws).expanduser().resolve()
+        try:
+            ws_path.relative_to(wawa_workspace_dir)
+            result.append(agent_id)
+        except ValueError:
+            pass
+    return result
