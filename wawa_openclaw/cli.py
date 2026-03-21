@@ -6,6 +6,7 @@ from pathlib import Path
 
 from wawa_openclaw.agents_ops import (
     ALLOWED_ROLES,
+    find_wawa_agents,
     materialize_agent,
     merge_agent_into_config,
     plan_add_agent,
@@ -89,17 +90,19 @@ def main_add(argv: list[str] | None = None) -> int:
         state = args.state_dir or openclaw_state_dir()
         root = args.repo or repo_root()
 
+        name = args.name if args.name.startswith("wawa-") else f"wawa-{args.name}"
+
         cfg = load_config(config_path)
         ensure_agents_tree(cfg)
 
         entry, workspace, agent_dir, role_src = plan_add_agent(
-            name=args.name, role=args.role, root=root, state=state
+            name=name, role=args.role, root=root, state=state
         )
         merge_agent_into_config(cfg, entry)
         save_config(config_path, cfg)
         materialize_agent(workspace=workspace, agent_dir=agent_dir, role_src=role_src)
 
-        print(f"Added agent id={entry['id']!r}")
+        print(f"Added agent name={name!r} id={entry['id']!r}")
         print(f"  workspace: {workspace}")
         print(f"  agentDir:  {agent_dir}")
         print(f"  config:    {config_path}")
@@ -143,6 +146,120 @@ def main_remove(argv: list[str] | None = None) -> int:
         return 1
 
 
+def _parser_init_agents() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        description=(
+            "Register all default Wawa agents (one per role) into openclaw.json. "
+            "Each agent is named 'wawa-<role>'. Already-registered agents are skipped."
+        )
+    )
+    p.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to openclaw.json (default: OPENCLAW_CONFIG_PATH or ~/.openclaw/openclaw.json).",
+    )
+    p.add_argument(
+        "--state-dir",
+        type=Path,
+        default=None,
+        help="OpenClaw state dir (default: OPENCLAW_STATE_DIR or ~/.openclaw).",
+    )
+    p.add_argument(
+        "--repo",
+        type=Path,
+        default=None,
+        help="Wawa Kanban repo root (default: WAWA_KANBAN_ROOT or parent of wawa_openclaw).",
+    )
+    return p
+
+
+def main_init_agents(argv: list[str] | None = None) -> int:
+    args = _parser_init_agents().parse_args(argv)
+    config_path = args.config or openclaw_config_path()
+    state = args.state_dir or openclaw_state_dir()
+    root = args.repo or repo_root()
+
+    cfg = load_config(config_path)
+    ensure_agents_tree(cfg)
+
+    errors = 0
+    for role in sorted(ALLOWED_ROLES):
+        name = f"wawa-{role}"
+        try:
+            entry, workspace, agent_dir, role_src = plan_add_agent(
+                name=name, role=role, root=root, state=state
+            )
+            merge_agent_into_config(cfg, entry)
+            save_config(config_path, cfg)
+            materialize_agent(workspace=workspace, agent_dir=agent_dir, role_src=role_src)
+            print(f"  [added]   {name} (role={role})")
+        except ValueError as e:
+            msg = str(e)
+            if "already" in msg:
+                print(f"  [skipped] {name} (already registered)")
+            else:
+                print(f"  [error]   {name}: {msg}", file=sys.stderr)
+                errors += 1
+
+    print(f"Done. Config: {config_path}")
+    return 1 if errors else 0
+
+
+def _parser_uninstall_agents() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        description=(
+            "Remove all Wawa-managed agents from openclaw.json. "
+            "Only agents whose id starts with 'wawa-' AND whose workspace is under "
+            "the Wawa workspace directory are removed."
+        )
+    )
+    p.add_argument(
+        "--wawa-workspace",
+        type=Path,
+        default=Path.home() / ".wawa-kanban" / "workspace",
+        help="Wawa workspace root used to verify agent ownership (default: ~/.wawa-kanban/workspace).",
+    )
+    p.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to openclaw.json (default: OPENCLAW_CONFIG_PATH or ~/.openclaw/openclaw.json).",
+    )
+    p.add_argument(
+        "--state-dir",
+        type=Path,
+        default=None,
+        help="OpenClaw state dir (default: OPENCLAW_STATE_DIR or ~/.openclaw).",
+    )
+    return p
+
+
+def main_uninstall_agents(argv: list[str] | None = None) -> int:
+    args = _parser_uninstall_agents().parse_args(argv)
+    config_path = args.config or openclaw_config_path()
+    state = args.state_dir or openclaw_state_dir()
+
+    cfg = load_config(config_path)
+    if not cfg:
+        print("No openclaw.json found, nothing to clean up.")
+        return 0
+
+    agent_ids = find_wawa_agents(cfg, args.wawa_workspace)
+    if not agent_ids:
+        print("No Wawa-managed agents found in openclaw.json.")
+        return 0
+
+    for agent_id in agent_ids:
+        remove_agent_from_config(cfg, agent_id)
+        purge_agent_paths(agent_id, state=state)
+        print(f"  [removed] {agent_id}")
+
+    save_config(config_path, cfg)
+    print(f"Done. Removed {len(agent_ids)} agent(s) from {config_path}")
+    return 0
+
+
 def main() -> int:
-    print("Use openclaw-agent-add or openclaw-agent-remove.", file=sys.stderr)
+    print("Use openclaw-agent-add, openclaw-agent-remove, openclaw-init-agents, or openclaw-uninstall-agents.", file=sys.stderr)
     return 2
