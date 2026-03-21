@@ -5,6 +5,7 @@ node_modules
 .pytest_cache
 .playwright-browsers
 *.md
+!README.md
 .git
 .gitignore
 .env

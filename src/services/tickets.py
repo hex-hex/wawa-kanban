@@ -206,7 +206,8 @@ def _display_name(project_id: str) -> str:
 
 def _load_project(project_path: Path) -> Project | None:
     """Load a single project from workspace/projects/{project_id}/.
-    Verifying column also includes tickets from workspace/agents/verifiers/*."""
+    Verifying column also includes tickets from workspace/agents/verifiers/*
+    (e.g. code-verifier for implementation, general-verifier for design/investigation)."""
     project_id = project_path.name
     if project_id.startswith("."):
         return None
@@ -233,7 +234,7 @@ def _load_project(project_path: Path) -> Project | None:
                             tickets.append(t)
                             existing_ids.add(t["id"])
 
-    # Merge Verifying from agents/verifiers (only tickets belonging to this project)
+    # Merge Verifying from agents/verifiers/* (only tickets belonging to this project)
     verifiers_path = AGENTS_WORKSPACE_PATH / "verifiers"
     if verifiers_path.exists():
         for name_path in sorted(verifiers_path.iterdir()):
