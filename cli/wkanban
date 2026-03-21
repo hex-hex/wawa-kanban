@@ -80,6 +80,10 @@ uninstall() {
   log "Uninstalling..."
   docker_stop_remove
 
+  # Remove Wawa-managed agents from openclaw.json before deleting workspace.
+  log "Cleaning up agents from openclaw.json..."
+  openclaw_via_uv openclaw-uninstall-agents --wawa-workspace "$WORKSPACE_DIR" || true
+
   # Remove command links + installed script.
   rm -f "${LOCAL_BIN_DIR}/wkanban" >/dev/null 2>&1 || true
   rm -f "${BIN_DIR}/wkanban" >/dev/null 2>&1 || true
@@ -91,8 +95,9 @@ uninstall() {
 }
 
 init() {
-  # Do not perform docker/openclaw prerequisite checks here.
   docker_start
+  log "Registering default agents..."
+  openclaw_via_uv openclaw-init-agents
 }
 
 openclaw_via_uv() {
@@ -128,8 +133,16 @@ case "$cmd" in
     shift
     openclaw_via_uv openclaw-agent-remove "$@"
     ;;
+  openclaw-init-agents)
+    shift
+    openclaw_via_uv openclaw-init-agents "$@"
+    ;;
+  openclaw-uninstall-agents)
+    shift
+    openclaw_via_uv openclaw-uninstall-agents "$@"
+    ;;
   *)
-    die "Usage: wkanban {init|uninstall|openclaw-agent-add|openclaw-agent-remove} ..."
+    die "Usage: wkanban {init|uninstall|openclaw-agent-add|openclaw-agent-remove|openclaw-init-agents|openclaw-uninstall-agents} ..."
     ;;
 esac
 
