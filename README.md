@@ -51,21 +51,32 @@ The app listens at http://localhost:5020.
 - **Tickets:** markdown files with frontmatter under each project’s column folders (`backlog/`, `implementing/`, etc.) and under agent folders for in-progress work.
 - **Agent instructions:** role docs live in this repo under `agents/` (e.g. designer, developer, code-verifier, general-verifier). They describe how agents cooperate on the same workspace.
 
-### OpenClaw agent helpers
+### CLI: agents and projects
 
-From the repo (after `uv sync`), register or remove an **OpenClaw** agent backed by this project’s role templates under `agents/<role>/`:
+From the repo (after `uv sync`), the **`wkanban`** command groups subcommands (OpenClaw agents today; workspace projects are stubs):
+
+```bash
+uv run wkanban agent add "Alex" --role developer
+uv run wkanban agent remove "Alex"              # drop from openclaw.json only
+uv run wkanban agent remove "Alex" --purge --yes   # also delete workspace + agentDir
+
+uv run wkanban project list    # not implemented yet (placeholder)
+```
+
+Legacy entry points still work:
 
 ```bash
 uv run openclaw-agent-add "Alex" --role developer
-uv run openclaw-agent-remove "Alex"              # drop from openclaw.json only
-uv run openclaw-agent-remove "Alex" --purge --yes   # also delete workspace + agentDir
+uv run openclaw-agent-remove "Alex"
 ```
+
+#### OpenClaw agent helpers
 
 - **Config:** `~/.openclaw/openclaw.json` (JSON5 read/write). Override with `OPENCLAW_CONFIG_PATH`.
 - **State / workspaces:** under `~/.openclaw/` unless `OPENCLAW_STATE_DIR` is set. Each add creates `workspace-wawa-<slug>/` and `agents/<slug>/agent/`, and appends one entry to `agents.list`.
 - **Templates:** `--role` is one of `designer`, `developer`, `code-verifier`, `general-verifier`, `lead`, `project-manager` (must match a folder under this repo’s `agents/`). Repo root defaults to the parent of `wawa_openclaw/`; override with `WAWA_KANBAN_ROOT`.
 
-If you use the installed `wkanban` script instead of `cd` into the clone, set `WAWA_KANBAN_ROOT` and run e.g. `wkanban openclaw-agent-add "Alex" --role developer`.
+If you use the installed `wkanban` bootstrap script, set `WAWA_KANBAN_ROOT` to this git clone and run e.g. `wkanban agent add "Alex" --role developer`. The same script still accepts `wkanban openclaw-agent-add …` as an alias for `wkanban agent add …`.
 
 **Docker:** run the OpenClaw gateway container with the host OpenClaw directory mounted (adjust in-container user home if needed), for example `-v ~/.openclaw:/root/.openclaw`, so the new workspace paths stay on the host.
 

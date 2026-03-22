@@ -18,13 +18,8 @@ from wawa_openclaw.config_io import ensure_agents_tree, load_config, save_config
 from wawa_openclaw.paths import openclaw_config_path, openclaw_state_dir, repo_root
 
 
-def _parser_add() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
-        description=(
-            "Register a new OpenClaw agent: append to openclaw.json, create workspace and agentDir, "
-            "and copy role templates from this repo's agents/<role>/."
-        )
-    )
+def add_agent_add_arguments(p: argparse.ArgumentParser) -> None:
+    """Register OpenClaw agent-add CLI arguments on an existing parser (for nested wkanban CLI)."""
     p.add_argument("name", help="Display name; used to derive agent id (slug).")
     p.add_argument(
         "--role",
@@ -50,13 +45,21 @@ def _parser_add() -> argparse.ArgumentParser:
         default=None,
         help="Wawa Kanban repo root (default: WAWA_KANBAN_ROOT or parent of wawa_openclaw).",
     )
+
+
+def _parser_add() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        description=(
+            "Register a new OpenClaw agent: append to openclaw.json, create workspace and agentDir, "
+            "and copy role templates from this repo's agents/<role>/."
+        )
+    )
+    add_agent_add_arguments(p)
     return p
 
 
-def _parser_remove() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
-        description="Remove an agent created by openclaw-agent-add from openclaw.json (and optional disk purge)."
-    )
+def add_agent_remove_arguments(p: argparse.ArgumentParser) -> None:
+    """Register OpenClaw agent-remove CLI arguments on an existing parser (for nested wkanban CLI)."""
     p.add_argument("name", help="Same name as used for add; id is derived by slug.")
     p.add_argument(
         "--purge",
@@ -80,12 +83,19 @@ def _parser_remove() -> argparse.ArgumentParser:
         default=None,
         help="OpenClaw state dir (default: OPENCLAW_STATE_DIR or ~/.openclaw).",
     )
+
+
+def _parser_remove() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        description="Remove an agent created by openclaw-agent-add from openclaw.json (and optional disk purge)."
+    )
+    add_agent_remove_arguments(p)
     return p
 
 
-def main_add(argv: list[str] | None = None) -> int:
+def run_add(args: argparse.Namespace) -> int:
+    """Execute agent add from a parsed argparse Namespace (shared by main_add and wawa_cli)."""
     try:
-        args = _parser_add().parse_args(argv)
         config_path = args.config or openclaw_config_path()
         state = args.state_dir or openclaw_state_dir()
         root = args.repo or repo_root()
@@ -116,9 +126,14 @@ def main_add(argv: list[str] | None = None) -> int:
         return 1
 
 
-def main_remove(argv: list[str] | None = None) -> int:
+def main_add(argv: list[str] | None = None) -> int:
+    args = _parser_add().parse_args(argv)
+    return run_add(args)
+
+
+def run_remove(args: argparse.Namespace) -> int:
+    """Execute agent remove from a parsed argparse Namespace (shared by main_remove and wawa_cli)."""
     try:
-        args = _parser_remove().parse_args(argv)
         config_path = args.config or openclaw_config_path()
         state = args.state_dir or openclaw_state_dir()
         agent_id = slugify_agent_id(args.name)
@@ -144,6 +159,11 @@ def main_remove(argv: list[str] | None = None) -> int:
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
+
+
+def main_remove(argv: list[str] | None = None) -> int:
+    args = _parser_remove().parse_args(argv)
+    return run_remove(args)
 
 
 def _parser_init_agents() -> argparse.ArgumentParser:
@@ -261,5 +281,9 @@ def main_uninstall_agents(argv: list[str] | None = None) -> int:
 
 
 def main() -> int:
-    print("Use openclaw-agent-add, openclaw-agent-remove, openclaw-init-agents, or openclaw-uninstall-agents.", file=sys.stderr)
+    print(
+        "Use: wkanban agent add|remove, or openclaw-agent-add / openclaw-agent-remove / "
+        "openclaw-init-agents / openclaw-uninstall-agents.",
+        file=sys.stderr,
+    )
     return 2

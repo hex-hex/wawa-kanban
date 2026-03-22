@@ -100,20 +100,30 @@ init() {
   openclaw_via_uv openclaw-init-agents
 }
 
-openclaw_via_uv() {
-  subcmd="$1"
-  shift
+require_uv_and_repo() {
+  _ctx="$1"
   if ! command -v uv >/dev/null 2>&1; then
-    die "Command not found: uv. Install from https://docs.astral.sh/uv/ — required for ${subcmd}."
+    die "Command not found: uv. Install from https://docs.astral.sh/uv/ — required for ${_ctx}."
   fi
   root="${WAWA_KANBAN_ROOT:-}"
   if [ -z "$root" ]; then
-    die "Set WAWA_KANBAN_ROOT to your wawa-kanban git clone, then run: wkanban ${subcmd} ..."
+    die "Set WAWA_KANBAN_ROOT to your wawa-kanban git clone, then run: wkanban ${_ctx} ..."
   fi
   if [ ! -d "$root" ]; then
     die "WAWA_KANBAN_ROOT is not a directory: $root"
   fi
+}
+
+openclaw_via_uv() {
+  subcmd="$1"
+  shift
+  require_uv_and_repo "${subcmd}"
   (cd "$root" && uv run "$subcmd" "$@")
+}
+
+wkanban_py_via_uv() {
+  require_uv_and_repo "agent|project|…"
+  (cd "$root" && uv run wkanban "$@")
 }
 
 cmd="${1:-}"
@@ -125,13 +135,16 @@ case "$cmd" in
   uninstall)
     uninstall
     ;;
+  agent|project)
+    wkanban_py_via_uv "$@"
+    ;;
   openclaw-agent-add)
     shift
-    openclaw_via_uv openclaw-agent-add "$@"
+    wkanban_py_via_uv agent add "$@"
     ;;
   openclaw-agent-remove)
     shift
-    openclaw_via_uv openclaw-agent-remove "$@"
+    wkanban_py_via_uv agent remove "$@"
     ;;
   openclaw-init-agents)
     shift
@@ -142,7 +155,7 @@ case "$cmd" in
     openclaw_via_uv openclaw-uninstall-agents "$@"
     ;;
   *)
-    die "Usage: wkanban {init|uninstall|openclaw-agent-add|openclaw-agent-remove|openclaw-init-agents|openclaw-uninstall-agents} ..."
+    die "Usage: wkanban {init|uninstall|agent|project|openclaw-agent-add|openclaw-agent-remove|openclaw-init-agents|openclaw-uninstall-agents} ..."
     ;;
 esac
 

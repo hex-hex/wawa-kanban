@@ -17,6 +17,7 @@ dependencies = [
 ]
 
 [project.scripts]
+wkanban = "wawa_cli.main:main"
 openclaw-agent-add = "wawa_openclaw.cli:main_add"
 openclaw-agent-remove = "wawa_openclaw.cli:main_remove"
 openclaw-init-agents = "wawa_openclaw.cli:main_init_agents"
@@ -30,4 +31,4 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["wawa_openclaw"]
+packages = ["wawa_openclaw", "wawa_cli"]
