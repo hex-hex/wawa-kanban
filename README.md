@@ -111,4 +111,13 @@ uv sync --extra test
 uv run pytest
 ```
 
+Browser e2e (`tests/e2e/test_modal_open_close.py`) starts a temporary server on port **5022** by default so it does not collide with a dev app on **5021**. Override in either order (**CLI wins over env**):
+
+```bash
+uv run pytest tests/e2e/ --wawa-e2e-port=5030
+# or
+export WAWA_E2E_PORT=5030
+uv run pytest tests/e2e/
+```
+
 UI assertions belong in **e2e** tests (HTTP against the running app), not in unit tests that render a single component in isolation.

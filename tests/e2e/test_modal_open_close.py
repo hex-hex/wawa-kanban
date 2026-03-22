@@ -11,8 +11,27 @@ from pathlib import Path
 import httpx
 import pytest
 
-# Port for the browser test server
-MODAL_TEST_PORT = 5021
+_DEFAULT_E2E_PORT = 5022
+
+
+def _validate_bind_port(port: int, source: str) -> int:
+    if not (1 <= port <= 65535):
+        raise ValueError(f"{source} port out of range (1-65535): {port}")
+    return port
+
+
+def resolve_e2e_bind_port(config: pytest.Config) -> int:
+    """Port for Playwright e2e uvicorn: CLI --wawa-e2e-port, then WAWA_E2E_PORT, then default."""
+    cli_port = config.getoption("wawa_e2e_port")
+    if cli_port is not None:
+        return _validate_bind_port(cli_port, "--wawa-e2e-port")
+
+    raw = os.environ.get("WAWA_E2E_PORT", str(_DEFAULT_E2E_PORT)).strip()
+    try:
+        port = int(raw)
+    except ValueError as e:
+        raise ValueError(f"WAWA_E2E_PORT must be an integer, got {raw!r}") from e
+    return _validate_bind_port(port, "WAWA_E2E_PORT")
 
 # Project-local browser dir: one version, no pollution of system cache
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -136,19 +155,21 @@ def _ensure_playwright_chromium():
 
 
 @pytest.fixture(scope="module")
-def app_server():
+def app_server(request):
     """Start the ASGI app for the browser test."""
     import uvicorn
     from app import app
 
+    port = resolve_e2e_bind_port(request.config)
+
     def run():
-        uvicorn.run(app, host="127.0.0.1", port=MODAL_TEST_PORT, log_level="warning")
+        uvicorn.run(app, host="127.0.0.1", port=port, log_level="warning")
 
     thread = threading.Thread(target=run, daemon=True)
     thread.start()
-    if not _wait_for_port(MODAL_TEST_PORT):
-        raise RuntimeError(f"Server did not start on port {MODAL_TEST_PORT}")
-    yield f"http://127.0.0.1:{MODAL_TEST_PORT}"
+    if not _wait_for_port(port):
+        raise RuntimeError(f"Server did not start on port {port}")
+    yield f"http://127.0.0.1:{port}"
 
 
 @pytest.mark.asyncio

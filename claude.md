@@ -37,6 +37,7 @@ npm run dev:css
 ## Testing
 
 - Any test that asserts page/UI display (what the user sees) must be an **e2e test** (HTTP request against the app), not a unit test (e.g. rendering a single component to string).
+- Browser e2e in `tests/e2e/test_modal_open_close.py` binds **5022** by default; override with `pytest --wawa-e2e-port=PORT` (highest priority) or `WAWA_E2E_PORT`, so **5021** can stay free for local debugging.
 
 ## Page Layout
 
