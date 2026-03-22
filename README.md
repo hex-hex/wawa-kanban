@@ -59,8 +59,11 @@ From the repo (after `uv sync`), the **`wkanban`** command groups subcommands (O
 uv run wkanban agent add "Alex" --role developer
 uv run wkanban agent remove "Alex"              # drop from openclaw.json only
 uv run wkanban agent remove "Alex" --purge --yes   # also delete workspace + agentDir
+uv run wkanban agent list                       # ids from openclaw.json agents.list (sorted)
+uv run wkanban agent list --long                # id<TAB>name
+uv run wkanban agent list --wawa-only --wawa-workspace ~/.wawa-kanban/workspace   # Wawa-managed only
 
-uv run wkanban project list    # not implemented yet (placeholder)
+uv run wkanban project list    # names under workspace projects/ (see --workspace / WAWA_WORKSPACE_PATH)
 ```
 
 Legacy entry points still work:
