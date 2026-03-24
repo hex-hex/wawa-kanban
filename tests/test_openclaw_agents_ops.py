@@ -96,7 +96,7 @@ _AGENT_JSON_J2_WITH_HEARTBEAT = """{
   "name": {{ agent_display_name | tojson }},
   "workspace": {{ workspace_path | tojson }},
   "agentDir": {{ agent_dir_path | tojson }},
-  "heartbeat": {"intervalSeconds": 42},
+  "heartbeat": {"every": "42s", "target": "none"},
   "tag": {{ kanban_slot | tojson }}
 }
 """
@@ -121,7 +121,7 @@ def test_render_agent_list_entry_from_agent_json_j2(tmp_path: Path) -> None:
         "name": "wawa-X",
         "workspace": to_config_path(ws),
         "agentDir": to_config_path(ad),
-        "heartbeat": {"intervalSeconds": 42},
+        "heartbeat": {"every": "42s", "target": "none"},
         "tag": "x",
     }
     assert entry == expected

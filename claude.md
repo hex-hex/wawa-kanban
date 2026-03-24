@@ -26,7 +26,7 @@ npm run dev:css
 - `uno.config.ts` - UnoCSS configuration
 - `scripts/build-css.mjs` - Extracts cls/class from Python files and generates CSS
 - `static/uno.css` - Generated CSS file (referenced by app.py)
-- `agents/<role>/` - OpenClaw role templates: **`*.md.j2`** (Jinja2) is rendered to **`*.md`** in the agent’s OpenClaw workspace when registering an agent (`wawa_openclaw.agents_ops.materialize_agent`). **`agent.json.j2`** is the full **`agents.list[]`** entry: use **`| tojson`** for strings and context **`workspace_path`**, **`agent_dir_path`**, etc. (`render_agent_list_entry`); **not** copied into the workspace. Other non-`.md.j2` files are copied as-is into the workspace.
+- `agents/<role>/` - OpenClaw role templates: **`*.md.j2`** (Jinja2) is rendered to **`*.md`** in the agent’s OpenClaw workspace when registering an agent (`wawa_openclaw.agents_ops.materialize_agent`). **`agent.json.j2`** is the full **`agents.list[]`** entry: use **`| tojson`** for strings and context **`workspace_path`**, **`agent_dir_path`**, etc. (`render_agent_list_entry`); **not** copied into the workspace. Per current [OpenClaw heartbeat docs](https://docs.openclaw.ai/gateway/heartbeat), use **`heartbeat.every`** (duration string, e.g. `"1m"`, `"30m"`, `"0m"` to disable) and **`heartbeat.target`** (`"none"` | `"last"` | channel id), not legacy `intervalSeconds`. Other non-`.md.j2` files are copied as-is into the workspace.
 
 ## Coding Rules
 

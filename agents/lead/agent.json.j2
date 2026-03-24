@@ -4,6 +4,7 @@
   "workspace": {{ workspace_path | tojson }},
   "agentDir": {{ agent_dir_path | tojson }},
   "heartbeat": {
-    "intervalSeconds": 300
+    "every": "5m",
+    "target": "none"
   }
 }
