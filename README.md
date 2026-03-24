@@ -55,7 +55,7 @@ The app listens at **http://localhost:5020**.
 
 ### Workspace layout (what the UI reads)
 
-- **Fixture workspace:** `fixtures/workspace` is sample data for local runs and tests. It is **not** in the published Docker image (`.dockerignore` excludes `fixtures/`).
+- **Fixture workspace:** `fixtures/workspace` is sample data for local runs and tests. It is **not** in the published Docker image (`.dockerignore` excludes `fixtures/`). Recreate layout with `wkanban project add` / `wkanban agent add` (or mount your own tree).
 - **Default in a git checkout:** if `WAWA_WORKSPACE_PATH` is unset, the app defaults to `fixtures/workspace`.
 - **Production / Docker:** set `WAWA_WORKSPACE_PATH` to a directory that contains **`projects/`** and **`agents/`** (same layout as `~/.wawa-kanban/workspace` after init).
 
@@ -118,21 +118,25 @@ uv run openclaw-agent-remove "Alex"
 
 #### OpenClaw paths and config
 
-- **Fixture config (dev/tests only):** `fixtures/openclaw/openclaw.json` — not copied into your real `~/.openclaw`. Mount the host directory you actually use. See `fixtures/openclaw/README.md`. Do not commit secrets.
-- **Config file:** defaults to **`$OPENCLAW_CONFIG_PATH`** or under **`OPENCLAW_STATE_DIR`** (default `~/.openclaw`). JSON5 read/write.
-- **Per-agent state:** each successful **`agent add`** creates `workspace-wawa-<id>/` and `agents/<id>/agent/` under the OpenClaw state dir and appends **`agents.list`**.
-- **Repo root for templates:** defaults to the parent of `wawa_openclaw/`; override with **`WAWA_KANBAN_ROOT`**.
+- **Fixture config (dev/tests only):** `fixtures/openclaw/openclaw.json` — sample tree for local dev/tests. **Installers and the Docker image do not copy this into your real OpenClaw home.** Mount `~/.openclaw` (or set `OPENCLAW_STATE_DIR`) to the directory you actually use. See `fixtures/openclaw/README.md`. Do not commit secrets.
+- **Config file:** JSON5. Defaults to **`$OPENCLAW_CONFIG_PATH`** if set, otherwise **`$OPENCLAW_STATE_DIR/openclaw.json`**. Default `OPENCLAW_STATE_DIR` is `~/.openclaw`. Use **`OPENCLAW_STATE_DIR`** for a self-contained tree (config + agent state); **`OPENCLAW_CONFIG_PATH`** can point elsewhere.
+- **Per-agent state:** under `OPENCLAW_STATE_DIR`. Each **`agent add`** creates `workspace-wawa-<id>/` and `agents/<id>/agent/` and appends **`agents.list`**.
+- **Templates:** `--role` must match a folder under `agents/` (see roles above). Repo root defaults to the parent of `wawa_openclaw/`; override with **`WAWA_KANBAN_ROOT`**.
 
-**Docker:** the published image runs as **`appuser`** (home `/home/appuser`). `wkanban init` mounts `~/.openclaw` there. For an OpenClaw gateway container, mount the **same host directory** so agents and the Kanban app share one config tree.
+The installed **`wkanban`** script: **`init`** / **`uninstall`** need no clone or **`uv`**. For **`agent`**, **`project`**, or **`openclaw-*`** aliases, set **`WAWA_KANBAN_ROOT`** to a git clone and install **`uv`**. **`wkanban openclaw-agent-add …`** is an alias for **`wkanban agent add …`**.
+
+**Docker:** the image runs as **`appuser`** (home `/home/appuser`). `wkanban init` mounts `~/.openclaw` there. For an OpenClaw gateway, mount the **same host path** (e.g. `-v ~/.openclaw:/root/.openclaw` if the gateway runs as root).
 
 ### Running your own Docker image
+
+If you need to **build and run your own image** while developing (e.g. to verify the Dockerfile), from the repo root:
 
 ```bash
 docker build -t wawa-kanban .
 docker run -p 5020:5020 wawa-kanban
 ```
 
-The image starts with an **empty** tree at `/app/.workspace`. Mount a real workspace and set `WAWA_WORKSPACE_PATH` if needed:
+The runtime image is **Debian Bookworm** (slim Python base) with an **empty** workspace at `/app/.workspace` (`projects/` and `agents/` only). Mount your own workspace and set `WAWA_WORKSPACE_PATH` if needed:
 
 ```bash
 docker run -p 5020:5020 -e WAWA_WORKSPACE_PATH=/data -v /path/to/workspace:/data wawa-kanban
