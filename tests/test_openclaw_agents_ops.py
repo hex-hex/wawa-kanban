@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from wawa_openclaw.agents_ops import (
+    ROLES_DISALLOWED_FOR_MANUAL_ADD,
     build_agent_template_context,
     identity_display_name_from,
     kanban_slot_from_agent_id,
@@ -15,6 +16,7 @@ from wawa_openclaw.agents_ops import (
     plan_add_agent,
     remove_agent_from_config,
     render_agent_list_entry,
+    slugify_agent_id,
 )
 from wawa_openclaw.cli import run_add
 from wawa_openclaw.config_io import ensure_agents_tree, load_config, save_config
@@ -163,6 +165,20 @@ def test_plan_rejects_unknown_role(tmp_path: Path) -> None:
         plan_add_agent(name="a", role="not-a-role", root=tmp_path, state=tmp_path)
 
 
+@pytest.mark.parametrize("role", sorted(ROLES_DISALLOWED_FOR_MANUAL_ADD))
+def test_run_add_rejects_single_instance_roles(tmp_path: Path, role: str) -> None:
+    args = Namespace(
+        name="extra",
+        role=role,
+        config=tmp_path / "missing.json",
+        state_dir=tmp_path,
+        repo=tmp_path,
+        yes=True,
+        wawa_workspace=None,
+    )
+    assert run_add(args) == 1
+
+
 def test_kanban_slot_and_identity_display_name() -> None:
     assert kanban_slot_from_agent_id("wawa-alice") == "alice"
     assert kanban_slot_from_agent_id("naked-id") == "naked-id"
@@ -179,6 +195,29 @@ def test_build_agent_template_context_has_ticket_folder_for_developer() -> None:
     assert ctx["kanban_slot"] == "dev1"
     assert ctx["kanban_ticket_folder"] == "workspace/agents/developers/dev1/"
     assert ctx["kanban_type_folder"] == "developers"
+
+
+def test_identity_agent_call_name_default_slot_vs_custom() -> None:
+    ctx_default = build_agent_template_context(
+        agent_id=slugify_agent_id("wawa-designer"),
+        agent_display_name="wawa-designer",
+        role="designer",
+    )
+    assert ctx_default["identity_agent_call_name"] == "Default Designer"
+
+    ctx_pm = build_agent_template_context(
+        agent_id=slugify_agent_id("wawa-project-manager"),
+        agent_display_name="wawa-project-manager",
+        role="project-manager",
+    )
+    assert ctx_pm["identity_agent_call_name"] == "Default Project Manager"
+
+    ctx_custom = build_agent_template_context(
+        agent_id="wawa-alice",
+        agent_display_name="wawa-Alice",
+        role="designer",
+    )
+    assert ctx_custom["identity_agent_call_name"] == "Alice"
 
 
 def test_run_add_rejects_duplicate_agent_id(tmp_path: Path) -> None:

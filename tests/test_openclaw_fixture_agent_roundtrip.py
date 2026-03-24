@@ -13,7 +13,7 @@ from jinja2 import Environment
 
 from wawa_openclaw.agents_ops import (
     AGENT_JSON_J2,
-    ALLOWED_ROLES,
+    ROLES_ALLOWED_FOR_MANUAL_ADD,
     build_agent_template_context,
     remove_agent_from_config,
     slugify_agent_id,
@@ -134,11 +134,11 @@ def test_remove_strips_agent_nested_heartbeat_and_sandbox_with_list_entry() -> N
     assert cfg["agents"]["list"] == []
 
 
-@pytest.mark.parametrize("role", sorted(ALLOWED_ROLES))
+@pytest.mark.parametrize("role", sorted(ROLES_ALLOWED_FOR_MANUAL_ADD))
 def test_add_remove_roundtrip_matches_fixture_openclaw_snapshot_per_role(
     tmp_path: Path, role: str
 ) -> None:
-    """For every ``ALLOWED_ROLES`` entry: add agent, workspace matches rendered templates, remove restores config."""
+    """For every manually addable role: add agent, workspace matches rendered templates, remove restores config."""
     if not FIXTURE_OPENCLAW_JSON.is_file():
         pytest.skip("fixtures/openclaw/openclaw.json missing")
 

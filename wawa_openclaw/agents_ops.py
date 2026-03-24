@@ -25,6 +25,10 @@ ALLOWED_ROLES = frozenset(
     }
 )
 
+# Single-instance roles: only created by init (`wawa-<role>`), not via agent add.
+ROLES_DISALLOWED_FOR_MANUAL_ADD = frozenset({"lead", "project-manager"})
+ROLES_ALLOWED_FOR_MANUAL_ADD = ALLOWED_ROLES - ROLES_DISALLOWED_FOR_MANUAL_ADD
+
 # OpenClaw role -> Kanban workspace/agents/<plural>/<kanban_slot>/ (None = no ticket queue)
 KANBAN_PLURAL_BY_ROLE: dict[str, str | None] = {
     "developer": "developers",
@@ -70,9 +74,20 @@ def build_agent_template_context(
     agent_display_name: str,
     role: str,
 ) -> dict[str, Any]:
-    """Variables for ``*.md.j2`` when materializing an OpenClaw agent workspace."""
+    """Variables for ``*.md.j2`` when materializing an OpenClaw agent workspace.
+
+    ``identity_agent_call_name`` is ``Default <Role>`` when this instance is the default
+    slot for the role (``agent_id`` equals ``slugify_agent_id("wawa-" + role)``); otherwise
+    it matches ``identity_display_name`` (display name with a single leading ``wawa-`` stripped).
+    """
     kanban_slot = kanban_slot_from_agent_id(agent_id)
     identity_name = identity_display_name_from(agent_display_name)
+    default_slot_agent_id = slugify_agent_id(f"wawa-{role}")
+    if agent_id == default_slot_agent_id:
+        role_label = role.replace("-", " ").title()
+        identity_agent_call_name = f"Default {role_label}"
+    else:
+        identity_agent_call_name = identity_name
     plural = KANBAN_PLURAL_BY_ROLE.get(role)
     ticket_folder = (
         f"workspace/agents/{plural}/{kanban_slot}/" if plural else ""
@@ -81,6 +96,7 @@ def build_agent_template_context(
         "agent_id": agent_id,
         "agent_display_name": agent_display_name,
         "identity_display_name": identity_name,
+        "identity_agent_call_name": identity_agent_call_name,
         "kanban_slot": kanban_slot,
         "role": role,
         "kanban_agents_base": "workspace/agents",
