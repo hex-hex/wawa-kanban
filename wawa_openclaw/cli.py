@@ -6,6 +6,7 @@ from pathlib import Path
 
 from wawa_openclaw.agents_ops import (
     ALLOWED_ROLES,
+    PROTECTED_SINGLE_INSTANCE_AGENT_IDS,
     ROLES_ALLOWED_FOR_MANUAL_ADD,
     ROLES_DISALLOWED_FOR_MANUAL_ADD,
     agent_id_in_config,
@@ -228,6 +229,14 @@ def run_remove(args: argparse.Namespace) -> int:
         # Match run_add: same display name → same derived id (wawa- prefix when omitted).
         display_name = args.name if args.name.startswith("wawa-") else f"wawa-{args.name}"
         agent_id = slugify_agent_id(display_name)
+
+        if agent_id in PROTECTED_SINGLE_INSTANCE_AGENT_IDS:
+            print(
+                f"Error: Agent id {agent_id!r} cannot be removed; "
+                "Team Lead and Project Manager are fixed single-instance roles.",
+                file=sys.stderr,
+            )
+            return 1
 
         cfg = load_config(config_path)
         ensure_agents_tree(cfg)

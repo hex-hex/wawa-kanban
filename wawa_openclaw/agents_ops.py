@@ -51,6 +51,12 @@ def slugify_agent_id(name: str) -> str:
     return s
 
 
+# Init registers one agent per role as ``wawa-<role>``; these ids cannot be removed via agent remove.
+PROTECTED_SINGLE_INSTANCE_AGENT_IDS = frozenset(
+    slugify_agent_id(f"wawa-{r}") for r in ROLES_DISALLOWED_FOR_MANUAL_ADD
+)
+
+
 def kanban_slot_from_agent_id(agent_id: str) -> str:
     """Directory name under workspace/agents/<plural>/ (no wawa- prefix)."""
     if agent_id.startswith("wawa-"):

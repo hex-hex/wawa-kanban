@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from wawa_openclaw.agents_ops import (
+    PROTECTED_SINGLE_INSTANCE_AGENT_IDS,
     ROLES_DISALLOWED_FOR_MANUAL_ADD,
     build_agent_template_context,
     identity_display_name_from,
@@ -18,7 +19,7 @@ from wawa_openclaw.agents_ops import (
     render_agent_list_entry,
     slugify_agent_id,
 )
-from wawa_openclaw.cli import run_add
+from wawa_openclaw.cli import run_add, run_remove
 from wawa_openclaw.config_io import ensure_agents_tree, load_config, save_config
 from wawa_openclaw.paths import to_config_path
 
@@ -177,6 +178,25 @@ def test_run_add_rejects_single_instance_roles(tmp_path: Path, role: str) -> Non
         wawa_workspace=None,
     )
     assert run_add(args) == 1
+
+
+@pytest.mark.parametrize(
+    "name",
+    ("lead", "wawa-lead", "project-manager", "wawa-project-manager"),
+)
+def test_run_remove_rejects_protected_single_instance_agents(tmp_path: Path, name: str) -> None:
+    args = Namespace(
+        name=name,
+        purge=False,
+        yes=True,
+        config=tmp_path / "missing.json",
+        state_dir=tmp_path,
+    )
+    assert run_remove(args) == 1
+
+
+def test_protected_single_instance_agent_ids_match_init_defaults() -> None:
+    assert PROTECTED_SINGLE_INSTANCE_AGENT_IDS == frozenset({"wawa-lead", "wawa-project-manager"})
 
 
 def test_kanban_slot_and_identity_display_name() -> None:
