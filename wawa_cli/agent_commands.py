@@ -7,7 +7,13 @@ from pathlib import Path
 from typing import Any
 
 from wawa_cli.workspace_paths import ensure_init_agent_slot_dirs, workspace_base
-from wawa_openclaw.agents_ops import find_wawa_agents
+from wawa_openclaw.agents_ops import (
+    ALLOWED_ROLES,
+    ensure_kanban_slot_dir,
+    find_wawa_agents,
+    kanban_slot_from_agent_id,
+    slugify_agent_id,
+)
 from wawa_openclaw.cli import run_init_agents
 from wawa_openclaw.config_io import ensure_agents_tree, load_config
 from wawa_openclaw.paths import openclaw_config_path
@@ -38,7 +44,14 @@ def cmd_agent_add_default(
         print(f"{_PREFIX}Workspace not found: {root}", file=sys.stderr)
         return 1
     ensure_init_agent_slot_dirs(root)
-    return run_init_agents(config=config, state_dir=state_dir, repo=repo)
+    rc = run_init_agents(config=config, state_dir=state_dir, repo=repo, yes=True)
+    if rc != 0:
+        return rc
+    for role in sorted(ALLOWED_ROLES):
+        agent_id = slugify_agent_id(f"wawa-{role}")
+        slot = kanban_slot_from_agent_id(agent_id)
+        ensure_kanban_slot_dir(root, role, slot)
+    return 0
 
 
 def cmd_agent_list(

@@ -2,13 +2,13 @@
 
 ## My folder
 
-By default this agent is named **Default Developer** and uses:
+This agent uses display name **{{ identity_display_name }}** and uses:
 
-- Ticket folder: `workspace/agents/developers/default/`
+- Ticket folder: `workspace/agents/developers/{{ kanban_slot }}/`
 
 If the agent name is customized, use:
 
-- Ticket folder: `workspace/agents/developers/{name}/`
+- Ticket folder: `workspace/agents/developers/{{ kanban_slot }}/`
 
 In all cases:
 
@@ -20,7 +20,7 @@ In all cases:
 Move the ticket file to the **same project’s** `waiting_for_verification/` folder:
 
 - **Path:** `workspace/projects/{project_id}/waiting_for_verification/`
-- **project_id** comes from the ticket filename: first part before the first dot-separated `implementation` or `design` or `investigation`.  
+- **project_id** comes from the ticket filename: first part before the first dot-separated mode token (`implementation`, `design`, `websearch`, or `codesearch`).  
   Example: `wawa.proj.default.implementation.fix-login-bug.md` → project_id is `wawa.proj.default` → move to `workspace/projects/wawa.proj.default/waiting_for_verification/`.
 
 Keep the filename unchanged when moving. Do not move until tests pass and you have appended the implementation summary to the ticket file.

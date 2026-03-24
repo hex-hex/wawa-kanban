@@ -1,7 +1,7 @@
 ---
 id: TICKET-006
 title: Optimize database queries
-mode: investigation
+mode: codesearch
 ---
 
 # Optimize database queries

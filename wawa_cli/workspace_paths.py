@@ -28,6 +28,7 @@ def projects_dir(workspace_root: Path) -> Path:
 _INIT_AGENT_SLOT_PARTS: tuple[tuple[str, str], ...] = (
     ("designers", "default"),
     ("developers", "default"),
+    ("info-officers", "default"),
     ("code-verifiers", "default"),
     ("general-verifiers", "default"),
 )

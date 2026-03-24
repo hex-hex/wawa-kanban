@@ -10,6 +10,13 @@ import pytest
 from wawa_cli import project_commands
 
 
+class _FakeTTYStdin(io.StringIO):
+    """``StringIO`` that reports a TTY so interactive prompts run under pytest."""
+
+    def isatty(self) -> bool:
+        return True
+
+
 def test_project_archive_stub_exit_code(capsys):
     from wawa_cli.main import main
 
@@ -94,16 +101,16 @@ def test_project_add_accepts_full_id(tmp_path, capsys):
     assert (ws / "projects" / "wawa.proj.custom-id" / "todos").is_dir()
 
 
-def test_project_add_idempotent_second_call(tmp_path, capsys):
+def test_project_add_duplicate_rejects_second_call(tmp_path, capsys):
     from wawa_cli.main import main
 
     ws = tmp_path / "ws"
     ws.mkdir()
     argv = ["project", "add", "dup", "--workspace", str(ws), "-y"]
     assert main(argv) == 0
-    assert main(argv) == 0
-    out = capsys.readouterr().out
-    assert "skipped" in out
+    assert main(argv) == 1
+    err = capsys.readouterr().err
+    assert "duplicate" in err.lower() or "Refusing" in err
 
 
 def test_project_add_decline_prompt(tmp_path, capsys, monkeypatch):
@@ -111,18 +118,18 @@ def test_project_add_decline_prompt(tmp_path, capsys, monkeypatch):
 
     ws = tmp_path / "ws"
     ws.mkdir()
-    monkeypatch.setattr(sys, "stdin", io.StringIO("n\n"))
+    monkeypatch.setattr(sys, "stdin", _FakeTTYStdin("n\n"))
     assert main(["project", "add", "nope", "--workspace", str(ws)]) == 1
     assert "Aborted." in capsys.readouterr().err
     assert not (ws / "projects").exists()
 
 
-def test_project_add_confirm_prompt(tmp_path, capsys, monkeypatch):
+def test_project_add_confirm_prompt_default_y(tmp_path, capsys, monkeypatch):
     from wawa_cli.main import main
 
     ws = tmp_path / "ws"
     ws.mkdir()
-    monkeypatch.setattr(sys, "stdin", io.StringIO("y\n"))
+    monkeypatch.setattr(sys, "stdin", _FakeTTYStdin("\n"))
     assert main(["project", "add", "yes-proj", "--workspace", str(ws)]) == 0
     assert (ws / "projects" / "wawa.proj.yes-proj").is_dir()
 
@@ -206,6 +213,8 @@ def test_agent_add_default_creates_slot_dirs(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(agent_commands, "run_init_agents", fake_init)
     assert main(["agent", "add-default", "--workspace", str(ws)]) == 0
     assert (ws / "agents" / "designers" / "default").is_dir()
+    assert (ws / "agents" / "developers" / "default").is_dir()
+    assert (ws / "agents" / "info-officers" / "default").is_dir()
     assert (ws / "agents" / "code-verifiers" / "default").is_dir()
     assert (ws / "agents" / "general-verifiers" / "default").is_dir()
 

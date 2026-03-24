@@ -49,6 +49,10 @@ wawa-kanban/
 └── claude.md
 ```
 
+## OpenClaw agent templates (CLI)
+
+Role documentation under `agents/<role>/` uses **`*.md.j2`** templates. When `wkanban agent add` / `openclaw-agent-add` (or batch init) materializes an agent, Jinja renders each `*.md.j2` to a sibling **`*.md`** in the OpenClaw workspace; paths in those docs use variables such as `kanban_slot` (agent id with one `wawa-` prefix stripped for filesystem layout under `workspace/agents/<plural>/`). Project example ids like `wawa.proj.default` are not agent slots and stay literal in templates.
+
 ## Workspace Structure
 
 ```
@@ -65,12 +69,15 @@ workspace/
     │       └── *.md                  # → In Progress column
     ├── designers/
     │   └── {name}/
-    │       └── *.md                  # → In Progress column
+    │       └── *.md                  # → In Progress column (design mode)
+    ├── info-officers/
+    │   └── {name}/
+    │       └── *.md                  # → In Progress column (websearch mode)
     ├── code-verifiers/               # plural top-level type (like developers/)
-    │   └── {name}/                   # e.g. default — implementation tickets → Verifying
+    │   └── {name}/                   # e.g. default — implementation / codesearch → Verifying
     │       └── *.md
     └── general-verifiers/
-        └── {name}/                   # e.g. default — design / investigation → Verifying
+        └── {name}/                   # e.g. default — design / websearch → Verifying
             └── *.md
 ```
 
@@ -79,12 +86,12 @@ workspace/
 | Column | Source |
 |--------|--------|
 | TODOS | projects/{project_id}/todos/ |
-| IN_PROGRESS | agents/developers/{name}/ + agents/designers/{name}/ (not from projects) |
+| IN_PROGRESS | agents/developers/{name}/ + agents/designers/{name}/ + agents/info-officers/{name}/ (not from projects); ticket **mode** must match the slot (see `src/services/tickets.py`) |
 | WAITING_FOR_VERIFICATION | projects/{project_id}/waiting_for_verification/ |
-| VERIFYING | agents/code-verifiers/{name}/ (implementation) and agents/general-verifiers/{name}/ (design, investigation, other) — not from projects |
+| VERIFYING | agents/code-verifiers/{name}/ (implementation, codesearch) and agents/general-verifiers/{name}/ (design, websearch) — not from projects; mismatched mode is omitted from the board |
 | FINISHED | projects/{project_id}/finished/ |
 
-Agent tickets show a badge (Position + Agent name, e.g. "Developer: default") derived from the ticket file path at render time.
+Agent tickets show a badge (Position + Agent name, e.g. "Developer: default", "Info officer: default") derived from the ticket file path at render time.
 
 ## Data Structure
 
@@ -99,7 +106,7 @@ Plain dict, no DB. Fields come from frontmatter and file metadata:
     "project": str,      # parsed from filename (project_id)
     "description": str,  # markdown body
     "status": TicketStatus,
-    "mode": TaskMode,    # implementation / design / investigation
+    "mode": TaskMode,    # implementation / design / websearch / codesearch
     "locked": bool,      # True if .md.lock
     "created_at": str,   # ISO from file birthtime
     "updated_at": str,   # ISO from file mtime
@@ -115,7 +122,7 @@ Format: `{project_id}.{mode}.{slug}.md`
 | Part | Description |
 |------|-------------|
 | project_id | wawa.proj.{project_name} (e.g. wawa.proj.default) |
-| mode | implementation / design / investigation |
+| mode | implementation / design / websearch / codesearch |
 | slug | Lowercase, **hyphen-separated** phrase (no dots) |
 
 Example: `wawa.proj.default.implementation.setup-project-structure.md`
@@ -130,7 +137,7 @@ Ticket files can be moved (e.g. via `mv`) between `projects/` and `agents/` fold
 ---
 id: TICKET-001              # optional; fallback: filename stem
 title: Task name            # optional; fallback: filename stem
-mode: implementation        # implementation | design | investigation
+mode: implementation        # implementation | design | websearch | codesearch
 ---
 
 # Markdown body

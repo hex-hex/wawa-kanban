@@ -4,8 +4,9 @@ from enum import Enum
 
 class TaskMode(str, Enum):
     IMPLEMENTATION = "implementation"
-    INVESTIGATION = "investigation"
     DESIGN = "design"
+    WEBSEARCH = "websearch"
+    CODESEARCH = "codesearch"
 
 
 class TicketStatus(str, Enum):
@@ -19,6 +20,7 @@ class TicketStatus(str, Enum):
 class AgentPosition(str, Enum):
     DEVELOPER = "developer"
     DESIGNER = "designer"
+    INFO_OFFICER = "info_officer"
     VERIFIER = "verifier"
 
 

@@ -1,7 +1,7 @@
 ---
 id: TICKET-A03
 title: Tech spike for core feature
-mode: investigation
+mode: codesearch
 ---
 
 # Tech spike for core feature

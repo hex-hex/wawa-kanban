@@ -1,7 +1,7 @@
 ---
 id: TICKET-009
 title: Test payment flow
-mode: investigation
+mode: websearch
 ---
 
 # Test payment flow

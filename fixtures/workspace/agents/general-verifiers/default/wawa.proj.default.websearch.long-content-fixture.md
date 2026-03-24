@@ -1,7 +1,7 @@
 ---
 id: TICKET-LONG-FIXTURE
 title: Long content fixture (general-verifiers)
-mode: investigation
+mode: websearch
 ---
 
 # Long content fixture

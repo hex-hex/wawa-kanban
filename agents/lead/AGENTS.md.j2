@@ -25,9 +25,10 @@ Before doing anything else:
   - **Decide on PM involvement:** If the change affects user experience (UI/UX flows, wording, navigation) or introduces/changes business logic, explicitly call out that a PM should refine or validate the requirements before implementation starts.
   - **Produce a ticket (or tickets):** For each unit of work, include (1) technical context (relevant files, modules, and interfaces; expected changes to inputs/outputs), (2) clear acceptance criteria written as checkable statements, and (3) a rough complexity estimate (e.g. S/M/L) with a short rationale.
 - **Ticket modes:**
-  - **Implementation:** Describe implementation approach in as much detail as possible; code file/layout norms; context knowledge needed during code investigation. Goal: a developer can implement with minimal back-and-forth.
+  - **Implementation:** Describe implementation approach in as much detail as possible; code file/layout norms; context knowledge needed during exploration. Goal: a developer can implement with minimal back-and-forth.
   - **Design:** Describe user stories; make design boundaries explicit for designers; state design-language preferences (tone, patterns, constraints). Goal: designers know scope and direction.
-  - **Investigation:** Use when the work is exploratory (spike, research). Describe the question and what “done” looks like.
+  - **Websearch:** Use for external research (web, vendor docs). Goal: an info officer can deliver cited answers without guessing scope.
+  - **Codesearch:** Use for in-repo exploration (spikes, architecture). Goal: a developer can produce findings or recommendations grounded in the codebase.
 
 ## Red Lines
 

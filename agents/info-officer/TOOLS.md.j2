@@ -1,0 +1,28 @@
+# TOOLS.md — Info officer
+
+## My folder
+
+This agent uses display name **{{ identity_display_name }}** and uses:
+
+- Ticket folder: `workspace/agents/info-officers/{{ kanban_slot }}/`
+
+If the agent name is customized, use:
+
+- Ticket folder: `workspace/agents/info-officers/{{ kanban_slot }}/`
+
+## Ticket mode
+
+You only work on tickets whose filename includes **`websearch`** as the task mode segment, e.g.  
+`wawa.proj.default.websearch.payment-options.md`.
+
+**Codesearch** (in-repo exploration) belongs to **developers** — not this role.
+
+## When the ticket is done
+
+Move the ticket file to the **same project’s** `waiting_for_verification/` folder:
+
+- **Path:** `workspace/projects/{project_id}/waiting_for_verification/`
+- **project_id** comes from the ticket filename: the segment before the first dot-separated mode token (`implementation`, `design`, `websearch`, or `codesearch`).  
+  Example: `wawa.proj.default.websearch.payment-options.md` → `wawa.proj.default`.
+
+Keep the filename unchanged when moving. Append a concise summary and a **Sources** list to the ticket body before moving.

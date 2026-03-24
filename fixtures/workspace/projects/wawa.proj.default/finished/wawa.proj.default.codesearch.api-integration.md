@@ -1,7 +1,7 @@
 ---
 id: TICKET-005
 title: Research API integration
-mode: investigation
+mode: codesearch
 ---
 
 # Research API integration

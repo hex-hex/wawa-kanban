@@ -43,20 +43,14 @@ def _project_id_from_arg(name: str) -> str:
     return f"{_PROJECT_ID_PREFIX}{slug}"
 
 
-def _project_init_layout_complete(project_dir: Path) -> bool:
-    return project_dir.is_dir() and all(
-        (project_dir / sub).is_dir() for sub in _INIT_PROJECT_COLUMN_DIRS
-    )
-
-
 def _confirm_create(message: str, *, assume_yes: bool) -> bool:
     if assume_yes:
         return True
     try:
-        reply = input(f"{message} [y/N]: ").strip().lower()
+        reply = input(f"{message} [Y/n]: ").strip().lower()
     except EOFError:
         return False
-    return reply in ("y", "yes")
+    return reply in ("", "y", "yes")
 
 
 def cmd_project_add(
@@ -79,32 +73,29 @@ def cmd_project_add(
 
     pdir = projects_dir(root)
     target = pdir / project_id
-    if target.is_file():
-        print(f"{STUB_PREFIX}add: Path exists and is not a directory: {target}", file=sys.stderr)
+    if target.exists():
+        print(
+            f"{STUB_PREFIX}add: Project path already exists (duplicate): {target}. Refusing to create.",
+            file=sys.stderr,
+        )
         return 1
-    if target.is_dir():
-        if _project_init_layout_complete(target):
-            print(f"Project already present: {target} (skipped)")
-            return 0
-        pdir.mkdir(parents=True, exist_ok=True)
-        for sub in _INIT_PROJECT_COLUMN_DIRS:
-            (target / sub).mkdir(parents=True, exist_ok=True)
-        print(f"Updated project layout: {target}")
-        return 0
 
     cols = ", ".join(_INIT_PROJECT_COLUMN_DIRS)
     prompt = (
         f"Create project '{project_id}' under {pdir} with column directories ({cols}) "
         f"(same layout as wkanban init)?"
     )
+    if not yes and not sys.stdin.isatty():
+        print(
+            f"{STUB_PREFIX}add: stdin is not a TTY; pass --yes to create without a prompt.",
+            file=sys.stderr,
+        )
+        return 1
     if not _confirm_create(prompt, assume_yes=yes):
         print("Aborted.", file=sys.stderr)
         return 1
 
     pdir.mkdir(parents=True, exist_ok=True)
-    if target.exists():
-        print(f"{STUB_PREFIX}add: Project already exists: {target}", file=sys.stderr)
-        return 1
 
     # Mirror ``mkdir -p .../todos .../waiting_for_verification .../finished`` (init layout).
     for sub in _INIT_PROJECT_COLUMN_DIRS:
