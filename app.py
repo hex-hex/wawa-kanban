@@ -57,4 +57,4 @@ def post(ticket_id: str, description: str = ""):
 
 
 if __name__ == "__main__":
-    serve(port=5020)
+    serve(host="0.0.0.0", port=5020)

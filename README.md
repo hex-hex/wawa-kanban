@@ -125,7 +125,7 @@ uv run openclaw-agent-remove "Alex"
 
 The installed **`wkanban`** script: **`init`** / **`uninstall`** need no clone or **`uv`**. For **`agent`**, **`project`**, or **`openclaw-*`** aliases, set **`WAWA_KANBAN_ROOT`** to a git clone and install **`uv`**. **`wkanban openclaw-agent-add …`** is an alias for **`wkanban agent add …`**.
 
-**Docker:** the image runs as **`appuser`** (home `/home/appuser`). `wkanban init` mounts `~/.openclaw` there. For an OpenClaw gateway, mount the **same host path** (e.g. `-v ~/.openclaw:/root/.openclaw` if the gateway runs as root).
+**Docker:** the image entrypoint (**`docker-entrypoint.sh`**) starts as **root**, **`chown`s** `/app`, **`/home/appuser`**, and **`/workspace`** (when that mount exists) to **`PUID:PGID`**, then runs **`uvicorn`** via **`setpriv`** as that user. Defaults are **`PUID=1000`** / **`PGID=1000`**. The **`wkanban`** bootstrap passes **`PUID`/`PGID`** from **`id -u`** / **`id -g`** so files written on bind mounts (`~/.openclaw`, workspace) use the same numeric ids as your host user. For raw **`docker run`**, set them explicitly, e.g. **`-e PUID=$(id -u) -e PGID=$(id -g)`** (and keep **`HOME=/home/appuser`** if you mount OpenClaw at **`/home/appuser/.openclaw`**). For an OpenClaw gateway, mount the **same host `~/.openclaw`** into that container.
 
 ### Running your own Docker image
 
@@ -133,13 +133,15 @@ If you need to **build and run your own image** while developing (e.g. to verify
 
 ```bash
 docker build -t wawa-kanban .
-docker run -p 5020:5020 wawa-kanban
+docker run -p 0.0.0.0:5020:5020 -e PUID="$(id -u)" -e PGID="$(id -g)" wawa-kanban
 ```
 
 The runtime image is **Debian Bookworm** (slim Python base) with an **empty** workspace at `/app/.workspace` (`projects/` and `agents/` only). Mount your own workspace and set `WAWA_WORKSPACE_PATH` if needed:
 
 ```bash
-docker run -p 5020:5020 -e WAWA_WORKSPACE_PATH=/data -v /path/to/workspace:/data wawa-kanban
+docker run -p 0.0.0.0:5020:5020 \
+  -e PUID="$(id -u)" -e PGID="$(id -g)" \
+  -e WAWA_WORKSPACE_PATH=/data -v /path/to/workspace:/data wawa-kanban
 ```
 
 ### UI styles (UnoCSS)

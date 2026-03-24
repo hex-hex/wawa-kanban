@@ -23,18 +23,20 @@ CONTAINER_NAME="wawa-kanban"
 IMAGE="wawaassistant/wawa-kanban:latest"
 PORT="5020"
 
-# Must match the non-root user home in the Kanban image (see Dockerfile).
+# Must match appuser home in the Kanban image (see Dockerfile / docker-entrypoint.sh).
 CONTAINER_APP_HOME="/home/appuser"
 
 # Run a one-shot command in the Kanban image with the same mounts as the long-running app
 # (workspace + host OpenClaw dir). Used after the main container is removed (e.g. uninstall).
+# PUID/PGID align bind-mount ownership with the invoking host user (see docker-entrypoint.sh).
 ephemeral_kanban_run() {
   docker pull "$IMAGE" >/dev/null 2>&1 || true
   docker run --rm \
     -w /app \
     -e WAWA_WORKSPACE_PATH=/workspace \
     -e HOME="${CONTAINER_APP_HOME}" \
-    -u appuser \
+    -e "PUID=$(id -u)" \
+    -e "PGID=$(id -g)" \
     -v "${WORKSPACE_DIR}:/workspace" \
     -v "${HOME}/.openclaw:${CONTAINER_APP_HOME}/.openclaw" \
     "$IMAGE" \
@@ -56,12 +58,13 @@ docker_start() {
   docker run -d \
     --name "$CONTAINER_NAME" \
     --restart unless-stopped \
-    -p "${PORT}:${PORT}" \
+    -p "0.0.0.0:${PORT}:${PORT}" \
     -e "WAWA_WORKSPACE_PATH=/workspace" \
     -e "HOME=${CONTAINER_APP_HOME}" \
+    -e "PUID=$(id -u)" \
+    -e "PGID=$(id -g)" \
     -v "${WORKSPACE_DIR}:/workspace" \
     -v "${HOME}/.openclaw:${CONTAINER_APP_HOME}/.openclaw" \
-    -u appuser \
     "$IMAGE" >/dev/null
 
   log "Done. Open http://localhost:${PORT}"
