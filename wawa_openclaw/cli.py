@@ -400,8 +400,8 @@ def main_uninstall_agents(argv: list[str] | None = None) -> int:
         return 0
 
     for agent_id in agent_ids:
-        remove_agent_from_config(cfg, agent_id)
-        purge_agent_paths(agent_id, state=state)
+        remove_agent_from_config(cfg, agent_id, allow_protected_removal=True)
+        purge_agent_paths(agent_id, state=state, allow_protected_removal=True)
         print(f"  [removed] {agent_id}")
 
     save_config(config_path, cfg)

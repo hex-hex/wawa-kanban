@@ -51,6 +51,12 @@ def slugify_agent_id(name: str) -> str:
     return s
 
 
+# Init registers one agent per role as ``wawa-<role>``; these ids cannot be removed via agent remove.
+PROTECTED_SINGLE_INSTANCE_AGENT_IDS = frozenset(
+    slugify_agent_id(f"wawa-{r}") for r in ROLES_DISALLOWED_FOR_MANUAL_ADD
+)
+
+
 def kanban_slot_from_agent_id(agent_id: str) -> str:
     """Directory name under workspace/agents/<plural>/ (no wawa- prefix)."""
     if agent_id.startswith("wawa-"):
@@ -270,8 +276,16 @@ def merge_agent_into_config(cfg: dict[str, Any], entry: dict[str, Any]) -> dict[
     return cfg
 
 
-def remove_agent_from_config(cfg: dict[str, Any], agent_id: str) -> dict[str, Any]:
+def remove_agent_from_config(
+    cfg: dict[str, Any],
+    agent_id: str,
+    *,
+    allow_protected_removal: bool = False,
+) -> dict[str, Any]:
     """Remove agent from ``agents.list``, strip matching ``bindings``, and drop related channel accounts.
+
+    ``wawa-lead`` and ``wawa-project-manager`` cannot be removed unless ``allow_protected_removal=True``
+    (Wawa bulk uninstall only).
 
     Channel cleanup (OpenClaw-style):
     - For each removed binding with ``match.channel`` + ``match.accountId``, delete
@@ -282,6 +296,15 @@ def remove_agent_from_config(cfg: dict[str, Any], agent_id: str) -> dict[str, An
     lst = cfg["agents"]["list"]
     if not any(isinstance(a, dict) and a.get("id") == agent_id for a in lst):
         raise ValueError(f"No agent with id {agent_id!r} in agents.list")
+
+    if (
+        agent_id in PROTECTED_SINGLE_INSTANCE_AGENT_IDS
+        and not allow_protected_removal
+    ):
+        raise ValueError(
+            f"Agent id {agent_id!r} cannot be removed individually; "
+            "use Wawa bulk agent uninstall to remove all Wawa-managed agents at once."
+        )
 
     accounts_to_drop: list[tuple[str, str]] = []
     bindings = cfg.get("bindings")
@@ -318,7 +341,20 @@ def remove_agent_from_config(cfg: dict[str, Any], agent_id: str) -> dict[str, An
     return cfg
 
 
-def purge_agent_paths(agent_id: str, state: Path | None = None) -> None:
+def purge_agent_paths(
+    agent_id: str,
+    state: Path | None = None,
+    *,
+    allow_protected_removal: bool = False,
+) -> None:
+    if (
+        agent_id in PROTECTED_SINGLE_INSTANCE_AGENT_IDS
+        and not allow_protected_removal
+    ):
+        raise ValueError(
+            f"Agent id {agent_id!r} workspace/agent dirs cannot be purged individually; "
+            "use Wawa bulk agent uninstall."
+        )
     state = state or openclaw_state_dir()
     workspace = state / f"workspace-wawa-{agent_id}"
     agent_tree = state / "agents" / agent_id

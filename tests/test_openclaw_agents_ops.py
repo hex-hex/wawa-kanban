@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from wawa_openclaw.agents_ops import (
+    PROTECTED_SINGLE_INSTANCE_AGENT_IDS,
     ROLES_DISALLOWED_FOR_MANUAL_ADD,
     build_agent_template_context,
     identity_display_name_from,
@@ -14,11 +15,12 @@ from wawa_openclaw.agents_ops import (
     materialize_agent,
     merge_agent_into_config,
     plan_add_agent,
+    purge_agent_paths,
     remove_agent_from_config,
     render_agent_list_entry,
     slugify_agent_id,
 )
-from wawa_openclaw.cli import run_add
+from wawa_openclaw.cli import main_uninstall_agents, run_add, run_remove
 from wawa_openclaw.config_io import ensure_agents_tree, load_config, save_config
 from wawa_openclaw.paths import to_config_path
 
@@ -177,6 +179,126 @@ def test_run_add_rejects_single_instance_roles(tmp_path: Path, role: str) -> Non
         wawa_workspace=None,
     )
     assert run_add(args) == 1
+
+
+@pytest.mark.parametrize(
+    "name",
+    ("lead", "wawa-lead", "project-manager", "wawa-project-manager"),
+)
+def test_run_remove_rejects_protected_single_instance_agents(tmp_path: Path, name: str) -> None:
+    display = name if name.startswith("wawa-") else f"wawa-{name}"
+    agent_id = slugify_agent_id(display)
+    cfg_path = tmp_path / "openclaw.json"
+    wawa_ws = tmp_path / "wawa-workspace"
+    slot_ws = wawa_ws / agent_id
+    slot_ws.mkdir(parents=True)
+    cfg: dict = {
+        "agents": {
+            "defaults": {},
+            "list": [
+                {
+                    "id": agent_id,
+                    "name": display,
+                    "workspace": str(slot_ws.resolve()),
+                    "agentDir": "/x",
+                },
+            ],
+        },
+        "bindings": [],
+    }
+    ensure_agents_tree(cfg)
+    save_config(cfg_path, cfg)
+    args = Namespace(
+        name=name,
+        purge=False,
+        yes=True,
+        config=cfg_path,
+        state_dir=tmp_path,
+    )
+    assert run_remove(args) == 1
+
+
+@pytest.mark.parametrize("agent_id", sorted(PROTECTED_SINGLE_INSTANCE_AGENT_IDS))
+def test_remove_agent_from_config_rejects_protected_without_flag(
+    tmp_path: Path, agent_id: str
+) -> None:
+    cfg: dict = {
+        "agents": {
+            "defaults": {},
+            "list": [{"id": agent_id, "name": agent_id, "workspace": "/w", "agentDir": "/a"}],
+        },
+        "bindings": [],
+    }
+    ensure_agents_tree(cfg)
+    with pytest.raises(ValueError, match="cannot be removed individually"):
+        remove_agent_from_config(cfg, agent_id)
+
+
+def test_remove_agent_from_config_allows_protected_when_uninstall_flag(tmp_path: Path) -> None:
+    cfg: dict = {
+        "agents": {
+            "defaults": {},
+            "list": [
+                {
+                    "id": "wawa-lead",
+                    "name": "wawa-lead",
+                    "workspace": "/w",
+                    "agentDir": "/a",
+                },
+            ],
+        },
+        "bindings": [],
+    }
+    ensure_agents_tree(cfg)
+    remove_agent_from_config(cfg, "wawa-lead", allow_protected_removal=True)
+    assert cfg["agents"]["list"] == []
+
+
+@pytest.mark.parametrize("agent_id", sorted(PROTECTED_SINGLE_INSTANCE_AGENT_IDS))
+def test_purge_agent_paths_rejects_protected_without_flag(tmp_path: Path, agent_id: str) -> None:
+    with pytest.raises(ValueError, match="cannot be purged individually"):
+        purge_agent_paths(agent_id, state=tmp_path)
+
+
+def test_uninstall_removes_protected_wawa_agent(tmp_path: Path) -> None:
+    wawa_ws = tmp_path / "wawa-workspace"
+    ws_lead = wawa_ws / "lead-ws"
+    ws_lead.mkdir(parents=True)
+    cfg_path = tmp_path / "openclaw.json"
+    cfg: dict = {
+        "agents": {
+            "defaults": {},
+            "list": [
+                {
+                    "id": "wawa-lead",
+                    "name": "wawa-lead",
+                    "workspace": str(ws_lead.resolve()),
+                    "agentDir": str(tmp_path / "oc" / "agents" / "wawa-lead" / "agent"),
+                },
+            ],
+        },
+        "bindings": [],
+    }
+    ensure_agents_tree(cfg)
+    save_config(cfg_path, cfg)
+    state = tmp_path / "openclaw"
+    rc = main_uninstall_agents(
+        [
+            "--config",
+            str(cfg_path),
+            "--state-dir",
+            str(state),
+            "--wawa-workspace",
+            str(wawa_ws),
+        ]
+    )
+    assert rc == 0
+    final = load_config(cfg_path)
+    assert final["agents"]["list"] == []
+
+
+def test_protected_single_instance_agent_ids_match_init_defaults() -> None:
+    assert PROTECTED_SINGLE_INSTANCE_AGENT_IDS == frozenset({"wawa-lead", "wawa-project-manager"})
 
 
 def test_kanban_slot_and_identity_display_name() -> None:
