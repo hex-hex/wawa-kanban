@@ -74,6 +74,20 @@ def test_save_load_json5_roundtrip(tmp_path: Path) -> None:
     assert '"id"' in text
 
 
+def test_save_config_backs_up_before_overwrite(tmp_path: Path) -> None:
+    p = tmp_path / "openclaw.json"
+    backup = tmp_path / "openclaw.json.bak.wawa"
+    p.write_text('{"before": true}', encoding="utf-8")
+    save_config(p, {"agents": {"defaults": {}, "list": []}})
+    assert backup.is_file()
+    assert backup.read_text(encoding="utf-8") == '{"before": true}'
+    assert '"before"' not in p.read_text(encoding="utf-8")
+    save_config(p, {"agents": {"defaults": {}, "list": [{"id": "x"}]}})
+    assert backup.read_text(encoding="utf-8").strip().startswith("{")
+    loaded = load_config(backup)
+    assert loaded.get("agents", {}).get("list") == []
+
+
 def test_plan_rejects_unknown_role(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="Unknown role"):
         plan_add_agent(name="a", role="not-a-role", root=tmp_path, state=tmp_path)

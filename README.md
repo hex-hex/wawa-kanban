@@ -120,6 +120,7 @@ uv run openclaw-agent-remove "Alex"
 
 - **Fixture config (dev/tests only):** `fixtures/openclaw/openclaw.json` — sample tree for local dev/tests. **Installers and the Docker image do not copy this into your real OpenClaw home.** Mount `~/.openclaw` (or set `OPENCLAW_STATE_DIR`) to the directory you actually use. See `fixtures/openclaw/README.md`. Do not commit secrets.
 - **Config file:** JSON5. Defaults to **`$OPENCLAW_CONFIG_PATH`** if set, otherwise **`$OPENCLAW_STATE_DIR/openclaw.json`**. Default `OPENCLAW_STATE_DIR` is `~/.openclaw`. Use **`OPENCLAW_STATE_DIR`** for a self-contained tree (config + agent state); **`OPENCLAW_CONFIG_PATH`** can point elsewhere.
+- **Before each save:** if the config file already exists, it is copied to **`<same-name>.bak.wawa`** (e.g. **`openclaw.json.bak.wawa`**) beside it, then overwritten — a rolling backup of the immediately previous file. Creating a new config from scratch skips backup.
 - **Per-agent state:** under `OPENCLAW_STATE_DIR`. Each **`agent add`** creates `workspace-wawa-<id>/` and `agents/<id>/agent/` and appends **`agents.list`**.
 - **Templates:** `--role` must match a folder under `agents/` (see roles above). Repo root defaults to the parent of `wawa_openclaw/`; override with **`WAWA_KANBAN_ROOT`**.
 

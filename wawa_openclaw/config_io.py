@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json5
+import shutil
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,9 @@ def load_config(path: Path) -> dict[str, Any]:
 
 def save_config(path: Path, data: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_file():
+        backup = path.parent / f"{path.name}.bak.wawa"
+        shutil.copy2(path, backup)
     out = json5.dumps(data, indent=2, quote_keys=True, trailing_commas=False)
     path.write_text(out + "\n", encoding="utf-8")
 
