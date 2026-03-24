@@ -76,7 +76,7 @@ The app listens at **http://localhost:5020**.
 
 Tickets are markdown files with YAML frontmatter; filename pattern includes project id and mode (see [design.md](design.md)).
 
-**Agent role docs** in this repo live under `agents/<role>/` as **`*.md.j2`** templates. When you register an agent, they are rendered to `*.md` in that agent’s OpenClaw workspace (paths/names get `kanban_slot` and related variables). Roles include `developer`, `designer`, `info-officer`, `code-verifier`, `general-verifier`, `lead`, and `project-manager`.
+**Agent role docs** in this repo live under `agents/<role>/`: **`*.md.j2`** → rendered to `*.md` in the OpenClaw workspace; **`agent.json.j2`** → full **`openclaw.json`** `agents.list[]` entry (Jinja + **`| tojson`**; use **`workspace_path`** / **`agent_dir_path`** in the template). Roles include `developer`, `designer`, `info-officer`, `code-verifier`, `general-verifier`, `lead`, and `project-manager`.
 
 ### CLI: `wkanban` (agents + projects)
 

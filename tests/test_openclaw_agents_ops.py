@@ -14,11 +14,22 @@ from wawa_openclaw.agents_ops import (
     merge_agent_into_config,
     plan_add_agent,
     remove_agent_from_config,
+    render_agent_list_entry,
 )
 from wawa_openclaw.cli import run_add
 from wawa_openclaw.config_io import ensure_agents_tree, load_config, save_config
+from wawa_openclaw.paths import to_config_path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+# Minimal agent.json.j2 (same shape as production). Expected merged entry is asserted explicitly.
+_MINIMAL_AGENT_JSON_J2 = """{
+  "id": {{ agent_id | tojson }},
+  "name": {{ agent_display_name | tojson }},
+  "workspace": {{ workspace_path | tojson }},
+  "agentDir": {{ agent_dir_path | tojson }}
+}
+"""
 
 
 def test_plan_add_materialize_roundtrip(tmp_path: Path) -> None:
@@ -26,13 +37,19 @@ def test_plan_add_materialize_roundtrip(tmp_path: Path) -> None:
     role_dir = repo / "agents" / "designer"
     role_dir.mkdir(parents=True)
     (role_dir / "AGENTS.md.j2").write_text("slot={{ kanban_slot }}", encoding="utf-8")
+    (role_dir / "agent.json.j2").write_text(_MINIMAL_AGENT_JSON_J2, encoding="utf-8")
 
     state = tmp_path / "openclaw"
     entry, workspace, agent_dir, role_src = plan_add_agent(
         name="wawa-my-agent", role="designer", root=repo, state=state
     )
-    assert entry["id"] == "wawa-my-agent"
-    assert "workspace-wawa-wawa-my-agent" in entry["workspace"]
+    expected_entry = {
+        "id": "wawa-my-agent",
+        "name": "wawa-my-agent",
+        "workspace": to_config_path(workspace),
+        "agentDir": to_config_path(agent_dir),
+    }
+    assert entry == expected_entry
 
     cfg: dict = {}
     ensure_agents_tree(cfg)
@@ -72,6 +89,59 @@ def test_save_load_json5_roundtrip(tmp_path: Path) -> None:
     assert loaded["agents"]["list"][0]["id"] == "main"
     text = p.read_text(encoding="utf-8")
     assert '"id"' in text
+
+
+_AGENT_JSON_J2_WITH_HEARTBEAT = """{
+  "id": {{ agent_id | tojson }},
+  "name": {{ agent_display_name | tojson }},
+  "workspace": {{ workspace_path | tojson }},
+  "agentDir": {{ agent_dir_path | tojson }},
+  "heartbeat": {"intervalSeconds": 42},
+  "tag": {{ kanban_slot | tojson }}
+}
+"""
+
+
+def test_render_agent_list_entry_from_agent_json_j2(tmp_path: Path) -> None:
+    role_dir = tmp_path / "role"
+    role_dir.mkdir()
+    (role_dir / "agent.json.j2").write_text(_AGENT_JSON_J2_WITH_HEARTBEAT, encoding="utf-8")
+    ws = tmp_path / "workspace-wawa-x"
+    ad = tmp_path / "agents" / "wawa-x" / "agent"
+    entry = render_agent_list_entry(
+        role_dir,
+        agent_id="wawa-x",
+        agent_display_name="wawa-X",
+        role="developer",
+        workspace=ws,
+        agent_dir=ad,
+    )
+    expected = {
+        "id": "wawa-x",
+        "name": "wawa-X",
+        "workspace": to_config_path(ws),
+        "agentDir": to_config_path(ad),
+        "heartbeat": {"intervalSeconds": 42},
+        "tag": "x",
+    }
+    assert entry == expected
+
+
+def test_render_agent_list_entry_invalid_json_raises(tmp_path: Path) -> None:
+    role_dir = tmp_path / "role"
+    role_dir.mkdir()
+    (role_dir / "agent.json.j2").write_text("{not json", encoding="utf-8")
+    ws = tmp_path / "w"
+    ad = tmp_path / "a"
+    with pytest.raises(ValueError, match="Invalid JSON"):
+        render_agent_list_entry(
+            role_dir,
+            agent_id="wawa-x",
+            agent_display_name="wawa-X",
+            role="developer",
+            workspace=ws,
+            agent_dir=ad,
+        )
 
 
 def test_save_config_backs_up_before_overwrite(tmp_path: Path) -> None:

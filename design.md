@@ -51,7 +51,7 @@ wawa-kanban/
 
 ## OpenClaw agent templates (CLI)
 
-Role documentation under `agents/<role>/` uses **`*.md.j2`** templates. When `wkanban agent add` / `openclaw-agent-add` (or batch init) materializes an agent, Jinja renders each `*.md.j2` to a sibling **`*.md`** in the OpenClaw workspace; paths in those docs use variables such as `kanban_slot` (agent id with one `wawa-` prefix stripped for filesystem layout under `workspace/agents/<plural>/`). Project example ids like `wawa.proj.default` are not agent slots and stay literal in templates.
+Role documentation under `agents/<role>/` uses **`*.md.j2`** templates. When `wkanban agent add` / `openclaw-agent-add` (or batch init) materializes an agent, Jinja renders each `*.md.j2` to a sibling **`*.md`** in the OpenClaw workspace; paths in those docs use variables such as `kanban_slot` (agent id with one `wawa-` prefix stripped for filesystem layout under `workspace/agents/<plural>/`). **`agent.json.j2`** defines the full **`agents.list[]`** entry (Jinja + **`| tojson`**); it is not written into the workspace. Project example ids like `wawa.proj.default` are not agent slots and stay literal in templates.
 
 ## Workspace Structure
 

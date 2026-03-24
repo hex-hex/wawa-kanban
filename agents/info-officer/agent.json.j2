@@ -1,0 +1,17 @@
+{
+  "id": {{ agent_id | tojson }},
+  "name": {{ agent_display_name | tojson }},
+  "workspace": {{ workspace_path | tojson }},
+  "agentDir": {{ agent_dir_path | tojson }},
+  "heartbeat": {
+    "intervalSeconds": 60
+  },
+  "sandbox": {
+    "mode": "off",
+    "workspaceAccess": "rw",
+    "browser": {
+      "enabled": true,
+      "headless": true
+    }
+  }
+}

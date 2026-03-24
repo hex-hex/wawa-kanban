@@ -11,7 +11,13 @@ from typing import Any
 import pytest
 from jinja2 import Environment
 
-from wawa_openclaw.agents_ops import ALLOWED_ROLES, build_agent_template_context, remove_agent_from_config, slugify_agent_id
+from wawa_openclaw.agents_ops import (
+    AGENT_JSON_J2,
+    ALLOWED_ROLES,
+    build_agent_template_context,
+    remove_agent_from_config,
+    slugify_agent_id,
+)
 from wawa_openclaw.cli import run_add, run_remove
 from wawa_openclaw.config_io import ensure_agents_tree, load_config, save_config
 
@@ -45,6 +51,8 @@ def _assert_workspace_matches_rendered_j2(
         rel = src.relative_to(role_src)
         if src.is_dir():
             assert (workspace / rel).is_dir(), f"Expected directory {rel}"
+            continue
+        if src.name == AGENT_JSON_J2:
             continue
         if src.name.endswith(".md.j2"):
             out_name = src.name[:-3]

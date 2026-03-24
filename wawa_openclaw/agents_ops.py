@@ -5,9 +5,13 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+import json5
 from jinja2 import Environment
 
 from wawa_openclaw.paths import openclaw_state_dir, repo_root, to_config_path
+
+# OpenClaw ``agents.list[]`` entry template (Jinja → JSON object). Required per role. Not copied into workspace.
+AGENT_JSON_J2 = "agent.json.j2"
 
 ALLOWED_ROLES = frozenset(
     {
@@ -85,14 +89,71 @@ def build_agent_template_context(
     }
 
 
+def build_agent_entry_context(
+    *,
+    agent_id: str,
+    agent_display_name: str,
+    role: str,
+    workspace: Path,
+    agent_dir: Path,
+) -> dict[str, Any]:
+    """Context for ``agent.json.j2`` (extends :func:`build_agent_template_context`)."""
+    ctx = build_agent_template_context(
+        agent_id=agent_id,
+        agent_display_name=agent_display_name,
+        role=role,
+    )
+    ctx["workspace_path"] = to_config_path(workspace)
+    ctx["agent_dir_path"] = to_config_path(agent_dir)
+    return ctx
+
+
+_jinja_env = Environment(autoescape=False)
+
+
+def render_agent_list_entry(
+    role_src: Path,
+    *,
+    agent_id: str,
+    agent_display_name: str,
+    role: str,
+    workspace: Path,
+    agent_dir: Path,
+) -> dict[str, Any]:
+    """Render ``agent.json.j2`` to one ``agents.list`` object (template is authoritative).
+
+    Every role under ``agents/<role>/`` must ship ``agent.json.j2``. Use ``| tojson`` for string
+    fields; context includes ``workspace_path`` and ``agent_dir_path`` from :func:`build_agent_entry_context`.
+    """
+    tpl = role_src / AGENT_JSON_J2
+    ctx = build_agent_entry_context(
+        agent_id=agent_id,
+        agent_display_name=agent_display_name,
+        role=role,
+        workspace=workspace,
+        agent_dir=agent_dir,
+    )
+    if not tpl.is_file():
+        raise ValueError(
+            f"Missing {AGENT_JSON_J2} in role template directory: {role_src}. "
+            "Add agent.json.j2 (Jinja → JSON object for agents.list[])."
+        )
+    text = tpl.read_text(encoding="utf-8")
+    rendered = _jinja_env.from_string(text).render(**ctx)
+    try:
+        data = json5.loads(rendered)
+    except Exception as e:
+        raise ValueError(f"Invalid JSON in {tpl}: {e}") from e
+    if not isinstance(data, dict):
+        raise ValueError(f"{tpl} must render to a JSON object, got {type(data).__name__}")
+    return dict(data)
+
+
 def agent_id_in_config(cfg: dict[str, Any], agent_id: str) -> bool:
     lst = cfg.get("agents", {}).get("list", [])
     if not isinstance(lst, list):
         return False
     return any(isinstance(a, dict) and a.get("id") == agent_id for a in lst)
-
-
-_jinja_env = Environment(autoescape=False)
 
 
 def _materialize_role_tree(
@@ -107,6 +168,8 @@ def _materialize_role_tree(
             continue
         rel_name = item.name
         if item.is_file():
+            if rel_name == AGENT_JSON_J2:
+                continue
             if rel_name.endswith(".md.j2"):
                 out_name = rel_name[:-3]  # strip .j2 -> .md
                 text = item.read_text(encoding="utf-8")
@@ -152,12 +215,14 @@ def plan_add_agent(
             "Remove the agent first or pick another name."
         )
 
-    entry: dict[str, Any] = {
-        "id": agent_id,
-        "name": name.strip(),
-        "workspace": to_config_path(workspace),
-        "agentDir": to_config_path(agent_dir),
-    }
+    entry = render_agent_list_entry(
+        role_src,
+        agent_id=agent_id,
+        agent_display_name=name.strip(),
+        role=role,
+        workspace=workspace,
+        agent_dir=agent_dir,
+    )
     return entry, workspace, agent_dir, role_src
 
 
