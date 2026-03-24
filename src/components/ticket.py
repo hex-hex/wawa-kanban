@@ -1,7 +1,18 @@
 from fasthtml.common import *
-from src.models.kanban import Ticket, TicketStatus
+from src.models.kanban import AgentPosition, Ticket, TicketStatus
 from src.components.common import CardCloseButton, CardBodyScroll
 from src.utils.markdown import md_to_safe_html
+
+_AGENT_POSITION_LABEL: dict[AgentPosition, str] = {
+    AgentPosition.DEVELOPER: "Developer",
+    AgentPosition.DESIGNER: "Designer",
+    AgentPosition.INFO_OFFICER: "Info officer",
+    AgentPosition.VERIFIER: "Verifier",
+}
+
+
+def _agent_position_label(position: AgentPosition) -> str:
+    return _AGENT_POSITION_LABEL.get(position, position.value.replace("_", " ").title())
 
 
 def _ticket_card(ticket: Ticket, editable: bool = False, agent_badge=None):
@@ -52,7 +63,7 @@ def UnderGoingTicket(ticket: Ticket, col_id):
     from src.services.tickets import get_agent_info
 
     info = get_agent_info(ticket["id"])
-    label = f"{info[0].value.title()}: {info[1]}" if info else None
+    label = f"{_agent_position_label(info[0])}: {info[1]}" if info else None
     if col_id == TicketStatus.IN_PROGRESS and label:
         agent_badge = Span(label, cls="text-xs px-2 py-0.5 rounded bg-blue-500/50 text-blue-300 border border-blue-500/40")
     elif col_id == TicketStatus.VERIFYING and label:

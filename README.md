@@ -13,7 +13,8 @@ Runs `install.sh` from this repo: installs the `wkanban` bootstrap script and ru
 Requirements:
 
 - `docker` available and Docker Engine reachable
-- `openclaw` on your `PATH`
+
+`wkanban init` starts the Kanban container with your workspace and **`~/.openclaw` mounted into the image** (at `/home/appuser/.openclaw`), then runs `uv run wkanban project add default` and `uv run wkanban agent add-default` **inside the container** so the host does not need Python or `uv`. OpenClaw config and agent state therefore live on the host under `~/.openclaw`, same as before.
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/install.sh | sh
@@ -46,8 +47,9 @@ The app listens at http://localhost:5020.
 
 ### Workspace and collaboration
 
-- **Default workspace:** `fixtures/workspace` (contains `projects/` and `agents/`). Tests and local dev use it unless you override.
-- **Override:** set `WAWA_WORKSPACE_PATH` to a directory that includes `projects/` and `agents/` (same layout as the fixture).
+- **Fixture workspace (dev/tests only):** `fixtures/workspace` is sample data for local runs and automated tests. It is **not** copied into the Kanban Docker image (`.dockerignore` excludes `fixtures/`). Recreate layout with `wkanban project add` / `wkanban agent add` (or mount your own tree).
+- **App default (no env):** when `WAWA_WORKSPACE_PATH` is unset, the app still defaults to `fixtures/workspace` for convenience in a git checkout.
+- **Override:** set `WAWA_WORKSPACE_PATH` to a directory that includes `projects/` and `agents/` (same layout as production).
 - **Tickets:** markdown files with frontmatter under each project’s column folders (`backlog/`, `implementing/`, etc.) and under agent folders for in-progress work.
 - **Agent instructions:** role docs live in this repo under `agents/` (e.g. designer, developer, code-verifier, general-verifier). They describe how agents cooperate on the same workspace.
 
@@ -75,13 +77,14 @@ uv run openclaw-agent-remove "Alex"
 
 #### OpenClaw agent helpers
 
-- **Config:** `~/.openclaw/openclaw.json` (JSON5 read/write). Override with `OPENCLAW_CONFIG_PATH`.
-- **State / workspaces:** under `~/.openclaw/` unless `OPENCLAW_STATE_DIR` is set. Each add creates `workspace-wawa-<slug>/` and `agents/<slug>/agent/`, and appends one entry to `agents.list`.
+- **Fixture config (dev/tests only):** `fixtures/openclaw/openclaw.json` — minimal empty `agents` tree for local development or tests. **Installers and the Kanban Docker image do not copy this into your real OpenClaw home.** Production and normal installs **must keep** your existing OpenClaw config; mount `~/.openclaw` (or set `OPENCLAW_STATE_DIR`) to that real directory. See `fixtures/openclaw/README.md`. Do not commit real secrets.
+- **Config path:** defaults to **`$OPENCLAW_STATE_DIR/openclaw.json`** (JSON5 read/write). Default `OPENCLAW_STATE_DIR` is `~/.openclaw`. Set only **`OPENCLAW_STATE_DIR`** to use a self-contained tree (config + agent state in one directory). Override the config file location with **`OPENCLAW_CONFIG_PATH`** if needed (then it is not required to live under `OPENCLAW_STATE_DIR`).
+- **State / workspaces:** under `OPENCLAW_STATE_DIR`. Each `agent add` creates `workspace-wawa-<slug>/` and `agents/<slug>/agent/`, and appends one entry to `agents.list`.
 - **Templates:** `--role` is one of `designer`, `developer`, `code-verifier`, `general-verifier`, `lead`, `project-manager` (must match a folder under this repo’s `agents/`). Repo root defaults to the parent of `wawa_openclaw/`; override with `WAWA_KANBAN_ROOT`.
 
-If you use the installed `wkanban` bootstrap script, set `WAWA_KANBAN_ROOT` to this git clone and run e.g. `wkanban agent add "Alex" --role developer`. The same script still accepts `wkanban openclaw-agent-add …` as an alias for `wkanban agent add …`.
+If you use the installed `wkanban` bootstrap script, **`wkanban init` and `wkanban uninstall` do not require a git clone or `uv`**. For other subcommands (`wkanban agent …`, `wkanban project …`, or `wkanban openclaw-*` aliases), set `WAWA_KANBAN_ROOT` to this git clone and install `uv`, then e.g. `wkanban agent add "Alex" --role developer`. The same script accepts `wkanban openclaw-agent-add …` as an alias for `wkanban agent add …`.
 
-**Docker:** run the OpenClaw gateway container with the host OpenClaw directory mounted (adjust in-container user home if needed), for example `-v ~/.openclaw:/root/.openclaw`, so the new workspace paths stay on the host.
+**Docker:** the published Kanban image runs as user `appuser` (home `/home/appuser`). `wkanban init` mounts `-v ~/.openclaw:/home/appuser/.openclaw` next to the workspace. For the OpenClaw gateway, mount the same host directory into the gateway container (for example `-v ~/.openclaw:/root/.openclaw` if the gateway runs as root), so agents see the same files as the Kanban app.
 
 ### Running with Docker
 
@@ -92,7 +95,7 @@ docker build -t wawa-kanban .
 docker run -p 5020:5020 wawa-kanban
 ```
 
-The image uses Debian Bookworm (slim) and the bundled `fixtures/workspace` by default. Mount a custom workspace:
+The image uses Debian Bookworm (slim) with an **empty** workspace at `/app/.workspace` (`projects/` and `agents/` only). Mount your own workspace or populate it via CLI:
 
 ```bash
 docker run -p 5020:5020 -e WAWA_WORKSPACE_PATH=/data -v /path/to/workspace:/data wawa-kanban

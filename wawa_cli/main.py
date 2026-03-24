@@ -61,11 +61,73 @@ def _build_parser() -> argparse.ArgumentParser:
         help="With --wawa-only: Wawa workspace root (default: ~/.wawa-kanban/workspace).",
     )
 
+    add_def_p = agent_sub.add_parser(
+        "add-default",
+        help=(
+            "Create default kanban agent slot dirs under the Wawa workspace (same as wkanban init) "
+            "and register every Wawa role in OpenClaw (same as openclaw-init-agents)."
+        ),
+    )
+    add_def_p.add_argument(
+        "--workspace",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help=(
+            "Wawa workspace root (contains agents/). "
+            "Default: WAWA_WORKSPACE_PATH or ~/.wawa-kanban/workspace."
+        ),
+    )
+    add_def_p.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to openclaw.json (default: OPENCLAW_CONFIG_PATH or ~/.openclaw/openclaw.json).",
+    )
+    add_def_p.add_argument(
+        "--state-dir",
+        type=Path,
+        default=None,
+        help="OpenClaw state dir (default: OPENCLAW_STATE_DIR or ~/.openclaw).",
+    )
+    add_def_p.add_argument(
+        "--repo",
+        type=Path,
+        default=None,
+        help="Wawa Kanban repo root (default: WAWA_KANBAN_ROOT or parent of wawa_openclaw).",
+    )
+
     # --- project ---
     proj_p = sub.add_parser("project", help="Workspace projects under WAWA_WORKSPACE_PATH/projects/.")
     proj_sub = proj_p.add_subparsers(dest="project_cmd", required=True)
 
-    proj_sub.add_parser("add", help="Create a new project directory (not implemented).")
+    add_proj_p = proj_sub.add_parser(
+        "add",
+        help="Create a new project under projects/ (same dirs as wkanban init: todos, waiting_for_verification, finished).",
+    )
+    add_proj_p.add_argument(
+        "name",
+        help=(
+            "Project slug or full id (e.g. my-app -> wawa.proj.my-app, "
+            "or pass wawa.proj.my-app)."
+        ),
+    )
+    add_proj_p.add_argument(
+        "--workspace",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help=(
+            "Wawa workspace root (contains projects/). "
+            "Default: WAWA_WORKSPACE_PATH or ~/.wawa-kanban/workspace."
+        ),
+    )
+    add_proj_p.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Skip confirmation prompt.",
+    )
     proj_sub.add_parser("archive", help="Archive a project (not implemented).")
     list_p = proj_sub.add_parser(
         "list",
@@ -102,11 +164,22 @@ def main(argv: list[str] | None = None) -> int:
                 wawa_only=bool(getattr(args, "wawa_only", False)),
                 wawa_workspace=getattr(args, "wawa_workspace", None),
             )
+        if args.agent_cmd == "add-default":
+            return agent_commands.cmd_agent_add_default(
+                workspace=getattr(args, "workspace", None),
+                config=getattr(args, "config", None),
+                state_dir=getattr(args, "state_dir", None),
+                repo=getattr(args, "repo", None),
+            )
         raise AssertionError(f"unexpected agent_cmd: {args.agent_cmd!r}")
 
     if args.command == "project":
         if args.project_cmd == "add":
-            return project_commands.cmd_project_add()
+            return project_commands.cmd_project_add(
+                args.name,
+                workspace=getattr(args, "workspace", None),
+                yes=bool(getattr(args, "yes", False)),
+            )
         if args.project_cmd == "archive":
             return project_commands.cmd_project_archive()
         if args.project_cmd == "list":

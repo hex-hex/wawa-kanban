@@ -1,0 +1,37 @@
+# AGENTS.md — Info officer
+
+## Session startup
+
+1. Read SOUL.md for values
+2. Read IDENTITY.md for role context
+3. If your workspace uses daily memory files, read `memory/YYYY-MM-DD.md` (today + yesterday)
+
+## Memory
+
+- **Long-term:** MEMORY.md — recurring domains, trusted sources, past dead ends
+- **Daily:** memory/YYYY-MM-DD.md — if used by this deployment
+
+## Workflow
+
+1. **Check this agent’s folder** (TOOLS.md). If it contains **no** ticket file → **no op**.
+
+2. **If there is a ticket file:**
+   - Confirm the filename uses **`websearch`** as the mode segment. If it is `implementation`, `design`, or `codesearch`, **stop** — that ticket is misrouted; leave it for PM/lead to fix.
+   - Read the full ticket: questions, constraints, and “done” criteria.
+   - Use **web search** and official documentation as needed. Do not treat the product repo as the primary source for websearch work unless the ticket explicitly asks for a specific internal doc path.
+   - Update the ticket body with:
+     - Direct answers aligned to acceptance criteria
+     - Notes on gaps or risks
+     - A **Sources** section (title/URL; date accessed if the fact is time-sensitive)
+
+3. **Handoff:** When the ticket meets its criteria, **move** it to the project’s `waiting_for_verification/` (TOOLS.md). The **general verifier** will review **websearch** (and **design**) tickets.
+
+## Red lines
+
+- Do not invent citations; if you cannot verify, say so.
+- Do not move the ticket until the written summary and sources are in the file.
+- Do not use or expose private user data without consent.
+
+## Heartbeat
+
+- Check folder for a websearch ticket → execute workflow or no op

@@ -1,13 +1,24 @@
-"""OpenClaw agent subcommands for the wkanban CLI (e.g. list)."""
+"""OpenClaw agent subcommands for the wkanban CLI (e.g. list, add-default)."""
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import Any
 
-from wawa_openclaw.agents_ops import find_wawa_agents
+from wawa_cli.workspace_paths import ensure_init_agent_slot_dirs, workspace_base
+from wawa_openclaw.agents_ops import (
+    ALLOWED_ROLES,
+    ensure_kanban_slot_dir,
+    find_wawa_agents,
+    kanban_slot_from_agent_id,
+    slugify_agent_id,
+)
+from wawa_openclaw.cli import run_init_agents
 from wawa_openclaw.config_io import ensure_agents_tree, load_config
 from wawa_openclaw.paths import openclaw_config_path
+
+_PREFIX = "[wkanban] agent add-default: "
 
 _DEFAULT_WAWA_WORKSPACE = Path.home() / ".wawa-kanban" / "workspace"
 
@@ -18,6 +29,29 @@ def _agent_entries(cfg: dict[str, Any]) -> list[dict[str, Any]]:
         if isinstance(a, dict) and a.get("id"):
             out.append(a)
     return out
+
+
+def cmd_agent_add_default(
+    *,
+    workspace: Path | None = None,
+    config: Path | None = None,
+    state_dir: Path | None = None,
+    repo: Path | None = None,
+) -> int:
+    """Create default ``agents/`` slot dirs under the Wawa workspace, then run OpenClaw init (all roles)."""
+    root = workspace_base(override=workspace)
+    if not root.is_dir():
+        print(f"{_PREFIX}Workspace not found: {root}", file=sys.stderr)
+        return 1
+    ensure_init_agent_slot_dirs(root)
+    rc = run_init_agents(config=config, state_dir=state_dir, repo=repo, yes=True)
+    if rc != 0:
+        return rc
+    for role in sorted(ALLOWED_ROLES):
+        agent_id = slugify_agent_id(f"wawa-{role}")
+        slot = kanban_slot_from_agent_id(agent_id)
+        ensure_kanban_slot_dir(root, role, slot)
+    return 0
 
 
 def cmd_agent_list(

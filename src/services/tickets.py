@@ -15,11 +15,26 @@ from src.models.kanban import (
 from src.models.repository import repository
 from src.services.workspace import parse_frontmatter, serialize_frontmatter_and_body
 
-# Agent type folder (plural) -> AgentPosition
+# Agent type folder (plural) under workspace/agents/ -> AgentPosition
 _TYPE_TO_POSITION: dict[str, AgentPosition] = {
-    "verifiers": AgentPosition.VERIFIER,
+    "code-verifiers": AgentPosition.VERIFIER,
+    "general-verifiers": AgentPosition.VERIFIER,
     "designers": AgentPosition.DESIGNER,
     "developers": AgentPosition.DEVELOPER,
+    "info-officers": AgentPosition.INFO_OFFICER,
+}
+
+# In Progress: only show tickets whose mode matches the agent slot folder.
+_IN_PROGRESS_MODES: dict[str, frozenset[TaskMode]] = {
+    "developers": frozenset((TaskMode.IMPLEMENTATION, TaskMode.CODESEARCH)),
+    "designers": frozenset((TaskMode.DESIGN,)),
+    "info-officers": frozenset((TaskMode.WEBSEARCH,)),
+}
+
+# Verifying: code vs general verifier queues by ticket mode.
+_VERIFYING_MODES: dict[str, frozenset[TaskMode]] = {
+    "code-verifiers": frozenset((TaskMode.IMPLEMENTATION, TaskMode.CODESEARCH)),
+    "general-verifiers": frozenset((TaskMode.DESIGN, TaskMode.WEBSEARCH)),
 }
 
 
@@ -206,8 +221,8 @@ def _display_name(project_id: str) -> str:
 
 def _load_project(project_path: Path) -> Project | None:
     """Load a single project from workspace/projects/{project_id}/.
-    Verifying column also includes tickets from workspace/agents/verifiers/*
-    (e.g. code-verifier for implementation, general-verifier for design/investigation)."""
+    Verifying column also includes tickets from workspace/agents/code-verifiers/*
+    and workspace/agents/general-verifiers/*."""
     project_id = project_path.name
     if project_id.startswith("."):
         return None
@@ -215,32 +230,48 @@ def _load_project(project_path: Path) -> Project | None:
     tickets: list[Ticket] = []
     for status in COLUMNS:
         if status == TicketStatus.IN_PROGRESS:
-            continue  # In Progress comes from developers/designers agents only
+            continue  # In Progress comes from developers/designers/info-officers agents only
         if status == TicketStatus.VERIFYING:
-            continue  # Verifying comes from agents/verifiers only, not projects
+            continue  # Verifying comes from code-verifiers/general-verifiers only, not projects
         col_path = project_path / status.value
         tickets.extend(_load_tickets_from_dir(col_path, status))
 
     existing_ids = {t["id"] for t in tickets}
 
-    # Merge In Progress from agents/developers and agents/designers (only tickets belonging to this project)
-    for type_folder in ("developers", "designers"):
+    # Merge In Progress from developers / designers / info-officers (mode must match slot)
+    for type_folder in ("developers", "designers", "info-officers"):
+        allowed_modes = _IN_PROGRESS_MODES.get(type_folder)
+        if not allowed_modes:
+            continue
         type_path = AGENTS_WORKSPACE_PATH / type_folder
         if type_path.exists():
             for name_path in sorted(type_path.iterdir()):
                 if name_path.is_dir() and not name_path.name.startswith("."):
                     for t in _load_tickets_from_dir(name_path, TicketStatus.IN_PROGRESS):
-                        if t.get("project") == project_id and t["id"] not in existing_ids:
+                        if (
+                            t.get("project") == project_id
+                            and t["id"] not in existing_ids
+                            and t["mode"] in allowed_modes
+                        ):
                             tickets.append(t)
                             existing_ids.add(t["id"])
 
-    # Merge Verifying from agents/verifiers/* (only tickets belonging to this project)
-    verifiers_path = AGENTS_WORKSPACE_PATH / "verifiers"
-    if verifiers_path.exists():
-        for name_path in sorted(verifiers_path.iterdir()):
+    # Merge Verifying from code-verifiers / general-verifiers (mode must match verifier kind)
+    for verifier_kind in ("code-verifiers", "general-verifiers"):
+        allowed_modes = _VERIFYING_MODES.get(verifier_kind)
+        if not allowed_modes:
+            continue
+        type_path = AGENTS_WORKSPACE_PATH / verifier_kind
+        if not type_path.exists():
+            continue
+        for name_path in sorted(type_path.iterdir()):
             if name_path.is_dir() and not name_path.name.startswith("."):
                 for t in _load_tickets_from_dir(name_path, TicketStatus.VERIFYING):
-                    if t.get("project") == project_id and t["id"] not in existing_ids:
+                    if (
+                        t.get("project") == project_id
+                        and t["id"] not in existing_ids
+                        and t["mode"] in allowed_modes
+                    ):
                         tickets.append(t)
                         existing_ids.add(t["id"])
 

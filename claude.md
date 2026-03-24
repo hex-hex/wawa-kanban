@@ -26,6 +26,7 @@ npm run dev:css
 - `uno.config.ts` - UnoCSS configuration
 - `scripts/build-css.mjs` - Extracts cls/class from Python files and generates CSS
 - `static/uno.css` - Generated CSS file (referenced by app.py)
+- `agents/<role>/` - OpenClaw role templates: **`*.md.j2`** (Jinja2) is rendered to **`*.md`** in the agent’s OpenClaw workspace when registering an agent (`wawa_openclaw.agents_ops.materialize_agent`). Context includes `agent_id`, `agent_display_name`, `identity_display_name` (no `wawa-` prefix for human-facing text), `kanban_slot`, `role`, `kanban_type_folder`, `kanban_ticket_folder`, etc. Other files under the role folder are copied as-is.
 
 ## Coding Rules
 
@@ -51,8 +52,9 @@ npm run dev:css
 ## Kanban Board
 
 ### Workspace
-- Default: `fixtures/workspace` (projects + agents). All tests and dev use this by default.
+- Default in a git checkout: `fixtures/workspace` (projects + agents) for tests and dev when `WAWA_WORKSPACE_PATH` is unset.
 - Override via env: `WAWA_WORKSPACE_PATH=/path/to/your/workspace` (must contain `projects/` and `agents/` subdirs).
+- Docker image: **does not** include `fixtures/`; runtime workspace is empty at `/app/.workspace` unless you mount one or populate via CLI.
 
 ### Workspace Structure
 ```
@@ -65,13 +67,15 @@ fixtures/workspace/projects/wawa_proj_default/   # or $WAWA_WORKSPACE_PATH/proje
 ```
 
 ### Ticket Format
-Each ticket is a markdown file with frontmatter:
+Each ticket is a markdown file with frontmatter. Filename pattern: `{project_id}.{mode}.{slug}.md` where **mode** is one of `implementation`, `design`, `websearch`, or `codesearch` (see [design.md](design.md) for agent folders and verifier routing).
+
 ```markdown
 ---
 id: TICKET-001
 title: Ticket title
 priority: high|medium|low
 created: 2024-01-01
+mode: implementation
 ---
 
 # Description
