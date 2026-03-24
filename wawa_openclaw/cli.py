@@ -6,6 +6,8 @@ from pathlib import Path
 
 from wawa_openclaw.agents_ops import (
     ALLOWED_ROLES,
+    ROLES_ALLOWED_FOR_MANUAL_ADD,
+    ROLES_DISALLOWED_FOR_MANUAL_ADD,
     agent_id_in_config,
     ensure_kanban_slot_dir,
     find_wawa_agents,
@@ -27,8 +29,8 @@ def add_agent_add_arguments(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--role",
         required=True,
-        choices=sorted(ALLOWED_ROLES),
-        help="Template folder under agents/ in the Wawa Kanban repo.",
+        choices=sorted(ROLES_ALLOWED_FOR_MANUAL_ADD),
+        help="Template folder under agents/ in the Wawa Kanban repo (lead and project-manager are init-only).",
     )
     p.add_argument(
         "--config",
@@ -135,6 +137,14 @@ def _confirm_init_batch(*, assume_yes: bool) -> bool:
 def run_add(args: argparse.Namespace) -> int:
     """Execute agent add from a parsed argparse Namespace (shared by main_add and wawa_cli)."""
     try:
+        if args.role in ROLES_DISALLOWED_FOR_MANUAL_ADD:
+            print(
+                f"Error: Role {args.role!r} cannot be added with agent add; "
+                f"use init (wawa-{args.role}) to register the single default instance.",
+                file=sys.stderr,
+            )
+            return 1
+
         config_path = args.config or openclaw_config_path()
         state = args.state_dir or openclaw_state_dir()
         root = args.repo or repo_root()
@@ -390,8 +400,8 @@ def main_uninstall_agents(argv: list[str] | None = None) -> int:
         return 0
 
     for agent_id in agent_ids:
-        remove_agent_from_config(cfg, agent_id)
-        purge_agent_paths(agent_id, state=state)
+        remove_agent_from_config(cfg, agent_id, allow_protected_removal=True)
+        purge_agent_paths(agent_id, state=state, allow_protected_removal=True)
         print(f"  [removed] {agent_id}")
 
     save_config(config_path, cfg)

@@ -24,6 +24,8 @@ Requirements:
 
 It then runs **`uv run wkanban project add default -y`** and **`uv run wkanban agent add-default`** **inside** the container (no Python/`uv` required on the host for init).
 
+**OpenClaw session bootstrap (optional):** if the **`openclaw`** CLI is on your **host** `PATH` and the **OpenClaw gateway** is running, **`wkanban init`** finishes by running **`openclaw agent --agent wawa-lead --message "introduce yourself."`** so the gateway gets a first session for the lead agent ([OpenClaw `agent` CLI](https://docs.openclaw.ai/cli/agent)). If `openclaw` is missing or the command fails (e.g. gateway offline), init still succeeds. Set **`WAWA_SKIP_OPENCLAW_LEAD_INTRO=1`** to skip; override agent or text with **`WAWA_OPENCLAW_LEAD_AGENT_ID`** / **`WAWA_OPENCLAW_LEAD_INTRO_MESSAGE`**.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/install.sh | sh
 # or
@@ -74,7 +76,7 @@ The app listens at **http://localhost:5020**.
 
 Tickets are markdown files with YAML frontmatter; filename pattern includes project id and mode (see [design.md](design.md)).
 
-**Agent role docs** in this repo live under `agents/<role>/` as **`*.md.j2`** templates. When you register an agent, they are rendered to `*.md` in that agent’s OpenClaw workspace (paths/names get `kanban_slot` and related variables). Roles include `developer`, `designer`, `info-officer`, `code-verifier`, `general-verifier`, `lead`, and `project-manager`.
+**Agent role docs** in this repo live under `agents/<role>/`: **`*.md.j2`** → rendered to `*.md` in the OpenClaw workspace; **`agent.json.j2`** → full **`openclaw.json`** `agents.list[]` entry (Jinja + **`| tojson`**; use **`workspace_path`** / **`agent_dir_path`** in the template). Roles include `developer`, `designer`, `info-officer`, `code-verifier`, `general-verifier`, `lead`, and `project-manager`.
 
 ### CLI: `wkanban` (agents + projects)
 
@@ -120,12 +122,13 @@ uv run openclaw-agent-remove "Alex"
 
 - **Fixture config (dev/tests only):** `fixtures/openclaw/openclaw.json` — sample tree for local dev/tests. **Installers and the Docker image do not copy this into your real OpenClaw home.** Mount `~/.openclaw` (or set `OPENCLAW_STATE_DIR`) to the directory you actually use. See `fixtures/openclaw/README.md`. Do not commit secrets.
 - **Config file:** JSON5. Defaults to **`$OPENCLAW_CONFIG_PATH`** if set, otherwise **`$OPENCLAW_STATE_DIR/openclaw.json`**. Default `OPENCLAW_STATE_DIR` is `~/.openclaw`. Use **`OPENCLAW_STATE_DIR`** for a self-contained tree (config + agent state); **`OPENCLAW_CONFIG_PATH`** can point elsewhere.
+- **Before each save:** if the config file already exists, it is copied to **`<same-name>.bak.wawa`** (e.g. **`openclaw.json.bak.wawa`**) beside it, then overwritten — a rolling backup of the immediately previous file. Creating a new config from scratch skips backup.
 - **Per-agent state:** under `OPENCLAW_STATE_DIR`. Each **`agent add`** creates `workspace-wawa-<id>/` and `agents/<id>/agent/` and appends **`agents.list`**.
 - **Templates:** `--role` must match a folder under `agents/` (see roles above). Repo root defaults to the parent of `wawa_openclaw/`; override with **`WAWA_KANBAN_ROOT`**.
 
 The installed **`wkanban`** script: **`init`** / **`uninstall`** need no clone or **`uv`**. For **`agent`**, **`project`**, or **`openclaw-*`** aliases, set **`WAWA_KANBAN_ROOT`** to a git clone and install **`uv`**. **`wkanban openclaw-agent-add …`** is an alias for **`wkanban agent add …`**.
 
-**Docker:** the image runs as **`appuser`** (home `/home/appuser`). `wkanban init` mounts `~/.openclaw` there. For an OpenClaw gateway, mount the **same host path** (e.g. `-v ~/.openclaw:/root/.openclaw` if the gateway runs as root).
+**Docker:** the image entrypoint (**`docker-entrypoint.sh`**) starts as **root**, **`chown`s** `/app`, **`/home/appuser`**, and **`/workspace`** (when that mount exists) to **`PUID:PGID`**, then runs **`uvicorn`** via **`setpriv`** as that user. Defaults are **`PUID=1000`** / **`PGID=1000`**. The **`wkanban`** bootstrap passes **`PUID`/`PGID`** from **`id -u`** / **`id -g`** so files written on bind mounts (`~/.openclaw`, workspace) use the same numeric ids as your host user. For raw **`docker run`**, set them explicitly, e.g. **`-e PUID=$(id -u) -e PGID=$(id -g)`** (and keep **`HOME=/home/appuser`** if you mount OpenClaw at **`/home/appuser/.openclaw`**). For an OpenClaw gateway, mount the **same host `~/.openclaw`** into that container.
 
 ### Running your own Docker image
 
@@ -133,13 +136,15 @@ If you need to **build and run your own image** while developing (e.g. to verify
 
 ```bash
 docker build -t wawa-kanban .
-docker run -p 5020:5020 wawa-kanban
+docker run -p 0.0.0.0:5020:5020 -e PUID="$(id -u)" -e PGID="$(id -g)" wawa-kanban
 ```
 
 The runtime image is **Debian Bookworm** (slim Python base) with an **empty** workspace at `/app/.workspace` (`projects/` and `agents/` only). Mount your own workspace and set `WAWA_WORKSPACE_PATH` if needed:
 
 ```bash
-docker run -p 5020:5020 -e WAWA_WORKSPACE_PATH=/data -v /path/to/workspace:/data wawa-kanban
+docker run -p 0.0.0.0:5020:5020 \
+  -e PUID="$(id -u)" -e PGID="$(id -g)" \
+  -e WAWA_WORKSPACE_PATH=/data -v /path/to/workspace:/data wawa-kanban
 ```
 
 ### UI styles (UnoCSS)

@@ -23,18 +23,24 @@ CONTAINER_NAME="wawa-kanban"
 IMAGE="wawaassistant/wawa-kanban:latest"
 PORT="5020"
 
-# Must match the non-root user home in the Kanban image (see Dockerfile).
+# Must match appuser home in the Kanban image (see Dockerfile / docker-entrypoint.sh).
 CONTAINER_APP_HOME="/home/appuser"
+
+# Same id as ``wawa-<role>`` from ``openclaw-init-agents`` / ``agent add-default`` (role ``lead``).
+WAWA_OPENCLAW_LEAD_AGENT_ID="${WAWA_OPENCLAW_LEAD_AGENT_ID:-wawa-lead}"
+WAWA_OPENCLAW_LEAD_INTRO_MESSAGE="${WAWA_OPENCLAW_LEAD_INTRO_MESSAGE:-introduce yourself.}"
 
 # Run a one-shot command in the Kanban image with the same mounts as the long-running app
 # (workspace + host OpenClaw dir). Used after the main container is removed (e.g. uninstall).
+# PUID/PGID align bind-mount ownership with the invoking host user (see docker-entrypoint.sh).
 ephemeral_kanban_run() {
   docker pull "$IMAGE" >/dev/null 2>&1 || true
   docker run --rm \
     -w /app \
     -e WAWA_WORKSPACE_PATH=/workspace \
     -e HOME="${CONTAINER_APP_HOME}" \
-    -u appuser \
+    -e "PUID=$(id -u)" \
+    -e "PGID=$(id -g)" \
     -v "${WORKSPACE_DIR}:/workspace" \
     -v "${HOME}/.openclaw:${CONTAINER_APP_HOME}/.openclaw" \
     "$IMAGE" \
@@ -56,12 +62,13 @@ docker_start() {
   docker run -d \
     --name "$CONTAINER_NAME" \
     --restart unless-stopped \
-    -p "${PORT}:${PORT}" \
+    -p "0.0.0.0:${PORT}:${PORT}" \
     -e "WAWA_WORKSPACE_PATH=/workspace" \
     -e "HOME=${CONTAINER_APP_HOME}" \
+    -e "PUID=$(id -u)" \
+    -e "PGID=$(id -g)" \
     -v "${WORKSPACE_DIR}:/workspace" \
     -v "${HOME}/.openclaw:${CONTAINER_APP_HOME}/.openclaw" \
-    -u appuser \
     "$IMAGE" >/dev/null
 
   log "Done. Open http://localhost:${PORT}"
@@ -95,6 +102,23 @@ uninstall() {
   log "Uninstalled. Workspace removed."
 }
 
+# After init, ask OpenClaw to run one turn for the lead agent so the gateway creates a session.
+# Requires the ``openclaw`` CLI on the host PATH and a running OpenClaw gateway; see https://docs.openclaw.ai/cli/agent
+openclaw_lead_intro() {
+  if [ "${WAWA_SKIP_OPENCLAW_LEAD_INTRO:-0}" = "1" ]; then
+    log "Skipping OpenClaw lead intro (WAWA_SKIP_OPENCLAW_LEAD_INTRO=1)."
+    return 0
+  fi
+  if ! command -v openclaw >/dev/null 2>&1; then
+    log "OpenClaw CLI not in PATH; skipping lead intro. With gateway running: openclaw agent --agent ${WAWA_OPENCLAW_LEAD_AGENT_ID} --message \"${WAWA_OPENCLAW_LEAD_INTRO_MESSAGE}\""
+    return 0
+  fi
+  log "OpenClaw: one agent turn for ${WAWA_OPENCLAW_LEAD_AGENT_ID} (session bootstrap)..."
+  if ! openclaw agent --agent "${WAWA_OPENCLAW_LEAD_AGENT_ID}" --message "${WAWA_OPENCLAW_LEAD_INTRO_MESSAGE}"; then
+    log "OpenClaw lead intro failed (is the gateway running?). Continuing."
+  fi
+}
+
 init() {
   mkdir -p "$WORKSPACE_DIR"
   mkdir -p "${HOME}/.openclaw"
@@ -102,6 +126,7 @@ init() {
   log "Seeding default project and agents (inside container, same as wkanban CLI)..."
   docker exec -w /app "$CONTAINER_NAME" uv run wkanban project add default -y --workspace /workspace
   docker exec -w /app "$CONTAINER_NAME" uv run wkanban agent add-default --workspace /workspace
+  openclaw_lead_intro
   log "Init complete."
 }
 

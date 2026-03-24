@@ -11,7 +11,13 @@ from typing import Any
 import pytest
 from jinja2 import Environment
 
-from wawa_openclaw.agents_ops import ALLOWED_ROLES, build_agent_template_context, remove_agent_from_config, slugify_agent_id
+from wawa_openclaw.agents_ops import (
+    AGENT_JSON_J2,
+    ROLES_ALLOWED_FOR_MANUAL_ADD,
+    build_agent_template_context,
+    remove_agent_from_config,
+    slugify_agent_id,
+)
 from wawa_openclaw.cli import run_add, run_remove
 from wawa_openclaw.config_io import ensure_agents_tree, load_config, save_config
 
@@ -45,6 +51,8 @@ def _assert_workspace_matches_rendered_j2(
         rel = src.relative_to(role_src)
         if src.is_dir():
             assert (workspace / rel).is_dir(), f"Expected directory {rel}"
+            continue
+        if src.name == AGENT_JSON_J2:
             continue
         if src.name.endswith(".md.j2"):
             out_name = src.name[:-3]
@@ -126,11 +134,11 @@ def test_remove_strips_agent_nested_heartbeat_and_sandbox_with_list_entry() -> N
     assert cfg["agents"]["list"] == []
 
 
-@pytest.mark.parametrize("role", sorted(ALLOWED_ROLES))
+@pytest.mark.parametrize("role", sorted(ROLES_ALLOWED_FOR_MANUAL_ADD))
 def test_add_remove_roundtrip_matches_fixture_openclaw_snapshot_per_role(
     tmp_path: Path, role: str
 ) -> None:
-    """For every ``ALLOWED_ROLES`` entry: add agent, workspace matches rendered templates, remove restores config."""
+    """For every manually addable role: add agent, workspace matches rendered templates, remove restores config."""
     if not FIXTURE_OPENCLAW_JSON.is_file():
         pytest.skip("fixtures/openclaw/openclaw.json missing")
 

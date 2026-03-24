@@ -5,9 +5,13 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+import json5
 from jinja2 import Environment
 
 from wawa_openclaw.paths import openclaw_state_dir, repo_root, to_config_path
+
+# OpenClaw ``agents.list[]`` entry template (Jinja → JSON object). Required per role. Not copied into workspace.
+AGENT_JSON_J2 = "agent.json.j2"
 
 ALLOWED_ROLES = frozenset(
     {
@@ -20,6 +24,10 @@ ALLOWED_ROLES = frozenset(
         "project-manager",
     }
 )
+
+# Single-instance roles: only created by init (`wawa-<role>`), not via agent add.
+ROLES_DISALLOWED_FOR_MANUAL_ADD = frozenset({"lead", "project-manager"})
+ROLES_ALLOWED_FOR_MANUAL_ADD = ALLOWED_ROLES - ROLES_DISALLOWED_FOR_MANUAL_ADD
 
 # OpenClaw role -> Kanban workspace/agents/<plural>/<kanban_slot>/ (None = no ticket queue)
 KANBAN_PLURAL_BY_ROLE: dict[str, str | None] = {
@@ -41,6 +49,12 @@ def slugify_agent_id(name: str) -> str:
     if not s:
         raise ValueError("Name must yield a non-empty agent id (use letters, digits, or hyphen).")
     return s
+
+
+# Init registers one agent per role as ``wawa-<role>``; these ids cannot be removed via agent remove.
+PROTECTED_SINGLE_INSTANCE_AGENT_IDS = frozenset(
+    slugify_agent_id(f"wawa-{r}") for r in ROLES_DISALLOWED_FOR_MANUAL_ADD
+)
 
 
 def kanban_slot_from_agent_id(agent_id: str) -> str:
@@ -66,9 +80,20 @@ def build_agent_template_context(
     agent_display_name: str,
     role: str,
 ) -> dict[str, Any]:
-    """Variables for ``*.md.j2`` when materializing an OpenClaw agent workspace."""
+    """Variables for ``*.md.j2`` when materializing an OpenClaw agent workspace.
+
+    ``identity_agent_call_name`` is ``Default <Role>`` when this instance is the default
+    slot for the role (``agent_id`` equals ``slugify_agent_id("wawa-" + role)``); otherwise
+    it matches ``identity_display_name`` (display name with a single leading ``wawa-`` stripped).
+    """
     kanban_slot = kanban_slot_from_agent_id(agent_id)
     identity_name = identity_display_name_from(agent_display_name)
+    default_slot_agent_id = slugify_agent_id(f"wawa-{role}")
+    if agent_id == default_slot_agent_id:
+        role_label = role.replace("-", " ").title()
+        identity_agent_call_name = f"Default {role_label}"
+    else:
+        identity_agent_call_name = identity_name
     plural = KANBAN_PLURAL_BY_ROLE.get(role)
     ticket_folder = (
         f"workspace/agents/{plural}/{kanban_slot}/" if plural else ""
@@ -77,6 +102,7 @@ def build_agent_template_context(
         "agent_id": agent_id,
         "agent_display_name": agent_display_name,
         "identity_display_name": identity_name,
+        "identity_agent_call_name": identity_agent_call_name,
         "kanban_slot": kanban_slot,
         "role": role,
         "kanban_agents_base": "workspace/agents",
@@ -85,14 +111,71 @@ def build_agent_template_context(
     }
 
 
+def build_agent_entry_context(
+    *,
+    agent_id: str,
+    agent_display_name: str,
+    role: str,
+    workspace: Path,
+    agent_dir: Path,
+) -> dict[str, Any]:
+    """Context for ``agent.json.j2`` (extends :func:`build_agent_template_context`)."""
+    ctx = build_agent_template_context(
+        agent_id=agent_id,
+        agent_display_name=agent_display_name,
+        role=role,
+    )
+    ctx["workspace_path"] = to_config_path(workspace)
+    ctx["agent_dir_path"] = to_config_path(agent_dir)
+    return ctx
+
+
+_jinja_env = Environment(autoescape=False)
+
+
+def render_agent_list_entry(
+    role_src: Path,
+    *,
+    agent_id: str,
+    agent_display_name: str,
+    role: str,
+    workspace: Path,
+    agent_dir: Path,
+) -> dict[str, Any]:
+    """Render ``agent.json.j2`` to one ``agents.list`` object (template is authoritative).
+
+    Every role under ``agents/<role>/`` must ship ``agent.json.j2``. Use ``| tojson`` for string
+    fields; context includes ``workspace_path`` and ``agent_dir_path`` from :func:`build_agent_entry_context`.
+    """
+    tpl = role_src / AGENT_JSON_J2
+    ctx = build_agent_entry_context(
+        agent_id=agent_id,
+        agent_display_name=agent_display_name,
+        role=role,
+        workspace=workspace,
+        agent_dir=agent_dir,
+    )
+    if not tpl.is_file():
+        raise ValueError(
+            f"Missing {AGENT_JSON_J2} in role template directory: {role_src}. "
+            "Add agent.json.j2 (Jinja → JSON object for agents.list[])."
+        )
+    text = tpl.read_text(encoding="utf-8")
+    rendered = _jinja_env.from_string(text).render(**ctx)
+    try:
+        data = json5.loads(rendered)
+    except Exception as e:
+        raise ValueError(f"Invalid JSON in {tpl}: {e}") from e
+    if not isinstance(data, dict):
+        raise ValueError(f"{tpl} must render to a JSON object, got {type(data).__name__}")
+    return dict(data)
+
+
 def agent_id_in_config(cfg: dict[str, Any], agent_id: str) -> bool:
     lst = cfg.get("agents", {}).get("list", [])
     if not isinstance(lst, list):
         return False
     return any(isinstance(a, dict) and a.get("id") == agent_id for a in lst)
-
-
-_jinja_env = Environment(autoescape=False)
 
 
 def _materialize_role_tree(
@@ -107,6 +190,8 @@ def _materialize_role_tree(
             continue
         rel_name = item.name
         if item.is_file():
+            if rel_name == AGENT_JSON_J2:
+                continue
             if rel_name.endswith(".md.j2"):
                 out_name = rel_name[:-3]  # strip .j2 -> .md
                 text = item.read_text(encoding="utf-8")
@@ -152,12 +237,14 @@ def plan_add_agent(
             "Remove the agent first or pick another name."
         )
 
-    entry: dict[str, Any] = {
-        "id": agent_id,
-        "name": name.strip(),
-        "workspace": to_config_path(workspace),
-        "agentDir": to_config_path(agent_dir),
-    }
+    entry = render_agent_list_entry(
+        role_src,
+        agent_id=agent_id,
+        agent_display_name=name.strip(),
+        role=role,
+        workspace=workspace,
+        agent_dir=agent_dir,
+    )
     return entry, workspace, agent_dir, role_src
 
 
@@ -189,8 +276,16 @@ def merge_agent_into_config(cfg: dict[str, Any], entry: dict[str, Any]) -> dict[
     return cfg
 
 
-def remove_agent_from_config(cfg: dict[str, Any], agent_id: str) -> dict[str, Any]:
+def remove_agent_from_config(
+    cfg: dict[str, Any],
+    agent_id: str,
+    *,
+    allow_protected_removal: bool = False,
+) -> dict[str, Any]:
     """Remove agent from ``agents.list``, strip matching ``bindings``, and drop related channel accounts.
+
+    ``wawa-lead`` and ``wawa-project-manager`` cannot be removed unless ``allow_protected_removal=True``
+    (Wawa bulk uninstall only).
 
     Channel cleanup (OpenClaw-style):
     - For each removed binding with ``match.channel`` + ``match.accountId``, delete
@@ -201,6 +296,15 @@ def remove_agent_from_config(cfg: dict[str, Any], agent_id: str) -> dict[str, An
     lst = cfg["agents"]["list"]
     if not any(isinstance(a, dict) and a.get("id") == agent_id for a in lst):
         raise ValueError(f"No agent with id {agent_id!r} in agents.list")
+
+    if (
+        agent_id in PROTECTED_SINGLE_INSTANCE_AGENT_IDS
+        and not allow_protected_removal
+    ):
+        raise ValueError(
+            f"Agent id {agent_id!r} cannot be removed individually; "
+            "use Wawa bulk agent uninstall to remove all Wawa-managed agents at once."
+        )
 
     accounts_to_drop: list[tuple[str, str]] = []
     bindings = cfg.get("bindings")
@@ -237,7 +341,20 @@ def remove_agent_from_config(cfg: dict[str, Any], agent_id: str) -> dict[str, An
     return cfg
 
 
-def purge_agent_paths(agent_id: str, state: Path | None = None) -> None:
+def purge_agent_paths(
+    agent_id: str,
+    state: Path | None = None,
+    *,
+    allow_protected_removal: bool = False,
+) -> None:
+    if (
+        agent_id in PROTECTED_SINGLE_INSTANCE_AGENT_IDS
+        and not allow_protected_removal
+    ):
+        raise ValueError(
+            f"Agent id {agent_id!r} workspace/agent dirs cannot be purged individually; "
+            "use Wawa bulk agent uninstall."
+        )
     state = state or openclaw_state_dir()
     workspace = state / f"workspace-wawa-{agent_id}"
     agent_tree = state / "agents" / agent_id
