@@ -24,6 +24,8 @@ Requirements:
 
 It then runs **`uv run wkanban project add default -y`** and **`uv run wkanban agent add-default`** **inside** the container (no Python/`uv` required on the host for init).
 
+**OpenClaw session bootstrap (optional):** if the **`openclaw`** CLI is on your **host** `PATH` and the **OpenClaw gateway** is running, **`wkanban init`** finishes by running **`openclaw agent --agent wawa-lead --message "introduce yourself."`** so the gateway gets a first session for the lead agent ([OpenClaw `agent` CLI](https://docs.openclaw.ai/cli/agent)). If `openclaw` is missing or the command fails (e.g. gateway offline), init still succeeds. Set **`WAWA_SKIP_OPENCLAW_LEAD_INTRO=1`** to skip; override agent or text with **`WAWA_OPENCLAW_LEAD_AGENT_ID`** / **`WAWA_OPENCLAW_LEAD_INTRO_MESSAGE`**.
+
 ```bash
 curl -fsSL https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/install.sh | sh
 # or
