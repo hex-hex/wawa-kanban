@@ -1,0 +1,419 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.3.13",
+    "lastTouchedAt": "2026-03-15T22:08:29.381Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-03-06T06:50:39.453Z",
+    "lastRunVersion": "2026.3.2",
+    "lastRunCommand": "doctor",
+    "lastRunMode": "local"
+  },
+  "auth": {
+    "profiles": {
+      "minimax-portal:default": {
+        "provider": "minimax-portal",
+        "mode": "token"
+      }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "minimax-portal": {
+        "baseUrl": "https://api.minimax.io/anthropic",
+        "apiKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "api": "anthropic-messages",
+        "models": [
+          {
+            "id": "MiniMax-M2.5",
+            "name": "MiniMax M2.5",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 200000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "minimax-portal/MiniMax-M2.5"
+      },
+      "models": {
+        "minimax-portal/MiniMax-M2.5": {
+          "alias": "minimax-m2.5"
+        }
+      },
+      "workspace": "/home/user/.openclaw/workspace",
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "timeoutSeconds": 900,
+      "maxConcurrent": 4,
+      "subagents": {
+        "maxConcurrent": 8
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "default": true
+      },
+      {
+        "id": "soul-writer",
+        "name": "soul-writer",
+        "workspace": "/home/user/.openclaw/workspace-soul-writer",
+        "agentDir": "/home/user/.openclaw/agents/soul-writer/agent"
+      },
+      {
+        "id": "info-officer",
+        "name": "info-officer",
+        "workspace": "/home/user/.openclaw/workspace-info-officer",
+        "agentDir": "/home/user/.openclaw/agents/info-officer/agent",
+        "sandbox": {
+          "mode": "off",
+          "workspaceAccess": "rw",
+          "docker": {
+            "network": "openclaw-sandbox-browser"
+          },
+          "browser": {
+            "enabled": true,
+            "headless": false
+          }
+        }
+      },
+      {
+        "id": "devmaster",
+        "name": "devmaster",
+        "workspace": "/home/user/.openclaw/agents/devmaster",
+        "agentDir": "/home/user/.openclaw/agents/devmaster/agent"
+      },
+      {
+        "id": "antfarm-medic",
+        "name": "Antfarm Medic",
+        "model": "minimax-portal/MiniMax-M2.5"
+      },
+      {
+        "id": "plyman-info",
+        "name": "plyman-info",
+        "workspace": "/home/user/.openclaw/workspace-plyman-info",
+        "agentDir": "/home/user/.openclaw/agents/plyman-info/agent"
+      },
+      {
+        "id": "plyman-anaylse",
+        "name": "plyman-anaylse",
+        "workspace": "/home/user/.openclaw/workspace-plyman-anaylse",
+        "agentDir": "/home/user/.openclaw/agents/plyman-anaylse/agent"
+      },
+      {
+        "id": "plyman-mailer",
+        "name": "plyman-mailer",
+        "workspace": "/home/user/.openclaw/workspace-plyman-mailer",
+        "agentDir": "/home/user/.openclaw/agents/plyman-mailer/agent"
+      }
+    ]
+  },
+  "tools": {
+    "web": {
+      "search": {
+        "apiKey": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      }
+    },
+    "media": {
+      "audio": {
+        "enabled": true,
+        "models": [
+          {
+            "type": "cli",
+            "command": "/home/user/Tools/fun_asr/funasr-transcribe.py",
+            "args": [
+              "{{MediaPath}}"
+            ],
+            "timeoutSeconds": 240
+          }
+        ]
+      }
+    },
+    "sessions": {
+      "visibility": "tree"
+    },
+    "agentToAgent": {
+      "enabled": true
+    },
+    "sandbox": {
+      "tools": {
+        "allow": [
+          "browser"
+        ],
+        "deny": []
+      }
+    }
+  },
+  "bindings": [
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "telegram",
+        "accountId": "main"
+      }
+    },
+    {
+      "agentId": "info-officer",
+      "match": {
+        "channel": "telegram",
+        "accountId": "info-officer"
+      }
+    },
+    {
+      "agentId": "soul-writer",
+      "match": {
+        "channel": "telegram",
+        "accountId": "soul-writer"
+      }
+    },
+    {
+      "agentId": "devmaster",
+      "match": {
+        "channel": "discord"
+      }
+    }
+  ],
+  "messages": {
+    "ackReactionScope": "group-mentions"
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "command-logger": {
+          "enabled": true
+        },
+        "session-memory": {
+          "enabled": true
+        },
+        "bootstrap-extra-files": {
+          "enabled": true
+        },
+        "boot-md": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing",
+      "groupPolicy": "open",
+      "streaming": "off",
+      "timeoutSeconds": 240,
+      "network": {
+        "autoSelectFamily": false
+      },
+      "accounts": {
+        "main": {
+          "dmPolicy": "pairing",
+          "botToken": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "groupPolicy": "open",
+          "streaming": "off"
+        },
+        "info-officer": {
+          "dmPolicy": "pairing",
+          "botToken": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "groupPolicy": "open",
+          "streaming": "off"
+        },
+        "soul-writer": {
+          "dmPolicy": "pairing",
+          "botToken": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "groupPolicy": "open",
+          "streaming": "off"
+        },
+        "default": {
+          "dmPolicy": "pairing",
+          "groupPolicy": "open",
+          "streaming": "partial"
+        }
+      }
+    },
+    "discord": {
+      "enabled": true,
+      "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "groupPolicy": "allowlist",
+      "streaming": "off",
+      "guilds": {
+        "1234567890123456789": {
+          "requireMention": false
+        }
+      }
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "controlUi": {
+      "allowedOrigins": [
+        "https://claw.test.com"
+      ]
+    },
+    "auth": {
+      "mode": "token",
+      "token": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    "trustedProxies": [
+      "127.0.0.1",
+      "172.16.0.0/12"
+    ],
+    "tools": {
+      "allow": [
+        "sessions_list",
+        "sessions_history",
+        "sessions_send",
+        "sessions_spawn"
+      ]
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
+    "nodes": {
+      "denyCommands": [
+        "camera.snap",
+        "camera.clip",
+        "screen.record",
+        "calendar.add",
+        "contacts.add",
+        "reminders.add"
+      ]
+    }
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "npm"
+    },
+    "entries": {
+      "openai-whisper": {
+        "enabled": false
+      },
+      "openai-whisper-api": {
+        "enabled": false
+      },
+      "openhue": {
+        "enabled": false
+      },
+      "oracle": {
+        "enabled": false
+      },
+      "ordercli": {
+        "enabled": false
+      },
+      "peekaboo": {
+        "enabled": false
+      },
+      "sag": {
+        "enabled": false
+      },
+      "sherpa-onnx-tts": {
+        "enabled": false
+      },
+      "slack": {
+        "enabled": false
+      },
+      "songsee": {
+        "enabled": false
+      },
+      "sonoscli": {
+        "enabled": false
+      },
+      "spotify-player": {
+        "enabled": false
+      },
+      "trello": {
+        "enabled": false
+      },
+      "things-mac": {
+        "enabled": false
+      },
+      "voice-call": {
+        "enabled": false
+      },
+      "xurl": {
+        "enabled": false
+      },
+      "nano-banana-pro": {
+        "enabled": false
+      },
+      "model-usage": {
+        "enabled": false
+      },
+      "imsg": {
+        "enabled": false
+      },
+      "goplaces": {
+        "enabled": false
+      },
+      "gog": {
+        "enabled": false
+      },
+      "eightctl": {
+        "enabled": false
+      },
+      "discord": {
+        "enabled": false
+      },
+      "camsnap": {
+        "enabled": false
+      },
+      "bear-notes": {
+        "enabled": false
+      },
+      "apple-reminders": {
+        "enabled": false
+      },
+      "apple-notes": {
+        "enabled": false
+      },
+      "blucli": {
+        "enabled": false
+      },
+      "openai-image-gen": {
+        "enabled": false
+      },
+      "notion": {
+        "enabled": false
+      },
+      "clawhub": {
+        "enabled": true
+      }
+    }
+  },
+  "plugins": {
+    "entries": {
+      "telegram": {
+        "enabled": true
+      },
+      "minimax-portal-auth": {
+        "enabled": true
+      }
+    }
+  }
+}

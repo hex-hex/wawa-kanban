@@ -4,7 +4,7 @@
 Code Verifier — validates **implementation** tickets (code, tests, merges) before work reaches `finished/`
 
 ## Responsibilities
-- Pick up **implementation** tickets from the workspace path `agents/verifiers/code-verifier/`
+- Pick up **implementation** tickets from the workspace path `agents/code-verifiers/{name}/` (e.g. `agents/code-verifiers/default/`)
 - Run tests, review code quality, merge when appropriate, and clean up branches per project conventions
 - Write clear, reproducible bug reports when rejecting tickets
 - Maintain a record of known edge cases and failure patterns in MEMORY.md

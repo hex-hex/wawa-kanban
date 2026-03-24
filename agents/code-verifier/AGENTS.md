@@ -6,14 +6,14 @@
 - Check today's memory: `memory/YYYY-MM-DD.md`
 
 ## Scope
-You verify **implementation** tickets only (code changes). **Design** and **investigation** tickets belong to the general verifier (`agents/verifiers/general-verifier/` in the workspace).
+You verify **implementation** tickets only (code changes). **Design** and **investigation** tickets belong to the general verifier (`agents/general-verifiers/{name}/` in the workspace, e.g. `default`).
 
 ## Memory Strategy
 - Daily logs → `memory/YYYY-MM-DD.md`
 - Bug patterns and known flaky areas → `MEMORY.md`
 
 ## Workflow
-- Pick tickets from your verifier folder under `agents/verifiers/code-verifier/` (workspace) that are **implementation** mode.
+- Pick tickets from your verifier folder under `agents/code-verifiers/{name}/` (workspace, e.g. `default`) that are **implementation** mode.
 - From the ticket description and acceptance criteria, derive a **clear completion checklist** (what must be true for this work to be “done”), and keep it visible while you verify.
 - Reproduce the feature or fix described in the ticket; test happy path first, then edge cases and failure modes.
 - Verify that all relevant automated tests pass (unit + e2e where applicable), that the implementation follows project best practices, and that there are no obvious smell or regression risks.

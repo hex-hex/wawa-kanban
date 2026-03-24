@@ -37,9 +37,10 @@ wawa-kanban/
 │       ├── pages.py          # Page routes
 │       └── api.py            # API routes
 │
-├── workspace/                # Kanban data (env: WAWA_WORKSPACE_PATH; local default: fixtures/workspace; Docker image: /app/.workspace)
-│   ├── projects/             # Project tickets
-│   └── agents/               # Agent tickets (In Progress, Verifying)
+├── fixtures/                 # Dev/test only (not in Docker image; see .dockerignore and fixtures/README.md)
+│   └── workspace/            # Sample Kanban tree; app default when WAWA_WORKSPACE_PATH is unset in a checkout
+│       ├── projects/         # Project tickets
+│       └── agents/           # Agent tickets (In Progress, Verifying)
 │
 ├── static/                   # CSS assets (uno.css)
 ├── scripts/                  # Build scripts (build-css.mjs)
@@ -65,10 +66,11 @@ workspace/
     ├── designers/
     │   └── {name}/
     │       └── *.md                  # → In Progress column
-    └── verifiers/
-        ├── code-verifier/            # implementation tickets in Verifying
-        │   └── *.md
-        └── general-verifier/         # design / investigation tickets in Verifying
+    ├── code-verifiers/               # plural top-level type (like developers/)
+    │   └── {name}/                   # e.g. default — implementation tickets → Verifying
+    │       └── *.md
+    └── general-verifiers/
+        └── {name}/                   # e.g. default — design / investigation → Verifying
             └── *.md
 ```
 
@@ -79,7 +81,7 @@ workspace/
 | TODOS | projects/{project_id}/todos/ |
 | IN_PROGRESS | agents/developers/{name}/ + agents/designers/{name}/ (not from projects) |
 | WAITING_FOR_VERIFICATION | projects/{project_id}/waiting_for_verification/ |
-| VERIFYING | agents/verifiers/code-verifier/ (implementation) and agents/verifiers/general-verifier/ (design, investigation, other) — not from projects |
+| VERIFYING | agents/code-verifiers/{name}/ (implementation) and agents/general-verifiers/{name}/ (design, investigation, other) — not from projects |
 | FINISHED | projects/{project_id}/finished/ |
 
 Agent tickets show a badge (Position + Agent name, e.g. "Developer: default") derived from the ticket file path at render time.

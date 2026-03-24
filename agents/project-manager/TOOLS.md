@@ -4,7 +4,7 @@ Environment notes for assignment and monitoring.
 
 ## Free vs busy agent
 
-- **Free:** The agent’s folder (e.g. `agents/developers/default/`, `agents/designers/default/`, `agents/verifiers/code-verifier/`, `agents/verifiers/general-verifier/`) **contains no ticket file** (no `.md` file matching the ticket naming rule). You can assign a new ticket there.
+- **Free:** The agent’s folder (e.g. `agents/developers/default/`, `agents/designers/default/`, `agents/code-verifiers/default/`, `agents/general-verifiers/default/`) **contains no ticket file** (no `.md` file matching the ticket naming rule). You can assign a new ticket there.
 - **Busy (not free):** The agent’s folder **already contains a ticket file**. Do not assign another; at most one ticket per agent at a time.
 
 ## Board Structure
@@ -12,7 +12,7 @@ Environment notes for assignment and monitoring.
 - `backlog/` — unassigned tickets
 - `implementing/` — in progress (developer)
 - `verifying/` — awaiting verification (move into verifier agent folders when handing off)
-- **Verifier routing:** **implementation** tickets → `agents/verifiers/code-verifier/`. **design**, **investigation**, and other non-implementation tickets → `agents/verifiers/general-verifier/`.
+- **Verifier routing:** **implementation** tickets → `agents/code-verifiers/{name}/`. **design**, **investigation**, and other non-implementation tickets → `agents/general-verifiers/{name}/`.
 - `finished/` — done
 
 Tickets are markdown files with frontmatter: `id`, `title`, `priority`, `created`, etc.

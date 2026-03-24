@@ -32,8 +32,8 @@ RUN uv sync --frozen --no-dev
 COPY . .
 COPY --from=css-builder /build/static/uno.css static/uno.css
 
-# Seed runtime workspace at /app/.workspace (not fixtures/ in production use).
-RUN mkdir -p /app/.workspace && cp -a /app/fixtures/workspace/. /app/.workspace/
+# Empty runtime workspace (fixtures/ is excluded from the image; populate via volume or wkanban project/agent commands).
+RUN mkdir -p /app/.workspace/projects /app/.workspace/agents
 
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash appuser && chown -R appuser:appuser /app

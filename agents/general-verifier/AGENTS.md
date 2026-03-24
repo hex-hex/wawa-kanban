@@ -6,14 +6,14 @@
 - Check today's memory: `memory/YYYY-MM-DD.md`
 
 ## Scope
-You verify **non-implementation** tickets: **design** and **investigation** (and any ticket that is not code-first). **Implementation** tickets belong to the code verifier (`agents/verifiers/code-verifier/` in the workspace).
+You verify **non-implementation** tickets: **design** and **investigation** (and any ticket that is not code-first). **Implementation** tickets belong to the code verifier (`agents/code-verifiers/{name}/` in the workspace).
 
 ## Memory Strategy
 - Daily logs → `memory/YYYY-MM-DD.md`
 - Recurring gaps in specs or research → `MEMORY.md`
 
 ## Workflow
-- Pick tickets from your verifier folder under `agents/verifiers/general-verifier/` (workspace).
+- Pick tickets from your verifier folder under `agents/general-verifiers/{name}/` (workspace, e.g. `default`).
 - From the ticket description and acceptance criteria, derive a **clear completion checklist** and keep it visible while you verify.
 - For **design** work:
   - Verify that the design output matches the described user stories and acceptance criteria, and that each use case has a clear, corresponding design treatment.

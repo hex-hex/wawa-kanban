@@ -136,7 +136,9 @@ def run_remove(args: argparse.Namespace) -> int:
     try:
         config_path = args.config or openclaw_config_path()
         state = args.state_dir or openclaw_state_dir()
-        agent_id = slugify_agent_id(args.name)
+        # Match run_add: same display name → same derived id (wawa- prefix when omitted).
+        display_name = args.name if args.name.startswith("wawa-") else f"wawa-{args.name}"
+        agent_id = slugify_agent_id(display_name)
 
         cfg = load_config(config_path)
         ensure_agents_tree(cfg)
@@ -194,11 +196,16 @@ def _parser_init_agents() -> argparse.ArgumentParser:
     return p
 
 
-def main_init_agents(argv: list[str] | None = None) -> int:
-    args = _parser_init_agents().parse_args(argv)
-    config_path = args.config or openclaw_config_path()
-    state = args.state_dir or openclaw_state_dir()
-    root = args.repo or repo_root()
+def run_init_agents(
+    *,
+    config: Path | None = None,
+    state_dir: Path | None = None,
+    repo: Path | None = None,
+) -> int:
+    """Register all default Wawa agents (one per role). Same behavior as ``openclaw-init-agents``."""
+    config_path = config or openclaw_config_path()
+    state = state_dir or openclaw_state_dir()
+    root = repo or repo_root()
 
     cfg = load_config(config_path)
     ensure_agents_tree(cfg)
@@ -224,6 +231,15 @@ def main_init_agents(argv: list[str] | None = None) -> int:
 
     print(f"Done. Config: {config_path}")
     return 1 if errors else 0
+
+
+def main_init_agents(argv: list[str] | None = None) -> int:
+    args = _parser_init_agents().parse_args(argv)
+    return run_init_agents(
+        config=args.config,
+        state_dir=args.state_dir,
+        repo=args.repo,
+    )
 
 
 def _parser_uninstall_agents() -> argparse.ArgumentParser:
@@ -282,8 +298,8 @@ def main_uninstall_agents(argv: list[str] | None = None) -> int:
 
 def main() -> int:
     print(
-        "Use: wkanban agent add|remove, or openclaw-agent-add / openclaw-agent-remove / "
-        "openclaw-init-agents / openclaw-uninstall-agents.",
+        "Use: wkanban agent add|remove|add-default|list, or openclaw-agent-add / "
+        "openclaw-agent-remove / openclaw-init-agents / openclaw-uninstall-agents.",
         file=sys.stderr,
     )
     return 2

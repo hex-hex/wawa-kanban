@@ -53,15 +53,6 @@ download_to() {
   fi
 }
 
-WORKSPACE_PROJECTS_DIR="${WORKSPACE_DIR}/projects"
-WORKSPACE_AGENTS_DIR="${WORKSPACE_DIR}/agents"
-DEFAULT_PROJECT_DIR="${WORKSPACE_PROJECTS_DIR}/wawa.proj.default"
-
-AGENTS_DEFAULT_DESIGNERS_DIR="${WORKSPACE_AGENTS_DIR}/designers/default"
-AGENTS_DEFAULT_DEVELOPERS_DIR="${WORKSPACE_AGENTS_DIR}/developers/default"
-AGENTS_DEFAULT_VERIFIER_CODE_DIR="${WORKSPACE_AGENTS_DIR}/verifiers/code-verifier"
-AGENTS_DEFAULT_VERIFIER_GENERAL_DIR="${WORKSPACE_AGENTS_DIR}/verifiers/general-verifier"
-
 require_curl_or_wget
 
 have_required_tool_or_die docker
@@ -69,20 +60,8 @@ if ! docker info >/dev/null 2>&1; then
   die "Docker CLI is available, but the Docker engine is not reachable. Please start Docker Desktop / Docker Engine."
 fi
 
-have_required_tool_or_die openclaw
-
 log "Preparing workspace directory: $WORKSPACE_DIR"
 mkdir -p "$WORKSPACE_DIR"
-
-log "Creating base directory tree (directories only)"
-mkdir -p \
-  "$DEFAULT_PROJECT_DIR/todos" \
-  "$DEFAULT_PROJECT_DIR/waiting_for_verification" \
-  "$DEFAULT_PROJECT_DIR/finished" \
-  "$AGENTS_DEFAULT_DESIGNERS_DIR" \
-  "$AGENTS_DEFAULT_DEVELOPERS_DIR" \
-  "$AGENTS_DEFAULT_VERIFIER_CODE_DIR" \
-  "$AGENTS_DEFAULT_VERIFIER_GENERAL_DIR"
 
 log "Installing wkanban from GitHub raw: $WAWA_WKANBAN_URL"
 mkdir -p "$BIN_DIR"

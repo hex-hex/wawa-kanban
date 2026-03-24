@@ -11,3 +11,5 @@ node_modules
 .env
 .env.*
 tests
+# Dev/test sample data only; not copied into the runtime image (use project add / agent add or a volume).
+fixtures

@@ -1,6 +1,8 @@
 """CLI behavior for ``wkanban`` (non-e2e)."""
 
+import io
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -8,17 +10,10 @@ import pytest
 from wawa_cli import project_commands
 
 
-@pytest.mark.parametrize(
-    "argv",
-    [
-        ["project", "add"],
-        ["project", "archive"],
-    ],
-)
-def test_project_subcommands_stub_exit_code(argv, capsys):
+def test_project_archive_stub_exit_code(capsys):
     from wawa_cli.main import main
 
-    assert main(argv) == project_commands.STUB_EXIT_CODE
+    assert main(["project", "archive"]) == project_commands.STUB_EXIT_CODE
     err = capsys.readouterr().err
     assert "Not implemented yet" in err
 
@@ -60,6 +55,76 @@ def test_project_list_workspace_missing(tmp_path, capsys, monkeypatch):
     assert main(["project", "list", "--workspace", str(missing)]) == 1
     err = capsys.readouterr().err
     assert "Workspace not found" in err
+
+
+def test_project_add_creates_layout(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    assert (
+        main(["project", "add", "my-beta", "--workspace", str(ws), "--yes"]) == 0
+    )
+    out = capsys.readouterr().out
+    proj = ws / "projects" / "wawa.proj.my-beta"
+    assert proj.is_dir()
+    for sub in ("todos", "waiting_for_verification", "finished"):
+        assert (proj / sub).is_dir()
+    assert str(proj) in out
+
+
+def test_project_add_accepts_full_id(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    assert (
+        main(
+            [
+                "project",
+                "add",
+                "wawa.proj.custom-id",
+                "--workspace",
+                str(ws),
+                "-y",
+            ]
+        )
+        == 0
+    )
+    assert (ws / "projects" / "wawa.proj.custom-id" / "todos").is_dir()
+
+
+def test_project_add_idempotent_second_call(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    argv = ["project", "add", "dup", "--workspace", str(ws), "-y"]
+    assert main(argv) == 0
+    assert main(argv) == 0
+    out = capsys.readouterr().out
+    assert "skipped" in out
+
+
+def test_project_add_decline_prompt(tmp_path, capsys, monkeypatch):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    monkeypatch.setattr(sys, "stdin", io.StringIO("n\n"))
+    assert main(["project", "add", "nope", "--workspace", str(ws)]) == 1
+    assert "Aborted." in capsys.readouterr().err
+    assert not (ws / "projects").exists()
+
+
+def test_project_add_confirm_prompt(tmp_path, capsys, monkeypatch):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+    monkeypatch.setattr(sys, "stdin", io.StringIO("y\n"))
+    assert main(["project", "add", "yes-proj", "--workspace", str(ws)]) == 0
+    assert (ws / "projects" / "wawa.proj.yes-proj").is_dir()
 
 
 def test_project_list_uses_fixtures_workspace(monkeypatch, capsys):
@@ -126,6 +191,31 @@ def test_agent_list_long_format(tmp_path, monkeypatch, capsys):
     assert main(["agent", "list", "--long"]) == 0
     lines = capsys.readouterr().out.strip().splitlines()
     assert lines == ["a\t", "b\tBee"]
+
+
+def test_agent_add_default_creates_slot_dirs(tmp_path, monkeypatch, capsys):
+    from wawa_cli import agent_commands
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    ws.mkdir()
+
+    def fake_init(**_kwargs):
+        return 0
+
+    monkeypatch.setattr(agent_commands, "run_init_agents", fake_init)
+    assert main(["agent", "add-default", "--workspace", str(ws)]) == 0
+    assert (ws / "agents" / "designers" / "default").is_dir()
+    assert (ws / "agents" / "code-verifiers" / "default").is_dir()
+    assert (ws / "agents" / "general-verifiers" / "default").is_dir()
+
+
+def test_agent_add_default_workspace_missing(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    missing = tmp_path / "nope"
+    assert main(["agent", "add-default", "--workspace", str(missing)]) == 1
+    assert "Workspace not found" in capsys.readouterr().err
 
 
 def test_agent_list_wawa_only_filters(tmp_path, monkeypatch, capsys):

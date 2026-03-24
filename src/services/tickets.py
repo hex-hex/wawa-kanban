@@ -15,9 +15,10 @@ from src.models.kanban import (
 from src.models.repository import repository
 from src.services.workspace import parse_frontmatter, serialize_frontmatter_and_body
 
-# Agent type folder (plural) -> AgentPosition
+# Agent type folder (plural) under workspace/agents/ -> AgentPosition
 _TYPE_TO_POSITION: dict[str, AgentPosition] = {
-    "verifiers": AgentPosition.VERIFIER,
+    "code-verifiers": AgentPosition.VERIFIER,
+    "general-verifiers": AgentPosition.VERIFIER,
     "designers": AgentPosition.DESIGNER,
     "developers": AgentPosition.DEVELOPER,
 }
@@ -206,8 +207,8 @@ def _display_name(project_id: str) -> str:
 
 def _load_project(project_path: Path) -> Project | None:
     """Load a single project from workspace/projects/{project_id}/.
-    Verifying column also includes tickets from workspace/agents/verifiers/*
-    (e.g. code-verifier for implementation, general-verifier for design/investigation)."""
+    Verifying column also includes tickets from workspace/agents/code-verifiers/*
+    and workspace/agents/general-verifiers/*."""
     project_id = project_path.name
     if project_id.startswith("."):
         return None
@@ -217,7 +218,7 @@ def _load_project(project_path: Path) -> Project | None:
         if status == TicketStatus.IN_PROGRESS:
             continue  # In Progress comes from developers/designers agents only
         if status == TicketStatus.VERIFYING:
-            continue  # Verifying comes from agents/verifiers only, not projects
+            continue  # Verifying comes from code-verifiers/general-verifiers only, not projects
         col_path = project_path / status.value
         tickets.extend(_load_tickets_from_dir(col_path, status))
 
@@ -234,10 +235,12 @@ def _load_project(project_path: Path) -> Project | None:
                             tickets.append(t)
                             existing_ids.add(t["id"])
 
-    # Merge Verifying from agents/verifiers/* (only tickets belonging to this project)
-    verifiers_path = AGENTS_WORKSPACE_PATH / "verifiers"
-    if verifiers_path.exists():
-        for name_path in sorted(verifiers_path.iterdir()):
+    # Merge Verifying from agents/code-verifiers/* and agents/general-verifiers/*
+    for verifier_kind in ("code-verifiers", "general-verifiers"):
+        type_path = AGENTS_WORKSPACE_PATH / verifier_kind
+        if not type_path.exists():
+            continue
+        for name_path in sorted(type_path.iterdir()):
             if name_path.is_dir() and not name_path.name.startswith("."):
                 for t in _load_tickets_from_dir(name_path, TicketStatus.VERIFYING):
                     if t.get("project") == project_id and t["id"] not in existing_ids:

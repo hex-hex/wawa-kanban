@@ -100,15 +100,50 @@ def merge_agent_into_config(cfg: dict[str, Any], entry: dict[str, Any]) -> dict[
 
 
 def remove_agent_from_config(cfg: dict[str, Any], agent_id: str) -> dict[str, Any]:
-    lst = cfg["agents"]["list"]
-    new_list = [a for a in lst if not (isinstance(a, dict) and a.get("id") == agent_id)]
-    if len(new_list) == len(lst):
-        raise ValueError(f"No agent with id {agent_id!r} in agents.list")
-    cfg["agents"]["list"] = new_list
+    """Remove agent from ``agents.list``, strip matching ``bindings``, and drop related channel accounts.
 
+    Channel cleanup (OpenClaw-style):
+    - For each removed binding with ``match.channel`` + ``match.accountId``, delete
+      ``channels.<channel>.accounts.<accountId>`` when present.
+    - Also delete ``channels.*.accounts.<agent_id>`` when the account key equals the agent id
+      (e.g. Telegram account id matches agent id).
+    """
+    lst = cfg["agents"]["list"]
+    if not any(isinstance(a, dict) and a.get("id") == agent_id for a in lst):
+        raise ValueError(f"No agent with id {agent_id!r} in agents.list")
+
+    accounts_to_drop: list[tuple[str, str]] = []
     bindings = cfg.get("bindings")
     if isinstance(bindings, list):
-        cfg["bindings"] = [b for b in bindings if not (isinstance(b, dict) and b.get("agentId") == agent_id)]
+        new_bindings: list[Any] = []
+        for b in bindings:
+            if isinstance(b, dict) and b.get("agentId") == agent_id:
+                m = b.get("match")
+                if isinstance(m, dict):
+                    ch = m.get("channel")
+                    aid = m.get("accountId")
+                    if isinstance(ch, str) and isinstance(aid, str):
+                        accounts_to_drop.append((ch, aid))
+                continue
+            new_bindings.append(b)
+        cfg["bindings"] = new_bindings
+
+    cfg["agents"]["list"] = [a for a in lst if not (isinstance(a, dict) and a.get("id") == agent_id)]
+
+    channels = cfg.get("channels")
+    if isinstance(channels, dict):
+        for ch_name, acc_id in accounts_to_drop:
+            ch_val = channels.get(ch_name)
+            if isinstance(ch_val, dict):
+                acc = ch_val.get("accounts")
+                if isinstance(acc, dict) and acc_id in acc:
+                    del acc[acc_id]
+        for _ch_name, ch_val in channels.items():
+            if isinstance(ch_val, dict):
+                acc = ch_val.get("accounts")
+                if isinstance(acc, dict) and agent_id in acc:
+                    del acc[agent_id]
+
     return cfg
 
 

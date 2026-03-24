@@ -19,36 +19,30 @@ WORKSPACE_DIR="${HOME}/.wawa-kanban/workspace"
 BIN_DIR="${HOME}/.wawa-kanban/bin"
 LOCAL_BIN_DIR="${HOME}/.local/bin"
 
-DEFAULT_PROJECT_DIR="${WORKSPACE_DIR}/projects/wawa.proj.default"
-AGENTS_DIR="${WORKSPACE_DIR}/agents"
-
-DEFAULT_TODOS_DIR="${DEFAULT_PROJECT_DIR}/todos"
-DEFAULT_WAITING_DIR="${DEFAULT_PROJECT_DIR}/waiting_for_verification"
-DEFAULT_FINISHED_DIR="${DEFAULT_PROJECT_DIR}/finished"
-
-DEFAULT_DESIGNERS_DIR="${AGENTS_DIR}/designers/default"
-DEFAULT_DEVELOPERS_DIR="${AGENTS_DIR}/developers/default"
-DEFAULT_VERIFIER_CODE_DIR="${AGENTS_DIR}/verifiers/code-verifier"
-DEFAULT_VERIFIER_GENERAL_DIR="${AGENTS_DIR}/verifiers/general-verifier"
-
 CONTAINER_NAME="wawa-kanban"
 IMAGE="wawaassistant/wawa-kanban:latest"
 PORT="5020"
 
-ensure_dirs() {
-  mkdir -p \
-    "$WORKSPACE_DIR" \
-    "$DEFAULT_TODOS_DIR" \
-    "$DEFAULT_WAITING_DIR" \
-    "$DEFAULT_FINISHED_DIR" \
-    "$DEFAULT_DESIGNERS_DIR" \
-    "$DEFAULT_DEVELOPERS_DIR" \
-    "$DEFAULT_VERIFIER_CODE_DIR" \
-    "$DEFAULT_VERIFIER_GENERAL_DIR"
+# Must match the non-root user home in the Kanban image (see Dockerfile).
+CONTAINER_APP_HOME="/home/appuser"
+
+# Run a one-shot command in the Kanban image with the same mounts as the long-running app
+# (workspace + host OpenClaw dir). Used after the main container is removed (e.g. uninstall).
+ephemeral_kanban_run() {
+  docker pull "$IMAGE" >/dev/null 2>&1 || true
+  docker run --rm \
+    -w /app \
+    -e WAWA_WORKSPACE_PATH=/workspace \
+    -e HOME="${CONTAINER_APP_HOME}" \
+    -u appuser \
+    -v "${WORKSPACE_DIR}:/workspace" \
+    -v "${HOME}/.openclaw:${CONTAINER_APP_HOME}/.openclaw" \
+    "$IMAGE" \
+    "$@"
 }
 
 docker_start() {
-  ensure_dirs
+  mkdir -p "${HOME}/.openclaw"
 
   log "Pulling image (if needed): $IMAGE"
   docker pull "$IMAGE" >/dev/null 2>&1 || true
@@ -64,7 +58,10 @@ docker_start() {
     --restart unless-stopped \
     -p "${PORT}:${PORT}" \
     -e "WAWA_WORKSPACE_PATH=/workspace" \
+    -e "HOME=${CONTAINER_APP_HOME}" \
     -v "${WORKSPACE_DIR}:/workspace" \
+    -v "${HOME}/.openclaw:${CONTAINER_APP_HOME}/.openclaw" \
+    -u appuser \
     "$IMAGE" >/dev/null
 
   log "Done. Open http://localhost:${PORT}"
@@ -80,9 +77,13 @@ uninstall() {
   log "Uninstalling..."
   docker_stop_remove
 
-  # Remove Wawa-managed agents from openclaw.json before deleting workspace.
-  log "Cleaning up agents from openclaw.json..."
-  openclaw_via_uv openclaw-uninstall-agents --wawa-workspace "$WORKSPACE_DIR" || true
+  # Remove Wawa-managed agents from openclaw.json before deleting workspace (no host uv required).
+  if [ -d "$WORKSPACE_DIR" ] && [ -d "${HOME}/.openclaw" ]; then
+    log "Cleaning up agents from openclaw.json (inside one-shot container)..."
+    ephemeral_kanban_run uv run openclaw-uninstall-agents --wawa-workspace /workspace || true
+  else
+    log "Skipping OpenClaw cleanup (workspace or ~/.openclaw missing)."
+  fi
 
   # Remove command links + installed script.
   rm -f "${LOCAL_BIN_DIR}/wkanban" >/dev/null 2>&1 || true
@@ -95,9 +96,13 @@ uninstall() {
 }
 
 init() {
+  mkdir -p "$WORKSPACE_DIR"
+  mkdir -p "${HOME}/.openclaw"
   docker_start
-  log "Registering default agents..."
-  openclaw_via_uv openclaw-init-agents
+  log "Seeding default project and agents (inside container, same as wkanban CLI)..."
+  docker exec -w /app "$CONTAINER_NAME" uv run wkanban project add default -y --workspace /workspace
+  docker exec -w /app "$CONTAINER_NAME" uv run wkanban agent add-default --workspace /workspace
+  log "Init complete."
 }
 
 require_uv_and_repo() {
@@ -158,4 +163,3 @@ case "$cmd" in
     die "Usage: wkanban {init|uninstall|agent|project|openclaw-agent-add|openclaw-agent-remove|openclaw-init-agents|openclaw-uninstall-agents} ..."
     ;;
 esac
-

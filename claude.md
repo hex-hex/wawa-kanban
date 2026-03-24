@@ -51,8 +51,9 @@ npm run dev:css
 ## Kanban Board
 
 ### Workspace
-- Default: `fixtures/workspace` (projects + agents). All tests and dev use this by default.
+- Default in a git checkout: `fixtures/workspace` (projects + agents) for tests and dev when `WAWA_WORKSPACE_PATH` is unset.
 - Override via env: `WAWA_WORKSPACE_PATH=/path/to/your/workspace` (must contain `projects/` and `agents/` subdirs).
+- Docker image: **does not** include `fixtures/`; runtime workspace is empty at `/app/.workspace` unless you mount one or populate via CLI.
 
 ### Workspace Structure
 ```
