@@ -169,6 +169,14 @@ init() {
   log "Init complete."
 }
 
+update() {
+  log "Updating container image and restarting with existing parameters..."
+  mkdir -p "$WORKSPACE_DIR"
+  mkdir -p "${HOME}/.openclaw"
+  docker_start
+  log "Update complete."
+}
+
 require_uv_and_repo() {
   _ctx="$1"
   if ! command -v uv >/dev/null 2>&1; then
@@ -201,6 +209,9 @@ case "$cmd" in
   init)
     init
     ;;
+  update)
+    update
+    ;;
   uninstall)
     shift
     uninstall "$@"
@@ -225,6 +236,6 @@ case "$cmd" in
     openclaw_via_uv openclaw-uninstall-agents "$@"
     ;;
   *)
-    die "Usage: wkanban {init|uninstall|agent|project|openclaw-agent-add|openclaw-agent-remove|openclaw-init-agents|openclaw-uninstall-agents} ..."
+    die "Usage: wkanban {init|update|uninstall|agent|project|openclaw-agent-add|openclaw-agent-remove|openclaw-init-agents|openclaw-uninstall-agents} ..."
     ;;
 esac
