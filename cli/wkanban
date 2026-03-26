@@ -18,6 +18,8 @@ have_container() {
 WORKSPACE_DIR="${HOME}/.wawa-kanban/workspace"
 BIN_DIR="${HOME}/.wawa-kanban/bin"
 LOCAL_BIN_DIR="${HOME}/.local/bin"
+WAWA_WKANBAN_URL_DEFAULT="https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/cli/wkanban"
+WAWA_WKANBAN_URL="${WAWA_WKANBAN_URL:-$WAWA_WKANBAN_URL_DEFAULT}"
 
 CONTAINER_NAME="wawa-kanban"
 IMAGE="wawaassistant/wawa-kanban:latest"
@@ -29,6 +31,51 @@ CONTAINER_APP_HOME="/home/appuser"
 # Same id as ``wawa-<role>`` from ``openclaw-init-agents`` / ``agent add-default`` (role ``lead``).
 WAWA_OPENCLAW_LEAD_AGENT_ID="${WAWA_OPENCLAW_LEAD_AGENT_ID:-wawa-lead}"
 WAWA_OPENCLAW_LEAD_INTRO_MESSAGE="${WAWA_OPENCLAW_LEAD_INTRO_MESSAGE:-introduce yourself.}"
+
+have_cmd() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+require_curl_or_wget() {
+  if have_cmd curl; then
+    DOWNLOADER="curl"
+    return 0
+  fi
+  if have_cmd wget; then
+    DOWNLOADER="wget"
+    return 0
+  fi
+  die "Neither 'curl' nor 'wget' is available. Please install one of them and ensure it is in your PATH."
+}
+
+download_to() {
+  url="$1"
+  out_path="$2"
+  if [ "$DOWNLOADER" = "curl" ]; then
+    curl -fsSL "$url" -o "$out_path"
+  else
+    wget -q "$url" -O "$out_path"
+  fi
+}
+
+update_wkanban_script() {
+  require_curl_or_wget
+  mkdir -p "$BIN_DIR"
+  mkdir -p "$LOCAL_BIN_DIR"
+
+  tmp_script="${TMPDIR:-/tmp}/wkanban.update.$$"
+  trap 'rm -f "$tmp_script" >/dev/null 2>&1 || true' EXIT HUP INT TERM
+
+  log "Downloading latest wkanban script: $WAWA_WKANBAN_URL"
+  download_to "$WAWA_WKANBAN_URL" "$tmp_script"
+  sh -n "$tmp_script" >/dev/null 2>&1 || die "Downloaded wkanban failed a syntax check."
+
+  install_path="${BIN_DIR}/wkanban"
+  mv -f "$tmp_script" "$install_path"
+  chmod +x "$install_path"
+  ln -sf "$install_path" "${LOCAL_BIN_DIR}/wkanban"
+  log "Updated local wkanban script: $install_path"
+}
 
 # Run a one-shot command in the Kanban image with the same mounts as the long-running app
 # (workspace + host OpenClaw dir). Used after the main container is removed (e.g. uninstall).
@@ -170,7 +217,8 @@ init() {
 }
 
 update() {
-  log "Updating container image and restarting with existing parameters..."
+  log "Updating wkanban script, image, and restarting with existing parameters..."
+  update_wkanban_script
   mkdir -p "$WORKSPACE_DIR"
   mkdir -p "${HOME}/.openclaw"
   docker_start
