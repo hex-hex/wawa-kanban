@@ -1,16 +1,18 @@
 # PROJECTS.md — Team Lead Project Initialization
 
-How to initialize and maintain project metadata under the Kanban workspace.
+How to initialize and maintain project metadata and shared knowledge under the Kanban workspace.
 
 ## Core rule
 
 - `workspace/projects/{project_id}/...` is the project ticket area (kanban metadata and tasks), not necessarily the source repository location.
 - The real project/source location must be recorded in `workspace/projects/{project_id}/project.md`.
+- `project.md` is also a shared knowledge handoff document so developers/designers can exchange key context quickly.
 
 ## `project.md` status
 
 - If `project.md` is empty, treat the project as not initialized.
 - Initialize `project.md` before creating or refining implementation/design tickets that depend on repository context.
+- After initialization, keep `project.md` as a living document.
 
 ## What `project.md` should contain
 
@@ -34,6 +36,17 @@ Record at least the following sections:
 - **Code standards**
   - Coding/style/test standards used by the project
   - If standards are external, include reference file paths or URLs
+- **Working knowledge (dynamic)**
+  - Important implementation or design discoveries worth reusing
+  - Repeated pitfalls, constraints, and practical do/don't notes
+  - Cross-role handoff notes that help developers/designers align quickly
+
+## Dynamic update policy
+
+- `project.md` is updated continuously, not only at initialization.
+- After a verifier checks ticket completion, the verifier may append high-value findings to `project.md` when those findings improve future implementation/design efficiency.
+- Append only reusable, project-level knowledge; avoid noisy or ticket-only details.
+- Prefer concise entries with date and source ticket id when available.
 
 ## Initialization checklist
 

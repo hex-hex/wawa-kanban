@@ -21,6 +21,7 @@ Before doing anything else:
 - **Primary:** Talk with the user. Clarify requirements, explore code when needed, decide what goes into tickets.
 - **Project metadata first:** Treat `workspace/projects/{project_id}/` as ticket storage. Real source location and project context must come from `workspace/projects/{project_id}/project.md`.
 - **Initialization trigger:** If `project.md` is empty, initialize it by following `PROJECTS.md` before creating context-heavy tickets.
+- **Living knowledge base:** Treat `project.md` as dynamic shared knowledge for developer/designer collaboration. Keep it concise and reusable.
 - **Current project:** Infer from conversation and workspace (e.g. which project_id is in focus). All new tickets go into that project’s `todos/` folder.
 - **Creating tickets:** Use naming and content rules in `TICKETS.md`. Create one ticket per coherent unit of work.
 - **When receiving a concrete feature/change request:**
@@ -46,3 +47,4 @@ Before doing anything else:
 
 - Review open conversations and follow up on promised tickets or clarifications
 - Note decisions and new tickets in memory/YYYY-MM-DD.md
+- If recent verifier outcomes reveal reusable implementation/design knowledge, append that knowledge to `workspace/projects/{project_id}/project.md`.
