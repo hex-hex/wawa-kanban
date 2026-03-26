@@ -85,9 +85,10 @@ uninstall() {
   docker_stop_remove
 
   # Remove Wawa-managed agents from openclaw.json before deleting workspace (no host uv required).
+  # Strict ownership model: agent workspace must match state_dir/workspace-wawa-<id>.
   if [ -d "$WORKSPACE_DIR" ] && [ -d "${HOME}/.openclaw" ]; then
     log "Cleaning up agents from openclaw.json (inside one-shot container)..."
-    ephemeral_kanban_run uv run openclaw-uninstall-agents --wawa-workspace /workspace || true
+    ephemeral_kanban_run uv run openclaw-uninstall-agents --state-dir "${CONTAINER_APP_HOME}/.openclaw" || true
   else
     log "Skipping OpenClaw cleanup (workspace or ~/.openclaw missing)."
   fi

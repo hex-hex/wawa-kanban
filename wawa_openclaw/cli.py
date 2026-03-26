@@ -10,7 +10,7 @@ from wawa_openclaw.agents_ops import (
     ROLES_DISALLOWED_FOR_MANUAL_ADD,
     agent_id_in_config,
     ensure_kanban_slot_dir,
-    find_wawa_agents,
+    find_wawa_agents_by_state,
     kanban_slot_from_agent_id,
     materialize_agent,
     merge_agent_into_config,
@@ -359,15 +359,9 @@ def _parser_uninstall_agents() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         description=(
             "Remove all Wawa-managed agents from openclaw.json. "
-            "Only agents whose id starts with 'wawa-' AND whose workspace is under "
-            "the Wawa workspace directory are removed."
+            "Strict ownership model: only agents whose id starts with 'wawa-' AND whose "
+            "workspace equals state_dir/workspace-wawa-<id> are removed."
         )
-    )
-    p.add_argument(
-        "--wawa-workspace",
-        type=Path,
-        default=Path.home() / ".wawa-kanban" / "workspace",
-        help="Wawa workspace root used to verify agent ownership (default: ~/.wawa-kanban/workspace).",
     )
     p.add_argument(
         "--config",
@@ -394,7 +388,7 @@ def main_uninstall_agents(argv: list[str] | None = None) -> int:
         print("No openclaw.json found, nothing to clean up.")
         return 0
 
-    agent_ids = find_wawa_agents(cfg, args.wawa_workspace)
+    agent_ids = find_wawa_agents_by_state(cfg, state)
     if not agent_ids:
         print("No Wawa-managed agents found in openclaw.json.")
         return 0

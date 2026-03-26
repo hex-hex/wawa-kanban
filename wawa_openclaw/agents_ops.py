@@ -373,24 +373,49 @@ def ensure_kanban_slot_dir(workspace_root: Path, role: str, kanban_slot: str) ->
     slot.mkdir(parents=True, exist_ok=True)
 
 
+def _resolve_path(raw: str | Path) -> Path:
+    return Path(raw).expanduser().resolve()
+
+
 def find_wawa_agents(cfg: dict[str, Any], wawa_workspace_dir: Path) -> list[str]:
-    """Return agent IDs that pass both cross-validation criteria:
-    1. id starts with 'wawa-'
-    2. workspace path is under wawa_workspace_dir
-    """
-    wawa_workspace_dir = wawa_workspace_dir.expanduser().resolve()
+    """Return Wawa agent IDs with workspace under ``wawa_workspace_dir`` (legacy workspace-prefix mode)."""
+    wawa_workspace_dir = _resolve_path(wawa_workspace_dir)
     result = []
     for agent in cfg.get("agents", {}).get("list", []):
         if not isinstance(agent, dict):
             continue
         agent_id = agent.get("id", "")
-        if not agent_id.startswith("wawa-"):
+        if not isinstance(agent_id, str) or not agent_id.startswith("wawa-"):
             continue
         raw_ws = agent.get("workspace", "")
-        ws_path = Path(raw_ws).expanduser().resolve()
+        ws_path = _resolve_path(raw_ws)
         try:
             ws_path.relative_to(wawa_workspace_dir)
             result.append(agent_id)
         except ValueError:
             pass
+    return result
+
+
+def find_wawa_agents_by_state(cfg: dict[str, Any], state_dir: Path) -> list[str]:
+    """Return Wawa agent IDs strictly owned by ``state_dir``.
+
+    Ownership rule (strict): ``workspace`` in openclaw.json must equal
+    ``state_dir/workspace-wawa-<agent_id>`` after path normalization.
+    """
+    state_dir = _resolve_path(state_dir)
+    result = []
+    for agent in cfg.get("agents", {}).get("list", []):
+        if not isinstance(agent, dict):
+            continue
+        agent_id = agent.get("id", "")
+        if not isinstance(agent_id, str) or not agent_id.startswith("wawa-"):
+            continue
+        raw_ws = agent.get("workspace")
+        if not isinstance(raw_ws, str) or not raw_ws.strip():
+            continue
+        ws_path = _resolve_path(raw_ws)
+        expected = state_dir / f"workspace-wawa-{agent_id}"
+        if ws_path == expected:
+            result.append(agent_id)
     return result

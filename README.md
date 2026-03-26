@@ -128,6 +128,8 @@ uv run openclaw-agent-remove "Alex"
 
 The installed **`wkanban`** script: **`init`** / **`uninstall`** need no clone or **`uv`**. For **`agent`**, **`project`**, or **`openclaw-*`** aliases, set **`WAWA_KANBAN_ROOT`** to a git clone and install **`uv`**. **`wkanban openclaw-agent-add …`** is an alias for **`wkanban agent add …`**.
 
+**Uninstall ownership model (strict, state-based):** `openclaw-uninstall-agents` now identifies removable Wawa agents only when each `agents.list[]` entry has `id` starting with `wawa-` **and** `workspace == <state_dir>/workspace-wawa-<id>` (normalized path equality). This replaces the old workspace-prefix ownership check and avoids false positives/false negatives caused by passing the wrong workspace root.
+
 **Docker:** the image entrypoint (**`docker-entrypoint.sh`**) starts as **root**, **`chown`s** `/app`, **`/home/appuser`**, and **`/workspace`** (when that mount exists) to **`PUID:PGID`**, then runs **`uvicorn`** via **`setpriv`** as that user. Defaults are **`PUID=1000`** / **`PGID=1000`**. The **`wkanban`** bootstrap passes **`PUID`/`PGID`** from **`id -u`** / **`id -g`** so files written on bind mounts (`~/.openclaw`, workspace) use the same numeric ids as your host user. For raw **`docker run`**, set them explicitly, e.g. **`-e PUID=$(id -u) -e PGID=$(id -g)`** (and keep **`HOME=/home/appuser`** if you mount OpenClaw at **`/home/appuser/.openclaw`**). For an OpenClaw gateway, mount the **same host `~/.openclaw`** into that container.
 
 ### Running your own Docker image

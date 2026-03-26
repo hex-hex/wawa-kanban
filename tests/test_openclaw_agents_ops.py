@@ -16,6 +16,7 @@ from wawa_openclaw.agents_ops import (
     merge_agent_into_config,
     plan_add_agent,
     purge_agent_paths,
+    find_wawa_agents_by_state,
     remove_agent_from_config,
     render_agent_list_entry,
     slugify_agent_id,
@@ -261,8 +262,8 @@ def test_purge_agent_paths_rejects_protected_without_flag(tmp_path: Path, agent_
 
 
 def test_uninstall_removes_protected_wawa_agent(tmp_path: Path) -> None:
-    wawa_ws = tmp_path / "wawa-workspace"
-    ws_lead = wawa_ws / "lead-ws"
+    state = tmp_path / "openclaw"
+    ws_lead = state / "workspace-wawa-wawa-lead"
     ws_lead.mkdir(parents=True)
     cfg_path = tmp_path / "openclaw.json"
     cfg: dict = {
@@ -281,20 +282,44 @@ def test_uninstall_removes_protected_wawa_agent(tmp_path: Path) -> None:
     }
     ensure_agents_tree(cfg)
     save_config(cfg_path, cfg)
-    state = tmp_path / "openclaw"
     rc = main_uninstall_agents(
         [
             "--config",
             str(cfg_path),
             "--state-dir",
             str(state),
-            "--wawa-workspace",
-            str(wawa_ws),
         ]
     )
     assert rc == 0
     final = load_config(cfg_path)
     assert final["agents"]["list"] == []
+
+
+def test_find_wawa_agents_by_state_strict_model(tmp_path: Path) -> None:
+    state = tmp_path / "openclaw"
+    good_id = "wawa-inside"
+    bad_prefix = "plain-agent"
+    cfg: dict = {
+        "agents": {
+            "defaults": {},
+            "list": [
+                {
+                    "id": good_id,
+                    "workspace": str((state / f"workspace-wawa-{good_id}").resolve()),
+                },
+                {
+                    "id": "wawa-mismatch",
+                    "workspace": str((tmp_path / "legacy" / "workspace-wawa-wawa-mismatch").resolve()),
+                },
+                {
+                    "id": bad_prefix,
+                    "workspace": str((state / f"workspace-wawa-{bad_prefix}").resolve()),
+                },
+            ],
+        },
+    }
+    ensure_agents_tree(cfg)
+    assert find_wawa_agents_by_state(cfg, state) == [good_id]
 
 
 def test_protected_single_instance_agent_ids_match_init_defaults() -> None:
