@@ -33,19 +33,24 @@ Use `.md.lock` when creating a new ticket. Keep `.md` for explicitly unlocked ti
 
 Every ticket must include all of the following:
 
+- **Brief background/context:** A short, concrete context summary (why this exists now). Keep it concise.
 - **Requirement intent (why/what):** Clear problem statement, target outcome, and core user/business intent.
 - **Boundaries:** Explicit in-scope and out-of-scope items, including nearby/similar requests that are not part of this ticket.
+- **Implementation principles (priority):** The core principles/constraints that must guide execution and tradeoffs.
 - **Verification / acceptance points:** Checkable criteria for done. Use concrete statements that can be validated.
 - **Empty tracking sections at initialization:** Include two empty sections: `## Work Log` and `## Verification Log`.
+- **Direction with execution space:** Provide clear direction, reasoning, and framework, but do not over-constrain implementation/design choices that can be safely decided by the assigned agent.
 
 ### Implementation
 
 - **Purpose:** Developer can implement with minimal back-and-forth.
 - **Include in the ticket (as much as possible):**
+  - **Brief background (required):** Minimal context to explain why this task exists.
   - **Requirement intent (required):** Why this change is needed and what outcome is expected.
   - **Boundaries (required):** What is in scope, what is out of scope, and what related work is intentionally excluded.
+  - **Implementation principles (required):** Non-negotiable implementation rules, quality constraints, and architecture guardrails.
   - **Acceptance points (required):** Key behavior and quality checks that must pass.
-  - **Implementation approach:** Suggested steps, key modules or layers, integration points.
+  - **Implementation approach (optional, when needed):** Suggested steps, key modules or layers, integration points. Keep this as guidance, not rigid step-by-step control, unless strict sequencing is necessary.
   - **Code and file norms:** Where new code lives, naming, structure, conventions.
   - **Context for codesearch / exploration:** What to read or explore first in the repo (files, docs, patterns), and what "understood enough" means for this task.
 
@@ -59,6 +64,7 @@ Every ticket must include all of the following:
   - **User stories:** Who, what goal, in what situation.
   - **Design boundaries:** In scope vs out of scope, constraints (e.g. reuse X, don't change Y).
   - **Design-language preferences:** Tone (e.g. minimal, playful), patterns to follow or avoid, any reference surfaces.
+  - Leave room for design exploration where choices do not violate boundaries or acceptance points.
 
 ### Websearch
 
@@ -102,10 +108,19 @@ Use this as a baseline for all modes (adapt as needed):
 - Target outcome:
 - Why now:
 
+# Brief background
+- Current state:
+- Trigger/context:
+
 # Scope boundaries
 - In scope:
 - Out of scope:
 - Similar but excluded:
+
+# Implementation principles
+- Principle 1:
+- Principle 2:
+- Principle 3:
 
 # Acceptance points
 - [ ] Checkable point 1
@@ -114,6 +129,10 @@ Use this as a baseline for all modes (adapt as needed):
 
 # Mode-specific details
 - (implementation/design/websearch/codesearch details)
+
+# Execution flexibility
+- Must-follow constraints/principles:
+- Flexible execution space (agent decides):
 
 ## Work Log
 
