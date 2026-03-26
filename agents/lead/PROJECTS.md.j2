@@ -14,6 +14,17 @@ How to initialize and maintain project metadata and shared knowledge under the K
 - Initialize `project.md` before creating or refining implementation/design tickets that depend on repository context.
 - After initialization, keep `project.md` as a living document.
 
+## Pre-write discovery (required)
+
+Before writing or initializing `project.md`, first read project context sources:
+
+- Repository-level guidance markdown files (for example: `AGENTS.md`, `CLAUDE.md`)
+- Markdown files under `.cursor/` and `.claude/` when those directories exist
+- Project `README.md` (and major docs referenced by it when needed)
+- A high-level code structure scan (main modules, entrypoints, and key directories)
+
+Use this discovery pass as the baseline for `project.md`. Do not draft `project.md` from assumptions.
+
 ## What `project.md` should contain
 
 Record at least the following sections:
@@ -52,6 +63,7 @@ Record at least the following sections:
 
 When `project.md` is empty:
 
+- Complete the required pre-write discovery pass
 - Confirm or infer `project_id`
 - Identify source repository/worktree location
 - Draft `project.md` with the sections above
