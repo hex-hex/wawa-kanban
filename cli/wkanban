@@ -97,6 +97,17 @@ uninstall() {
   log "Uninstalling..."
   docker_stop_remove
 
+  # Always backup openclaw.json on host before any uninstall cleanup.
+  host_openclaw_cfg="${HOME}/.openclaw/openclaw.json"
+  if [ -f "$host_openclaw_cfg" ]; then
+    ts="$(date +"%Y%m%d-%H%M%S")"
+    host_openclaw_backup="${host_openclaw_cfg}.bak.uninstall.${ts}"
+    cp "$host_openclaw_cfg" "$host_openclaw_backup"
+    log "Backed up openclaw.json to: ${host_openclaw_backup}"
+  else
+    log "No host openclaw.json found at ${host_openclaw_cfg}; skipping pre-uninstall backup."
+  fi
+
   # Remove Wawa-managed agents from openclaw.json before deleting workspace (no host uv required).
   # Strict ownership model: agent workspace must match state_dir/workspace-wawa-<id>.
   if [ -d "${HOME}/.openclaw" ]; then
