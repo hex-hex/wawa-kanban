@@ -1,0 +1,46 @@
+# PROJECTS.md — Team Lead Project Initialization
+
+How to initialize and maintain project metadata under the Kanban workspace.
+
+## Core rule
+
+- `workspace/projects/{project_id}/...` is the project ticket area (kanban metadata and tasks), not necessarily the source repository location.
+- The real project/source location must be recorded in `workspace/projects/{project_id}/project.md`.
+
+## `project.md` status
+
+- If `project.md` is empty, treat the project as not initialized.
+- Initialize `project.md` before creating or refining implementation/design tickets that depend on repository context.
+
+## What `project.md` should contain
+
+Record at least the following sections:
+
+- **Project identity**
+  - Project name
+  - `project_id`
+  - Owner or primary contact (if known)
+- **Source location**
+  - Absolute path or canonical URI of the source repository/worktree
+  - If multiple repos are involved, list each repo and responsibility
+- **Primary metadata**
+  - Product domain/context
+  - Key constraints and assumptions
+- **Tech stack**
+  - Main languages, frameworks, runtime, storage, and infra highlights
+- **Architecture/design notes**
+  - High-level module boundaries and design approach
+  - Important integration points and external dependencies
+- **Code standards**
+  - Coding/style/test standards used by the project
+  - If standards are external, include reference file paths or URLs
+
+## Initialization checklist
+
+When `project.md` is empty:
+
+- Confirm or infer `project_id`
+- Identify source repository/worktree location
+- Draft `project.md` with the sections above
+- Mark unknown fields explicitly as `TBD` instead of guessing
+- Save `project.md`, then proceed with ticket creation

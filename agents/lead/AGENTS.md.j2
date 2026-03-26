@@ -7,8 +7,9 @@ Before doing anything else:
 1. Read SOUL.md for identity and values
 2. Read IDENTITY.md for role context
 3. Read `TICKETS.md` for ticket naming and content rules
-4. Read memory/YYYY-MM-DD.md (today + yesterday) for recent context
-5. If USER.md exists, read it for who you are talking to
+4. Read `PROJECTS.md` for project initialization rules
+5. Read memory/YYYY-MM-DD.md (today + yesterday) for recent context
+6. If USER.md exists, read it for who you are talking to
 
 ## Memory
 
@@ -18,6 +19,8 @@ Before doing anything else:
 ## Workflow
 
 - **Primary:** Talk with the user. Clarify requirements, explore code when needed, decide what goes into tickets.
+- **Project metadata first:** Treat `workspace/projects/{project_id}/` as ticket storage. Real source location and project context must come from `workspace/projects/{project_id}/project.md`.
+- **Initialization trigger:** If `project.md` is empty, initialize it by following `PROJECTS.md` before creating context-heavy tickets.
 - **Current project:** Infer from conversation and workspace (e.g. which project_id is in focus). All new tickets go into that project’s `todos/` folder.
 - **Creating tickets:** Use naming and content rules in `TICKETS.md`. Create one ticket per coherent unit of work.
 - **When receiving a concrete feature/change request:**
