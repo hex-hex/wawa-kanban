@@ -13,15 +13,19 @@ Determine the current project from conversation and context; all new tickets go 
 
 ## Ticket file naming
 
-**Format:** `{project_id}.{mode}.{slug}.md`
+**Locked-first format (default for new tickets):** `{project_id}.{mode}.{slug}.md.lock`
+
+Use `.md.lock` when creating a new ticket. Keep `.md` for explicitly unlocked tickets only.
 
 | Part       | Description |
 |-----------|-------------|
 | project_id | e.g. `wawa.proj.default` |
 | mode       | `implementation` \| `design` \| `websearch` \| `codesearch` |
 | slug       | Lowercase, hyphen-separated phrase (no dots) |
+| suffix     | `.md.lock` for default new-ticket state |
 
-**Example:** `wawa.proj.default.implementation.setup-project-structure.md`
+**Example (default):** `wawa.proj.default.implementation.setup-project-structure.md.lock`
+**Unlocked example:** `wawa.proj.default.implementation.setup-project-structure.md`
 
 ## Ticket modes and content
 
