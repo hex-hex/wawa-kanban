@@ -10,7 +10,10 @@ The usual way to run the app is the **bootstrap** script below. **Clone the repo
 
 ### Quick install (bootstrap)
 
-`install.sh` downloads the `wkanban` shell wrapper into `~/.wawa-kanban/bin` (symlinked to `~/.local/bin`) and runs **`wkanban init`**.
+`install.sh` first downloads and overwrites the local `wkanban` shell wrapper in `~/.wawa-kanban/bin` (symlinked to `~/.local/bin`).  
+Then:
+- **first install**: runs **`wkanban init`**
+- **re-run on an existing install**: runs **`wkanban update`**
 
 Requirements:
 

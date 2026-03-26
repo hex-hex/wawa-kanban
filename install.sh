@@ -66,13 +66,18 @@ mkdir -p "$WORKSPACE_DIR"
 log "Installing wkanban from GitHub raw: $WAWA_WKANBAN_URL"
 mkdir -p "$BIN_DIR"
 
+install_path="${BIN_DIR}/wkanban"
+had_existing_install="0"
+if [ -f "$install_path" ]; then
+  had_existing_install="1"
+fi
+
 TMP_WKANBAN="${TMPDIR:-/tmp}/wkanban.$$"
 trap 'rm -f "$TMP_WKANBAN" >/dev/null 2>&1 || true' EXIT HUP INT TERM
 
 download_to "$WAWA_WKANBAN_URL" "$TMP_WKANBAN"
 sh -n "$TMP_WKANBAN" >/dev/null 2>&1 || die "Downloaded wkanban failed a syntax check."
 
-install_path="${BIN_DIR}/wkanban"
 mv -f "$TMP_WKANBAN" "$install_path"
 chmod +x "$install_path"
 
@@ -80,6 +85,11 @@ log "Linking wkanban into ~/.local/bin"
 mkdir -p "$LOCAL_BIN_DIR"
 ln -sf "$install_path" "$LOCAL_BIN_DIR/wkanban"
 
-log "Running: wkanban init"
-"$install_path" init
+if [ "$had_existing_install" = "1" ]; then
+  log "Existing wkanban detected. Running: wkanban update"
+  "$install_path" update
+else
+  log "First install. Running: wkanban init"
+  "$install_path" init
+fi
 
