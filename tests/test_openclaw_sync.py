@@ -20,7 +20,7 @@ def test_run_sync_agents_rerenders_and_skips_memory(tmp_path: Path) -> None:
 
     state = tmp_path / "openclaw_state"
     aid = "wawa-designer"
-    ws = state / f"workspace-wawa-{aid}"
+    ws = state / f"workspace-{aid}"
     ws.mkdir(parents=True)
     (ws / "AGENTS.md").write_text("old agents\n", encoding="utf-8")
     (ws / "HEARTBEAT.md").write_text("old heartbeat\n", encoding="utf-8")

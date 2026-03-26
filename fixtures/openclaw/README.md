@@ -17,7 +17,7 @@ So for local or container testing you can point **only** at a directory:
 export OPENCLAW_STATE_DIR="$PWD/fixtures/openclaw-state"
 mkdir -p "$OPENCLAW_STATE_DIR"
 cp fixtures/openclaw/openclaw.json "$OPENCLAW_STATE_DIR/openclaw.json"
-# edit openclaw.json as needed; `wkanban agent add` will create workspace-wawa-* under OPENCLAW_STATE_DIR
+# edit openclaw.json as needed; `wkanban agent add` will create workspace-<agent_id> under OPENCLAW_STATE_DIR (Wawa: workspace-wawa-<role-slug>)
 ```
 
 ## Production / Docker

@@ -9,6 +9,7 @@ from wawa_openclaw.agents_ops import (
     ROLES_ALLOWED_FOR_MANUAL_ADD,
     ROLES_DISALLOWED_FOR_MANUAL_ADD,
     agent_id_in_config,
+    agent_workspace_state_path,
     ensure_kanban_slot_dir,
     find_wawa_agents_by_state,
     kanban_slot_from_agent_id,
@@ -82,7 +83,7 @@ def add_agent_remove_arguments(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--purge",
         action="store_true",
-        help="Delete workspace-wawa-<id> and ~/.openclaw/agents/<id>/ after removing from config.",
+        help="Delete ~/.openclaw/workspace-<id> and ~/.openclaw/agents/<id>/ after removing from config.",
     )
     p.add_argument(
         "--yes",
@@ -238,7 +239,7 @@ def run_remove(args: argparse.Namespace) -> int:
 
         if args.purge:
             if not args.yes:
-                ws = state / f"workspace-wawa-{agent_id}"
+                ws = agent_workspace_state_path(state, agent_id)
                 ar = state / "agents" / agent_id
                 print(f"Will delete:\n  {ws}\n  {ar}")
                 confirm = input("Type yes to delete: ").strip().lower()
@@ -361,7 +362,7 @@ def _parser_uninstall_agents() -> argparse.ArgumentParser:
         description=(
             "Remove all Wawa-managed agents from openclaw.json. "
             "Strict ownership model: only agents whose id starts with 'wawa-' AND whose "
-            "workspace equals state_dir/workspace-wawa-<id> are removed."
+            "workspace equals state_dir/workspace-<id> are removed."
         )
     )
     p.add_argument(
@@ -472,13 +473,13 @@ def run_uninstall_analyze(
         orphan_agent_dirs: list[str] = []
 
         if state.is_dir():
-            prefix = "workspace-wawa-"
+            ws_prefix = "workspace-"
             for item in state.iterdir():
                 if not item.is_dir():
                     continue
-                if not item.name.startswith(prefix):
+                if not item.name.startswith(ws_prefix):
                     continue
-                agent_id = item.name[len(prefix) :]
+                agent_id = item.name[len(ws_prefix) :]
                 if agent_id.startswith("wawa-") and agent_id not in strict_ids:
                     orphan_workspaces.append(agent_id)
 
@@ -583,7 +584,11 @@ def run_sync_agents(
             continue
 
         ws_raw = agent.get("workspace")
-        workspace = Path(ws_raw).expanduser().resolve() if isinstance(ws_raw, str) and ws_raw else state / f"workspace-wawa-{aid}"
+        workspace = (
+            Path(ws_raw).expanduser().resolve()
+            if isinstance(ws_raw, str) and ws_raw
+            else agent_workspace_state_path(state, aid)
+        )
         role_src = root / "agents" / role
         display_name = agent.get("name") if isinstance(agent.get("name"), str) and agent.get("name") else aid
         try:

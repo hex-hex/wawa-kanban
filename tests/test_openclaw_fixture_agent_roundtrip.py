@@ -177,7 +177,7 @@ def test_add_remove_roundtrip_matches_fixture_openclaw_snapshot_per_role(
     assert entry.get("name") == display_name
     assert "workspace" in entry and "agentDir" in entry
 
-    ws = state_dir / f"workspace-wawa-{expected_id}"
+    ws = state_dir / f"workspace-{expected_id}"
     ad = state_dir / "agents" / expected_id / "agent"
     assert ws.is_dir()
     assert (ws / "AGENTS.md").is_file()
@@ -241,7 +241,7 @@ def test_synthetic_agent_with_binding_channel_heartbeat_roundtrip_to_initial_fil
     )
     assert run_add(add_args) == 0
 
-    ws_ch = state_dir / "workspace-wawa-wawa-chantest"
+    ws_ch = state_dir / "workspace-wawa-chantest"
     _assert_workspace_matches_rendered_j2(
         ws_ch,
         role="designer",

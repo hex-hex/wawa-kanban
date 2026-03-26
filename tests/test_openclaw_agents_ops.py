@@ -263,7 +263,7 @@ def test_purge_agent_paths_rejects_protected_without_flag(tmp_path: Path, agent_
 
 def test_uninstall_removes_protected_wawa_agent(tmp_path: Path) -> None:
     state = tmp_path / "openclaw"
-    ws_lead = state / "workspace-wawa-wawa-lead"
+    ws_lead = state / "workspace-wawa-lead"
     ws_lead.mkdir(parents=True)
     cfg_path = tmp_path / "openclaw.json"
     cfg: dict = {
@@ -305,7 +305,7 @@ def test_find_wawa_agents_by_state_strict_model(tmp_path: Path) -> None:
             "list": [
                 {
                     "id": good_id,
-                    "workspace": str((state / f"workspace-wawa-{good_id}").resolve()),
+                    "workspace": str((state / f"workspace-{good_id}").resolve()),
                 },
                 {
                     "id": "wawa-mismatch",
@@ -313,7 +313,7 @@ def test_find_wawa_agents_by_state_strict_model(tmp_path: Path) -> None:
                 },
                 {
                     "id": bad_prefix,
-                    "workspace": str((state / f"workspace-wawa-{bad_prefix}").resolve()),
+                    "workspace": str((state / f"workspace-{bad_prefix}").resolve()),
                 },
             ],
         },

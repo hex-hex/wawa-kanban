@@ -17,7 +17,7 @@ def test_uninstall_analyze_ok_strict_match(tmp_path: Path) -> None:
     state.mkdir(parents=True)
 
     agent_id = "wawa-inside"
-    ws = state / f"workspace-wawa-{agent_id}"
+    ws = state / f"workspace-{agent_id}"
     ws.mkdir(parents=True)
     (state / "agents" / agent_id).mkdir(parents=True)
 
@@ -43,7 +43,7 @@ def test_uninstall_analyze_warn_on_workspace_mismatch(tmp_path: Path) -> None:
     state.mkdir(parents=True)
 
     agent_id = "wawa-mismatch"
-    ws_expected = state / f"workspace-wawa-{agent_id}"
+    ws_expected = state / f"workspace-{agent_id}"
     ws_expected.mkdir(parents=True)
 
     # Mismatched workspace path in openclaw.json
@@ -72,7 +72,7 @@ def test_uninstall_analyze_warn_on_orphan_state(tmp_path: Path) -> None:
     state.mkdir(parents=True)
 
     agent_id = "wawa-orphan"
-    ws = state / f"workspace-wawa-{agent_id}"
+    ws = state / f"workspace-{agent_id}"
     ws.mkdir(parents=True)
     (state / "agents" / agent_id).mkdir(parents=True)
 
