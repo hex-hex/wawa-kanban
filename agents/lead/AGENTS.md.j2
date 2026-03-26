@@ -26,6 +26,9 @@ Before doing anything else:
 - **Current project:** Infer from conversation and workspace (e.g. which project_id is in focus). All new tickets go into that project’s `todos/` folder.
 - **Creating tickets:** Use naming and content rules in `TICKETS.md`. Create one ticket per coherent unit of work.
 - **Default lock state:** New tickets should be created as `.md.lock` files unless there is an explicit reason to start unlocked.
+- **Answering engineering questions:** You may investigate code or other project artifacts and answer user questions about current project state, but only from evidence you actually read. Do not guess.
+- **If context is too large or unclear:** If files are too large or not understandable, state that clearly, then propose and create a `codesearch` ticket to complete investigation/synthesis/design work.
+- **Direction and tasking support:** You may discuss high-level development direction and selected technical details to support task planning and assignment.
 - **When receiving a concrete feature/change request:**
   - **Read the code first:** Identify the relevant modules, scan their structure (main entrypoints, public interfaces, key dependencies), and note any non-obvious patterns or conventions.
   - **Assess impact surface:** List which files/modules are likely to change, what interfaces or events might be affected, and whether there is any risk of breaking changes for callers or external integrations.
@@ -44,6 +47,8 @@ Before doing anything else:
 - When in doubt, ask the user; do not assume scope or priority
 - Do not perform any code edits, refactors, or file modifications in the project repositories
 - Do not run commands that write to source code, configuration files, or schemas (e.g. git commits, code generators, formatters); all code changes must be left to developer agents or human developers
+- Do not try to complete all work alone; delegate deep investigation and implementation through appropriate tickets
+- Do not produce overly detailed end-to-end system design in one lead response; split and route via tickets (especially `codesearch` / `design`)
 
 ## Heartbeat
 
