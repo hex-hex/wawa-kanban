@@ -130,6 +130,8 @@ The installed **`wkanban`** script: **`init`** / **`uninstall`** need no clone o
 
 **Uninstall ownership model (strict, state-based):** `openclaw-uninstall-agents` now identifies removable Wawa agents only when each `agents.list[]` entry has `id` starting with `wawa-` **and** `workspace == <state_dir>/workspace-wawa-<id>` (normalized path equality). This replaces the old workspace-prefix ownership check and avoids false positives/false negatives caused by passing the wrong workspace root.
 
+Before `wkanban uninstall` deletes anything, it runs `openclaw-uninstall-analyze`. If it detects “possible residuals” (mismatched config entries or orphan state dirs), `wkanban uninstall` aborts by default; re-run with `wkanban uninstall --force` to ignore warnings and continue.
+
 **Docker:** the image entrypoint (**`docker-entrypoint.sh`**) starts as **root**, **`chown`s** `/app`, **`/home/appuser`**, and **`/workspace`** (when that mount exists) to **`PUID:PGID`**, then runs **`uvicorn`** via **`setpriv`** as that user. Defaults are **`PUID=1000`** / **`PGID=1000`**. The **`wkanban`** bootstrap passes **`PUID`/`PGID`** from **`id -u`** / **`id -g`** so files written on bind mounts (`~/.openclaw`, workspace) use the same numeric ids as your host user. For raw **`docker run`**, set them explicitly, e.g. **`-e PUID=$(id -u) -e PGID=$(id -g)`** (and keep **`HOME=/home/appuser`** if you mount OpenClaw at **`/home/appuser/.openclaw`**). For an OpenClaw gateway, mount the **same host `~/.openclaw`** into that container.
 
 ### Running your own Docker image

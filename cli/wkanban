@@ -81,16 +81,43 @@ docker_stop_remove() {
 }
 
 uninstall() {
+  force="0"
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --force|-f)
+        force="1"
+        shift
+        ;;
+      *)
+        die "Unknown uninstall option: $1"
+        ;;
+    esac
+  done
+
   log "Uninstalling..."
   docker_stop_remove
 
   # Remove Wawa-managed agents from openclaw.json before deleting workspace (no host uv required).
   # Strict ownership model: agent workspace must match state_dir/workspace-wawa-<id>.
-  if [ -d "$WORKSPACE_DIR" ] && [ -d "${HOME}/.openclaw" ]; then
+  if [ -d "${HOME}/.openclaw" ]; then
+    log "Analyzing potential uninstall residuals (inside one-shot container)..."
+    analyze_rc="0"
+    if ephemeral_kanban_run uv run openclaw-uninstall-analyze --state-dir "${CONTAINER_APP_HOME}/.openclaw"; then
+      analyze_rc="0"
+    else
+      analyze_rc="$?"
+    fi
+
+    if [ "$analyze_rc" -eq 3 ] && [ "$force" != "1" ]; then
+      die "Possible residual detected. Aborting uninstall. Re-run with: wkanban uninstall --force"
+    elif [ "$analyze_rc" -ne 0 ]; then
+      die "Uninstall analyze failed with exit code: $analyze_rc"
+    fi
+
     log "Cleaning up agents from openclaw.json (inside one-shot container)..."
     ephemeral_kanban_run uv run openclaw-uninstall-agents --state-dir "${CONTAINER_APP_HOME}/.openclaw" || true
   else
-    log "Skipping OpenClaw cleanup (workspace or ~/.openclaw missing)."
+    log "Skipping OpenClaw cleanup (~/.openclaw missing)."
   fi
 
   # Remove command links + installed script.
@@ -164,7 +191,8 @@ case "$cmd" in
     init
     ;;
   uninstall)
-    uninstall
+    shift
+    uninstall "$@"
     ;;
   agent|project)
     wkanban_py_via_uv "$@"
