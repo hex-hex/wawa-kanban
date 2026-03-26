@@ -115,7 +115,7 @@ uninstall() {
     fi
 
     log "Cleaning up agents from openclaw.json (inside one-shot container)..."
-    ephemeral_kanban_run uv run openclaw-uninstall-agents --state-dir "${CONTAINER_APP_HOME}/.openclaw" || true
+    ephemeral_kanban_run uv run openclaw-uninstall-agents --state-dir "${CONTAINER_APP_HOME}/.openclaw"
   else
     log "Skipping OpenClaw cleanup (~/.openclaw missing)."
   fi
