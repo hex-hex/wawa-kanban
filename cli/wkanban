@@ -222,6 +222,8 @@ update() {
   mkdir -p "$WORKSPACE_DIR"
   mkdir -p "${HOME}/.openclaw"
   docker_start
+  log "Syncing guidance files from latest templates..."
+  docker exec -w /app "$CONTAINER_NAME" uv run wkanban agent sync --state-dir "${CONTAINER_APP_HOME}/.openclaw"
   log "Update complete."
 }
 

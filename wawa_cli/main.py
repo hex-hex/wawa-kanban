@@ -97,6 +97,29 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Wawa Kanban repo root (default: WAWA_KANBAN_ROOT or parent of wawa_openclaw).",
     )
 
+    sync_p = agent_sub.add_parser(
+        "sync",
+        help="Re-render existing Wawa agents guidance files from latest templates.",
+    )
+    sync_p.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to openclaw.json (default: OPENCLAW_CONFIG_PATH or ~/.openclaw/openclaw.json).",
+    )
+    sync_p.add_argument(
+        "--state-dir",
+        type=Path,
+        default=None,
+        help="OpenClaw state dir (default: OPENCLAW_STATE_DIR or ~/.openclaw).",
+    )
+    sync_p.add_argument(
+        "--repo",
+        type=Path,
+        default=None,
+        help="Wawa Kanban repo root (default: WAWA_KANBAN_ROOT or parent of wawa_openclaw).",
+    )
+
     # --- project ---
     proj_p = sub.add_parser("project", help="Workspace projects under WAWA_WORKSPACE_PATH/projects/.")
     proj_sub = proj_p.add_subparsers(dest="project_cmd", required=True)
@@ -167,6 +190,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.agent_cmd == "add-default":
             return agent_commands.cmd_agent_add_default(
                 workspace=getattr(args, "workspace", None),
+                config=getattr(args, "config", None),
+                state_dir=getattr(args, "state_dir", None),
+                repo=getattr(args, "repo", None),
+            )
+        if args.agent_cmd == "sync":
+            return agent_commands.cmd_agent_sync(
                 config=getattr(args, "config", None),
                 state_dir=getattr(args, "state_dir", None),
                 repo=getattr(args, "repo", None),

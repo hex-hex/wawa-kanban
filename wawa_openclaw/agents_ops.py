@@ -268,6 +268,48 @@ def materialize_agent(
     _materialize_role_tree(role_src, workspace, ctx)
 
 
+def sync_agent_guidance_files(
+    *,
+    workspace: Path,
+    role_src: Path,
+    agent_id: str,
+    agent_display_name: str,
+    role: str,
+) -> int:
+    """Re-render all ``*.md.j2`` guidance templates into an existing workspace.
+
+    Only files that exist as templates are rendered. Any ``MEMORY*.md`` target file
+    is intentionally skipped to avoid overwriting user-maintained memory notes.
+    """
+    if not role_src.is_dir():
+        raise ValueError(f"Role template directory missing: {role_src}")
+    if not workspace.is_dir():
+        raise ValueError(f"Agent workspace missing: {workspace}")
+
+    ctx = build_agent_template_context(
+        agent_id=agent_id,
+        agent_display_name=agent_display_name,
+        role=role,
+    )
+
+    rendered_count = 0
+    for src in sorted(role_src.rglob("*.md.j2")):
+        if src.name.startswith("."):
+            continue
+        rel = src.relative_to(role_src)
+        out_rel = rel.with_suffix("")
+        out_name = out_rel.name
+        if out_name.lower().endswith(".md") and out_name.upper().startswith("MEMORY"):
+            continue
+        text = src.read_text(encoding="utf-8")
+        rendered = _jinja_env.from_string(text).render(**ctx)
+        dest = workspace / out_rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(rendered, encoding="utf-8")
+        rendered_count += 1
+    return rendered_count
+
+
 def merge_agent_into_config(cfg: dict[str, Any], entry: dict[str, Any]) -> dict[str, Any]:
     lst = cfg["agents"]["list"]
     if any(isinstance(a, dict) and a.get("id") == entry["id"] for a in lst):

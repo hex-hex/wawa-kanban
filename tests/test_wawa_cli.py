@@ -228,6 +228,29 @@ def test_agent_add_default_workspace_missing(tmp_path, capsys):
     assert "Workspace not found" in capsys.readouterr().err
 
 
+def test_agent_sync_dispatches_to_openclaw_sync(tmp_path, monkeypatch):
+    from wawa_cli import agent_commands
+    from wawa_cli.main import main
+
+    called = {}
+
+    def fake_sync(*, config=None, state_dir=None, repo=None):
+        called["config"] = config
+        called["state_dir"] = state_dir
+        called["repo"] = repo
+        return 0
+
+    monkeypatch.setattr(agent_commands, "run_sync_agents", fake_sync)
+
+    cfg = tmp_path / "cfg.json"
+    st = tmp_path / "state"
+    rp = tmp_path / "repo"
+    assert main(["agent", "sync", "--config", str(cfg), "--state-dir", str(st), "--repo", str(rp)]) == 0
+    assert called["config"] == cfg
+    assert called["state_dir"] == st
+    assert called["repo"] == rp
+
+
 def test_agent_list_wawa_only_filters(tmp_path, monkeypatch, capsys):
     from wawa_cli.main import main
 

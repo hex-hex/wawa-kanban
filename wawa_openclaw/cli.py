@@ -18,6 +18,7 @@ from wawa_openclaw.agents_ops import (
     purge_agent_paths,
     remove_agent_from_config,
     slugify_agent_id,
+    sync_agent_guidance_files,
 )
 from wawa_openclaw.config_io import ensure_agents_tree, load_config, save_config
 from wawa_openclaw.paths import openclaw_config_path, openclaw_state_dir, repo_root
@@ -499,11 +500,108 @@ def main_uninstall_analyze(argv: list[str] | None = None) -> int:
         return 1
 
 
+def _parser_sync_agents() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        description=(
+            "Re-render guidance files for existing Wawa agents from latest role templates. "
+            "Only *.md.j2 template outputs are rendered; MEMORY*.md files are never overwritten."
+        )
+    )
+    p.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to openclaw.json (default: OPENCLAW_CONFIG_PATH or ~/.openclaw/openclaw.json).",
+    )
+    p.add_argument(
+        "--state-dir",
+        type=Path,
+        default=None,
+        help="OpenClaw state dir (default: OPENCLAW_STATE_DIR or ~/.openclaw).",
+    )
+    p.add_argument(
+        "--repo",
+        type=Path,
+        default=None,
+        help="Wawa Kanban repo root (default: WAWA_KANBAN_ROOT or parent of wawa_openclaw).",
+    )
+    return p
+
+
+def _role_for_agent_entry(agent: dict, agent_id: str) -> str | None:
+    role = agent.get("role")
+    if isinstance(role, str) and role in ALLOWED_ROLES:
+        return role
+    for candidate in sorted(ALLOWED_ROLES):
+        if agent_id == slugify_agent_id(f"wawa-{candidate}"):
+            return candidate
+    return None
+
+
+def run_sync_agents(
+    *,
+    config: Path | None = None,
+    state_dir: Path | None = None,
+    repo: Path | None = None,
+) -> int:
+    config_path = config or openclaw_config_path()
+    state = state_dir or openclaw_state_dir()
+    root = repo or repo_root()
+
+    cfg = load_config(config_path)
+    ensure_agents_tree(cfg)
+
+    synced = 0
+    skipped = 0
+    errors = 0
+    for agent in cfg.get("agents", {}).get("list", []):
+        if not isinstance(agent, dict):
+            continue
+        aid = agent.get("id")
+        if not isinstance(aid, str) or not aid.startswith("wawa-"):
+            continue
+        role = _role_for_agent_entry(agent, aid)
+        if role is None:
+            print(f"  [skipped] {aid} (cannot determine role; missing entry.role and not a default role id)")
+            skipped += 1
+            continue
+
+        ws_raw = agent.get("workspace")
+        workspace = Path(ws_raw).expanduser().resolve() if isinstance(ws_raw, str) and ws_raw else state / f"workspace-wawa-{aid}"
+        role_src = root / "agents" / role
+        display_name = agent.get("name") if isinstance(agent.get("name"), str) and agent.get("name") else aid
+        try:
+            rendered = sync_agent_guidance_files(
+                workspace=workspace,
+                role_src=role_src,
+                agent_id=aid,
+                agent_display_name=display_name,
+                role=role,
+            )
+            print(f"  [synced]  {aid} (role={role}, files={rendered})")
+            synced += 1
+        except ValueError as e:
+            print(f"  [error]   {aid}: {e}", file=sys.stderr)
+            errors += 1
+
+    print(f"Done. synced={synced} skipped={skipped} errors={errors}")
+    return 1 if errors else 0
+
+
+def main_sync_agents(argv: list[str] | None = None) -> int:
+    args = _parser_sync_agents().parse_args(argv)
+    return run_sync_agents(
+        config=args.config,
+        state_dir=args.state_dir,
+        repo=args.repo,
+    )
+
+
 def main() -> int:
     print(
         "Use: wkanban agent add|remove|add-default|list, or openclaw-agent-add / "
         "openclaw-agent-remove / openclaw-init-agents / openclaw-uninstall-agents / "
-        "openclaw-uninstall-analyze.",
+        "openclaw-uninstall-analyze / openclaw-agent-sync.",
         file=sys.stderr,
     )
     return 2
