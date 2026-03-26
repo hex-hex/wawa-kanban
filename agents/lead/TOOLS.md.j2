@@ -1,65 +1,25 @@
-# TOOLS.md — Team Lead
+# TOOLS.md — Team Lead Local Notes
 
-Reference for ticket naming and content. Use this when creating or editing tickets.
+Local notes for tools and environment-specific conventions.
+This file guides tool usage preferences; it does not define tool availability.
 
-## Workspace layout
+## Workspace conventions
 
-- **Projects:** `workspace/projects/{project_id}/` (e.g. `wawa.proj.default`)
-- **Project todos:** `workspace/projects/{project_id}/todos/` — create new tickets here
-- **project_id** format: `wawa.proj.{project_name}` (e.g. `wawa.proj.default`)
+- Active Kanban workspace root is expected at `workspace/`.
+- Project trees usually live under `workspace/projects/{project_id}/`.
+- Agent queues usually live under `workspace/agents/{role}/{kanban_slot}/`.
 
-Determine the current project from conversation and context; all new tickets go into that project’s `todos/` folder.
+## Tool usage preferences
 
-## Ticket file naming
+- Prefer reading existing files before proposing ticket structure changes.
+- Prefer concise, non-destructive commands when checking workspace state.
+- Avoid commands that mutate project repositories; lead role is planning and ticketing only.
 
-**Format:** `{project_id}.{mode}.{slug}.md`
+## Safety reminders
 
-| Part       | Description |
-|-----------|-------------|
-| project_id | e.g. `wawa.proj.default` |
-| mode       | `implementation` \| `design` \| `websearch` \| `codesearch` |
-| slug       | Lowercase, hyphen-separated phrase (no dots) |
+- Do not expose secrets, tokens, private keys, or full credential files in chat.
+- Do not run destructive commands unless the user explicitly asks.
 
-**Example:** `wawa.proj.default.implementation.setup-project-structure.md`
+## Notes
 
-## Ticket modes and content
-
-### Implementation
-
-- **Purpose:** Developer can implement with minimal back-and-forth.
-- **Include in the ticket (as much as possible):**
-  - **Implementation approach:** Suggested steps, key modules or layers, integration points.
-  - **Code and file norms:** Where new code lives, naming, structure, conventions.
-  - **Context for codesearch / exploration:** What to read or explore first in the repo (files, docs, patterns), and what “understood enough” means for this task.
-
-### Design
-
-- **Purpose:** Designer knows scope and direction.
-- **Include in the ticket:**
-  - **User stories:** Who, what goal, in what situation.
-  - **Design boundaries:** In scope vs out of scope, constraints (e.g. reuse X, don’t change Y).
-  - **Design-language preferences:** Tone (e.g. minimal, playful), patterns to follow or avoid, any reference surfaces.
-
-### Websearch
-
-- **Purpose:** External research (web, vendor docs, standards) executed by an **info officer**.
-- **Include:** The question, constraints, acceptable source types, and what “done” looks like (e.g. summarized answer with citations, follow-up tickets).
-
-### Codesearch
-
-- **Purpose:** In-repository exploration (spike, architecture read-through) executed by a **developer**.
-- **Include:** The question, which areas of the codebase to inspect, and what “done” looks like (e.g. written findings, recommendations, or follow-up tickets).
-
-## Frontmatter
-
-Use YAML frontmatter at the top of each ticket:
-
-```yaml
----
-id: TICKET-001              # optional; fallback: filename stem
-title: Short task name      # optional; fallback: filename stem
-mode: implementation        # implementation | design | websearch | codesearch
----
-```
-
-Then the markdown body with description, approach, boundaries, or user stories as above.
+- Ticket naming, frontmatter, and mode-specific content rules are documented in `TICKETS.md`.
