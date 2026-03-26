@@ -25,10 +25,22 @@ Determine the current project from conversation and context; all new tickets go 
 
 ## Ticket modes and content
 
+## Required quality bar (all modes)
+
+Every ticket must include all of the following:
+
+- **Requirement intent (why/what):** Clear problem statement, target outcome, and core user/business intent.
+- **Boundaries:** Explicit in-scope and out-of-scope items, including nearby/similar requests that are not part of this ticket.
+- **Verification / acceptance points:** Checkable criteria for done. Use concrete statements that can be validated.
+- **Empty tracking sections at initialization:** Include two empty sections: `## 工作记录` and `## 验收记录`.
+
 ### Implementation
 
 - **Purpose:** Developer can implement with minimal back-and-forth.
 - **Include in the ticket (as much as possible):**
+  - **Requirement intent (required):** Why this change is needed and what outcome is expected.
+  - **Boundaries (required):** What is in scope, what is out of scope, and what related work is intentionally excluded.
+  - **Acceptance points (required):** Key behavior and quality checks that must pass.
   - **Implementation approach:** Suggested steps, key modules or layers, integration points.
   - **Code and file norms:** Where new code lives, naming, structure, conventions.
   - **Context for codesearch / exploration:** What to read or explore first in the repo (files, docs, patterns), and what "understood enough" means for this task.
@@ -37,6 +49,9 @@ Determine the current project from conversation and context; all new tickets go 
 
 - **Purpose:** Designer knows scope and direction.
 - **Include in the ticket:**
+  - **Requirement intent (required):** Product intent and expected user outcome.
+  - **Boundaries (required):** In scope vs out of scope, including similar but excluded design asks.
+  - **Acceptance points (required):** Observable criteria for design completion/review.
   - **User stories:** Who, what goal, in what situation.
   - **Design boundaries:** In scope vs out of scope, constraints (e.g. reuse X, don't change Y).
   - **Design-language preferences:** Tone (e.g. minimal, playful), patterns to follow or avoid, any reference surfaces.
@@ -44,12 +59,20 @@ Determine the current project from conversation and context; all new tickets go 
 ### Websearch
 
 - **Purpose:** External research (web, vendor docs, standards) executed by an **info officer**.
-- **Include:** The question, constraints, acceptable source types, and what "done" looks like (e.g. summarized answer with citations, follow-up tickets).
+- **Include:**
+  - **Requirement intent (required):** Why this research is needed and what decision it should inform.
+  - **Boundaries (required):** Which questions are in scope, which are explicitly out of scope.
+  - **Acceptance points (required):** What deliverable quality is required (e.g. answer structure, citation quality, decision usefulness).
+  - The question, constraints, acceptable source types, and what "done" looks like (e.g. summarized answer with citations, follow-up tickets).
 
 ### Codesearch
 
 - **Purpose:** In-repository exploration (spike, architecture read-through) executed by a **developer**.
-- **Include:** The question, which areas of the codebase to inspect, and what "done" looks like (e.g. written findings, recommendations, or follow-up tickets).
+- **Include:**
+  - **Requirement intent (required):** Why this exploration is needed and what downstream decision it supports.
+  - **Boundaries (required):** Which repo areas/questions are included and excluded.
+  - **Acceptance points (required):** What findings must be delivered (e.g. evidence-backed conclusions, alternatives, and next actions).
+  - The question, which areas of the codebase to inspect, and what "done" looks like (e.g. written findings, recommendations, or follow-up tickets).
 
 ## Frontmatter
 
@@ -64,3 +87,31 @@ mode: implementation        # implementation | design | websearch | codesearch
 ```
 
 Then the markdown body with description, approach, boundaries, or user stories as above.
+
+## Recommended ticket body template
+
+Use this as a baseline for all modes (adapt as needed):
+
+```markdown
+# Requirement intent
+- Problem:
+- Target outcome:
+- Why now:
+
+# Scope boundaries
+- In scope:
+- Out of scope:
+- Similar but excluded:
+
+# Acceptance points
+- [ ] Checkable point 1
+- [ ] Checkable point 2
+- [ ] Checkable point 3
+
+# Mode-specific details
+- (implementation/design/websearch/codesearch details)
+
+## 工作记录
+
+## 验收记录
+```
