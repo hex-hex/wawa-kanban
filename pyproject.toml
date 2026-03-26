@@ -22,6 +22,7 @@ openclaw-agent-add = "wawa_openclaw.cli:main_add"
 openclaw-agent-remove = "wawa_openclaw.cli:main_remove"
 openclaw-init-agents = "wawa_openclaw.cli:main_init_agents"
 openclaw-uninstall-agents = "wawa_openclaw.cli:main_uninstall_agents"
+openclaw-uninstall-analyze = "wawa_openclaw.cli:main_uninstall_analyze"
 
 [project.optional-dependencies]
 test = ["pytest>=8.0", "pytest-asyncio>=0.24", "httpx>=0.27.0", "playwright==1.49.1", "uvicorn>=0.30.0"]

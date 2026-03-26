@@ -403,10 +403,107 @@ def main_uninstall_agents(argv: list[str] | None = None) -> int:
     return 0
 
 
+def _parser_uninstall_analyze() -> argparse.ArgumentParser:
+    p = argparse.ArgumentParser(
+        description=(
+            "Analyze potential uninstall residuals before deleting Wawa agents. "
+            "Exit code 0 means safe; exit code 3 means possible residuals (uninstall would "
+            "not remove some mismatched agents or orphan state dirs)."
+        )
+    )
+    p.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to openclaw.json (default: OPENCLAW_CONFIG_PATH or ~/.openclaw/openclaw.json).",
+    )
+    p.add_argument(
+        "--state-dir",
+        type=Path,
+        default=None,
+        help="OpenClaw state dir (default: OPENCLAW_STATE_DIR or ~/.openclaw).",
+    )
+    return p
+
+
+def main_uninstall_analyze(argv: list[str] | None = None) -> int:
+    """Exit code contract for shell wrapper:
+    - 0: no possible residual detected
+    - 3: warnings (possible residual detected)
+    - 1: analysis failed (invalid paths/config)
+    """
+    try:
+        args = _parser_uninstall_analyze().parse_args(argv)
+        config_path = args.config or openclaw_config_path()
+        state = args.state_dir or openclaw_state_dir()
+
+        cfg = load_config(config_path)
+        ensure_agents_tree(cfg)
+
+        strict_ids = set(find_wawa_agents_by_state(cfg, state))
+
+        cfg_wawa_ids: list[str] = []
+        for a in cfg.get("agents", {}).get("list", []):
+            if isinstance(a, dict):
+                aid = a.get("id")
+                if isinstance(aid, str) and aid.startswith("wawa-"):
+                    cfg_wawa_ids.append(aid)
+
+        mismatched_ids = sorted(set(cfg_wawa_ids) - strict_ids)
+
+        orphan_workspaces: list[str] = []
+        orphan_agent_dirs: list[str] = []
+
+        if state.is_dir():
+            prefix = "workspace-wawa-"
+            for item in state.iterdir():
+                if not item.is_dir():
+                    continue
+                if not item.name.startswith(prefix):
+                    continue
+                agent_id = item.name[len(prefix) :]
+                if agent_id.startswith("wawa-") and agent_id not in strict_ids:
+                    orphan_workspaces.append(agent_id)
+
+            agents_root = state / "agents"
+            if agents_root.is_dir():
+                for d in agents_root.iterdir():
+                    if d.is_dir() and d.name.startswith("wawa-") and d.name not in strict_ids:
+                        orphan_agent_dirs.append(d.name)
+
+        warnings: list[str] = []
+        if mismatched_ids:
+            warnings.append(
+                "openclaw.json has Wawa agents but strict-state match failed for these ids "
+                "(uninstall will NOT remove them): "
+                + ", ".join(mismatched_ids)
+            )
+        if orphan_workspaces or orphan_agent_dirs:
+            parts: list[str] = []
+            if orphan_workspaces:
+                parts.append("orphan workspaces: " + ", ".join(sorted(set(orphan_workspaces))))
+            if orphan_agent_dirs:
+                parts.append("orphan agent dirs: " + ", ".join(sorted(set(orphan_agent_dirs))))
+            warnings.append("OpenClaw state contains files uninstall would not purge: " + " ; ".join(parts))
+
+        if warnings:
+            for w in warnings:
+                print(f"WARNING: {w}", file=sys.stderr)
+            print("Possible residual detected. Use --force to proceed.", file=sys.stderr)
+            return 3
+
+        print("OK: no possible residual detected.", file=sys.stderr)
+        return 0
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
+
+
 def main() -> int:
     print(
         "Use: wkanban agent add|remove|add-default|list, or openclaw-agent-add / "
-        "openclaw-agent-remove / openclaw-init-agents / openclaw-uninstall-agents.",
+        "openclaw-agent-remove / openclaw-init-agents / openclaw-uninstall-agents / "
+        "openclaw-uninstall-analyze.",
         file=sys.stderr,
     )
     return 2
