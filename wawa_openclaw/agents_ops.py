@@ -422,8 +422,7 @@ def _resolve_path(raw: str | Path) -> Path:
 def agent_workspace_state_path(state_dir: Path, agent_id: str) -> Path:
     """OpenClaw workspace directory for an agent: ``<state_dir>/workspace-<agent_id>``.
 
-    Wawa agent ids are already ``wawa-<...>``, so this yields ``.../workspace-wawa-lead``,
-    not ``.../workspace-wawa-wawa-lead``.
+    Wawa agent ids are already ``wawa-<...>``, so this yields ``.../workspace-wawa-lead``.
     """
     return _resolve_path(state_dir) / f"workspace-{agent_id}"
 

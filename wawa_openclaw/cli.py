@@ -586,7 +586,7 @@ def run_sync_agents(
         ws_raw = agent.get("workspace")
         workspace = (
             Path(ws_raw).expanduser().resolve()
-            if isinstance(ws_raw, str) and ws_raw
+            if isinstance(ws_raw, str) and ws_raw.strip()
             else agent_workspace_state_path(state, aid)
         )
         role_src = root / "agents" / role
