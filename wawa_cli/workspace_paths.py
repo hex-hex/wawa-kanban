@@ -24,7 +24,7 @@ def projects_dir(workspace_root: Path) -> Path:
     return workspace_root / "projects"
 
 
-# Same agent ticket slots as ``cli/wkanban`` ``ensure_dirs`` / ``install.sh`` (under workspace ``agents/``).
+# Same agent ticket slots as ``cli/wkanban.sh`` ``ensure_dirs`` / ``install.sh`` (under workspace ``agents/``).
 _INIT_AGENT_SLOT_PARTS: tuple[tuple[str, str], ...] = (
     ("designers", "default"),
     ("developers", "default"),

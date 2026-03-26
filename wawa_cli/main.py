@@ -65,7 +65,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "add-default",
         help=(
             "Create default kanban agent slot dirs under the Wawa workspace (same as wkanban init) "
-            "and register every Wawa role in OpenClaw (same as openclaw-init-agents)."
+            "and register every Wawa role in OpenClaw."
         ),
     )
     add_def_p.add_argument(
@@ -118,6 +118,38 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help="Wawa Kanban repo root (default: WAWA_KANBAN_ROOT or parent of wawa_openclaw).",
+    )
+    analyze_uninstall_p = agent_sub.add_parser(
+        "analyze-uninstall",
+        help="Analyze possible uninstall residuals (exit 3 when warnings are found).",
+    )
+    analyze_uninstall_p.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to openclaw.json (default: OPENCLAW_CONFIG_PATH or ~/.openclaw/openclaw.json).",
+    )
+    analyze_uninstall_p.add_argument(
+        "--state-dir",
+        type=Path,
+        default=None,
+        help="OpenClaw state dir (default: OPENCLAW_STATE_DIR or ~/.openclaw).",
+    )
+    uninstall_all_p = agent_sub.add_parser(
+        "uninstall-all",
+        help="Remove all Wawa-managed agents from openclaw.json and purge their state dirs.",
+    )
+    uninstall_all_p.add_argument(
+        "--config",
+        type=Path,
+        default=None,
+        help="Path to openclaw.json (default: OPENCLAW_CONFIG_PATH or ~/.openclaw/openclaw.json).",
+    )
+    uninstall_all_p.add_argument(
+        "--state-dir",
+        type=Path,
+        default=None,
+        help="OpenClaw state dir (default: OPENCLAW_STATE_DIR or ~/.openclaw).",
     )
 
     # --- project ---
@@ -199,6 +231,16 @@ def main(argv: list[str] | None = None) -> int:
                 config=getattr(args, "config", None),
                 state_dir=getattr(args, "state_dir", None),
                 repo=getattr(args, "repo", None),
+            )
+        if args.agent_cmd == "analyze-uninstall":
+            return agent_commands.cmd_agent_analyze_uninstall(
+                config=getattr(args, "config", None),
+                state_dir=getattr(args, "state_dir", None),
+            )
+        if args.agent_cmd == "uninstall-all":
+            return agent_commands.cmd_agent_uninstall_all(
+                config=getattr(args, "config", None),
+                state_dir=getattr(args, "state_dir", None),
             )
         raise AssertionError(f"unexpected agent_cmd: {args.agent_cmd!r}")
 

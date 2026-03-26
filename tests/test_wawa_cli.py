@@ -251,6 +251,13 @@ def test_agent_sync_dispatches_to_openclaw_sync(tmp_path, monkeypatch):
     assert called["repo"] == rp
 
 
+def test_agent_subparser_requires_known_subcommand():
+    from wawa_cli.main import main
+
+    with pytest.raises(SystemExit):
+        main(["agent", "unknown-subcommand"])
+
+
 def test_agent_list_wawa_only_filters(tmp_path, monkeypatch, capsys):
     from wawa_cli.main import main
 

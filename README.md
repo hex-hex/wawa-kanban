@@ -10,7 +10,7 @@ The usual way to run the app is the **bootstrap** script below. **Clone the repo
 
 ### Quick install (bootstrap)
 
-`install.sh` first downloads and overwrites the local `wkanban` shell wrapper in `~/.wawa-kanban/bin` (symlinked to `~/.local/bin`).  
+`install.sh` first downloads and overwrites the local `wkanban` shell wrapper from repo file `cli/wkanban.sh` into `~/.wawa-kanban/bin` (symlinked to `~/.local/bin`).  
 Then:
 - **first install**: runs **`wkanban init`**
 - **re-run on an existing install**: runs **`wkanban update`**
@@ -83,7 +83,7 @@ Tickets are markdown files with YAML frontmatter; filename pattern includes proj
 
 ### CLI: `wkanban` (agents + projects)
 
-From the repo (after `uv sync`), use **`uv run wkanban …`**. The installed shell `wkanban` runs **`init` / `uninstall`** without a clone; for **`agent`** / **`project`** it needs **`WAWA_KANBAN_ROOT`** pointing at this repo plus **`uv`** on the host (see `cli/wkanban`).
+From the repo (after `uv sync`), use **`uv run wkanban …`**. The installed shell `wkanban` runs **`init` / `update` / `uninstall`** without a clone; for **`agent`** / **`project`** it needs **`WAWA_KANBAN_ROOT`** pointing at this repo plus **`uv`** on the host (see `cli/wkanban.sh`).
 
 **Agents**
 
@@ -114,13 +114,6 @@ uv run wkanban project add my-app --workspace ~/.wawa-kanban/workspace -y
 uv run wkanban project list --workspace ~/.wawa-kanban/workspace
 ```
 
-Legacy entry points still work:
-
-```bash
-uv run openclaw-agent-add "Alex" --role developer
-uv run openclaw-agent-remove "Alex"
-```
-
 #### OpenClaw paths and config
 
 - **Fixture config (dev/tests only):** `fixtures/openclaw/openclaw.json` — sample tree for local dev/tests. **Installers and the Docker image do not copy this into your real OpenClaw home.** Mount `~/.openclaw` (or set `OPENCLAW_STATE_DIR`) to the directory you actually use. See `fixtures/openclaw/README.md`. Do not commit secrets.
@@ -129,11 +122,11 @@ uv run openclaw-agent-remove "Alex"
 - **Per-agent state:** under `OPENCLAW_STATE_DIR`. Each **`agent add`** creates `workspace-wawa-<id>/` and `agents/<id>/agent/` and appends **`agents.list`**.
 - **Templates:** `--role` must match a folder under `agents/` (see roles above). Repo root defaults to the parent of `wawa_openclaw/`; override with **`WAWA_KANBAN_ROOT`**.
 
-The installed **`wkanban`** script: **`init`** / **`uninstall`** need no clone or **`uv`**. For **`agent`**, **`project`**, or **`openclaw-*`** aliases, set **`WAWA_KANBAN_ROOT`** to a git clone and install **`uv`**. **`wkanban openclaw-agent-add …`** is an alias for **`wkanban agent add …`**.
+The installed **`wkanban`** script: **`init`** / **`update`** / **`uninstall`** need no clone or **`uv`**. For **`agent`** / **`project`** subcommands, set **`WAWA_KANBAN_ROOT`** to a git clone and install **`uv`**.
 
-**Uninstall ownership model (strict, state-based):** `openclaw-uninstall-agents` now identifies removable Wawa agents only when each `agents.list[]` entry has `id` starting with `wawa-` **and** `workspace == <state_dir>/workspace-wawa-<id>` (normalized path equality). This replaces the old workspace-prefix ownership check and avoids false positives/false negatives caused by passing the wrong workspace root.
+**Uninstall ownership model (strict, state-based):** `wkanban agent uninstall-all` identifies removable Wawa agents only when each `agents.list[]` entry has `id` starting with `wawa-` **and** `workspace == <state_dir>/workspace-wawa-<id>` (normalized path equality). This replaces the old workspace-prefix ownership check and avoids false positives/false negatives caused by passing the wrong workspace root.
 
-Before `wkanban uninstall` deletes anything, it runs `openclaw-uninstall-analyze`. If it detects “possible residuals” (mismatched config entries or orphan state dirs), `wkanban uninstall` aborts by default; re-run with `wkanban uninstall --force` to ignore warnings and continue.
+Before `wkanban uninstall` deletes anything, it runs `wkanban agent analyze-uninstall`. If it detects “possible residuals” (mismatched config entries or orphan state dirs), `wkanban uninstall` aborts by default; re-run with `wkanban uninstall --force` to ignore warnings and continue.
 `wkanban uninstall` also always creates a host-side pre-uninstall backup of `~/.openclaw/openclaw.json` when that file exists, using a timestamped filename like `openclaw.json.bak.uninstall.YYYYmmdd-HHMMSS`.
 
 **Docker:** the image entrypoint (**`docker-entrypoint.sh`**) starts as **root**, **`chown`s** `/app`, **`/home/appuser`**, and **`/workspace`** (when that mount exists) to **`PUID:PGID`**, then runs **`uvicorn`** via **`setpriv`** as that user. Defaults are **`PUID=1000`** / **`PGID=1000`**. The **`wkanban`** bootstrap passes **`PUID`/`PGID`** from **`id -u`** / **`id -g`** so files written on bind mounts (`~/.openclaw`, workspace) use the same numeric ids as your host user. For raw **`docker run`**, set them explicitly, e.g. **`-e PUID=$(id -u) -e PGID=$(id -g)`** (and keep **`HOME=/home/appuser`** if you mount OpenClaw at **`/home/appuser/.openclaw`**). For an OpenClaw gateway, mount the **same host `~/.openclaw`** into that container.

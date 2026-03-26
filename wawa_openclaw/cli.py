@@ -105,7 +105,7 @@ def add_agent_remove_arguments(p: argparse.ArgumentParser) -> None:
 
 def _parser_remove() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        description="Remove an agent created by openclaw-agent-add from openclaw.json (and optional disk purge)."
+        description="Remove an agent created by wkanban agent add from openclaw.json (and optional disk purge)."
     )
     add_agent_remove_arguments(p)
     return p
@@ -298,7 +298,7 @@ def run_init_agents(
     repo: Path | None = None,
     yes: bool = False,
 ) -> int:
-    """Register all default Wawa agents (one per role). Same behavior as ``openclaw-init-agents``."""
+    """Register all default Wawa agents (one per role)."""
     config_path = config or openclaw_config_path()
     state = state_dir or openclaw_state_dir()
     root = repo or repo_root()
@@ -381,8 +381,16 @@ def _parser_uninstall_agents() -> argparse.ArgumentParser:
 
 def main_uninstall_agents(argv: list[str] | None = None) -> int:
     args = _parser_uninstall_agents().parse_args(argv)
-    config_path = args.config or openclaw_config_path()
-    state = args.state_dir or openclaw_state_dir()
+    return run_uninstall_agents(config=args.config, state_dir=args.state_dir)
+
+
+def run_uninstall_agents(
+    *,
+    config: Path | None = None,
+    state_dir: Path | None = None,
+) -> int:
+    config_path = config or openclaw_config_path()
+    state = state_dir or openclaw_state_dir()
 
     cfg = load_config(config_path)
     if not cfg:
@@ -428,15 +436,23 @@ def _parser_uninstall_analyze() -> argparse.ArgumentParser:
 
 
 def main_uninstall_analyze(argv: list[str] | None = None) -> int:
+    args = _parser_uninstall_analyze().parse_args(argv)
+    return run_uninstall_analyze(config=args.config, state_dir=args.state_dir)
+
+
+def run_uninstall_analyze(
+    *,
+    config: Path | None = None,
+    state_dir: Path | None = None,
+) -> int:
     """Exit code contract for shell wrapper:
     - 0: no possible residual detected
     - 3: warnings (possible residual detected)
     - 1: analysis failed (invalid paths/config)
     """
     try:
-        args = _parser_uninstall_analyze().parse_args(argv)
-        config_path = args.config or openclaw_config_path()
-        state = args.state_dir or openclaw_state_dir()
+        config_path = config or openclaw_config_path()
+        state = state_dir or openclaw_state_dir()
 
         cfg = load_config(config_path)
         ensure_agents_tree(cfg)
@@ -599,9 +615,7 @@ def main_sync_agents(argv: list[str] | None = None) -> int:
 
 def main() -> int:
     print(
-        "Use: wkanban agent add|remove|add-default|list, or openclaw-agent-add / "
-        "openclaw-agent-remove / openclaw-init-agents / openclaw-uninstall-agents / "
-        "openclaw-uninstall-analyze / openclaw-agent-sync.",
+        "Use: wkanban agent add|remove|list|add-default|sync|analyze-uninstall|uninstall-all.",
         file=sys.stderr,
     )
     return 2

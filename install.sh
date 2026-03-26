@@ -18,7 +18,7 @@ WORKSPACE_DIR="${HOME}/.wawa-kanban/workspace"
 BIN_DIR="${HOME}/.wawa-kanban/bin"
 LOCAL_BIN_DIR="${HOME}/.local/bin"
 
-WAWA_WKANBAN_URL_DEFAULT="https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/cli/wkanban"
+WAWA_WKANBAN_URL_DEFAULT="https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/cli/wkanban.sh"
 WAWA_WKANBAN_URL="${WAWA_WKANBAN_URL:-$WAWA_WKANBAN_URL_DEFAULT}"
 
 have_required_tool_or_die() {

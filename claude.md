@@ -35,6 +35,7 @@ npm run dev:css
 - All text displayed on web pages must be in English.
 - **No hand-written CSS:** Do not add or maintain hand-written CSS (e.g. in `static/kanban.css` or any `.css` file). All styling must come from `cls` in Python and the generated `static/uno.css` (run `npm run build:css` or `npm run dev:css`).
 - **CSS not applied or class missing from `static/uno.css`?** The CSS build may not have run. Remind the user to run `npm run build:css` (one-off) or `npm run dev:css` (watch), or run it for them: `npm run build:css`.
+- Shell command style is multi-level only: `wkanban <group> <action>` (e.g. `wkanban agent sync`), not kebab `openclaw-*` entrypoints.
 
 ## Testing
 

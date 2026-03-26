@@ -1,7 +1,7 @@
 """Workspace project subcommands (add / archive / list).
 
 ``add`` creates the same per-project directory tree as ``wkanban init`` /
-``install.sh`` / ``cli/wkanban`` ``ensure_dirs``: ``todos``, ``waiting_for_verification``,
+``install.sh`` / ``cli/wkanban.sh`` ``ensure_dirs``: ``todos``, ``waiting_for_verification``,
 and ``finished`` under ``projects/<project_id>/`` (directories only).
 ``archive`` is still a stub.
 """
@@ -14,7 +14,7 @@ from pathlib import Path
 
 from wawa_cli.workspace_paths import projects_dir, workspace_base
 
-# Same column dirs as ``cli/wkanban`` ``ensure_dirs`` / ``install.sh`` for the default project.
+# Same column dirs as ``cli/wkanban.sh`` ``ensure_dirs`` / ``install.sh`` for the default project.
 _INIT_PROJECT_COLUMN_DIRS = (
     "todos",
     "waiting_for_verification",

@@ -14,7 +14,12 @@ from wawa_openclaw.agents_ops import (
     kanban_slot_from_agent_id,
     slugify_agent_id,
 )
-from wawa_openclaw.cli import run_init_agents, run_sync_agents
+from wawa_openclaw.cli import (
+    run_init_agents,
+    run_sync_agents,
+    run_uninstall_agents,
+    run_uninstall_analyze,
+)
 from wawa_openclaw.config_io import ensure_agents_tree, load_config
 from wawa_openclaw.paths import openclaw_config_path
 
@@ -99,3 +104,19 @@ def cmd_agent_sync(
     repo: Path | None = None,
 ) -> int:
     return run_sync_agents(config=config, state_dir=state_dir, repo=repo)
+
+
+def cmd_agent_analyze_uninstall(
+    *,
+    config: Path | None = None,
+    state_dir: Path | None = None,
+) -> int:
+    return run_uninstall_analyze(config=config, state_dir=state_dir)
+
+
+def cmd_agent_uninstall_all(
+    *,
+    config: Path | None = None,
+    state_dir: Path | None = None,
+) -> int:
+    return run_uninstall_agents(config=config, state_dir=state_dir)

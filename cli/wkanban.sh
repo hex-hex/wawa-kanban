@@ -11,30 +11,26 @@ die() {
 }
 
 have_container() {
-  # Return 0 if container exists, 1 otherwise.
   docker inspect "$1" >/dev/null 2>&1
+}
+
+have_cmd() {
+  command -v "$1" >/dev/null 2>&1
 }
 
 WORKSPACE_DIR="${HOME}/.wawa-kanban/workspace"
 BIN_DIR="${HOME}/.wawa-kanban/bin"
 LOCAL_BIN_DIR="${HOME}/.local/bin"
-WAWA_WKANBAN_URL_DEFAULT="https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/cli/wkanban"
+WAWA_WKANBAN_URL_DEFAULT="https://raw.githubusercontent.com/hex-hex/wawa-kanban/main/cli/wkanban.sh"
 WAWA_WKANBAN_URL="${WAWA_WKANBAN_URL:-$WAWA_WKANBAN_URL_DEFAULT}"
 
 CONTAINER_NAME="wawa-kanban"
 IMAGE="wawaassistant/wawa-kanban:latest"
 PORT="5020"
-
-# Must match appuser home in the Kanban image (see Dockerfile / docker-entrypoint.sh).
 CONTAINER_APP_HOME="/home/appuser"
 
-# Same id as ``wawa-<role>`` from ``openclaw-init-agents`` / ``agent add-default`` (role ``lead``).
 WAWA_OPENCLAW_LEAD_AGENT_ID="${WAWA_OPENCLAW_LEAD_AGENT_ID:-wawa-lead}"
 WAWA_OPENCLAW_LEAD_INTRO_MESSAGE="${WAWA_OPENCLAW_LEAD_INTRO_MESSAGE:-introduce yourself.}"
-
-have_cmd() {
-  command -v "$1" >/dev/null 2>&1
-}
 
 require_curl_or_wget() {
   if have_cmd curl; then
@@ -77,9 +73,6 @@ update_wkanban_script() {
   log "Updated local wkanban script: $install_path"
 }
 
-# Run a one-shot command in the Kanban image with the same mounts as the long-running app
-# (workspace + host OpenClaw dir). Used after the main container is removed (e.g. uninstall).
-# PUID/PGID align bind-mount ownership with the invoking host user (see docker-entrypoint.sh).
 ephemeral_kanban_run() {
   docker pull "$IMAGE" >/dev/null 2>&1 || true
   docker run --rm \
@@ -127,69 +120,6 @@ docker_stop_remove() {
   fi
 }
 
-uninstall() {
-  force="0"
-  while [ "$#" -gt 0 ]; do
-    case "$1" in
-      --force|-f)
-        force="1"
-        shift
-        ;;
-      *)
-        die "Unknown uninstall option: $1"
-        ;;
-    esac
-  done
-
-  log "Uninstalling..."
-  docker_stop_remove
-
-  # Always backup openclaw.json on host before any uninstall cleanup.
-  host_openclaw_cfg="${HOME}/.openclaw/openclaw.json"
-  if [ -f "$host_openclaw_cfg" ]; then
-    ts="$(date +"%Y%m%d-%H%M%S")"
-    host_openclaw_backup="${host_openclaw_cfg}.bak.uninstall.${ts}"
-    cp "$host_openclaw_cfg" "$host_openclaw_backup"
-    log "Backed up openclaw.json to: ${host_openclaw_backup}"
-  else
-    log "No host openclaw.json found at ${host_openclaw_cfg}; skipping pre-uninstall backup."
-  fi
-
-  # Remove Wawa-managed agents from openclaw.json before deleting workspace (no host uv required).
-  # Strict ownership model: agent workspace must match state_dir/workspace-wawa-<id>.
-  if [ -d "${HOME}/.openclaw" ]; then
-    log "Analyzing potential uninstall residuals (inside one-shot container)..."
-    analyze_rc="0"
-    if ephemeral_kanban_run uv run openclaw-uninstall-analyze --state-dir "${CONTAINER_APP_HOME}/.openclaw"; then
-      analyze_rc="0"
-    else
-      analyze_rc="$?"
-    fi
-
-    if [ "$analyze_rc" -eq 3 ] && [ "$force" != "1" ]; then
-      die "Possible residual detected. Aborting uninstall. Re-run with: wkanban uninstall --force"
-    elif [ "$analyze_rc" -ne 0 ]; then
-      die "Uninstall analyze failed with exit code: $analyze_rc"
-    fi
-
-    log "Cleaning up agents from openclaw.json (inside one-shot container)..."
-    ephemeral_kanban_run uv run openclaw-uninstall-agents --state-dir "${CONTAINER_APP_HOME}/.openclaw"
-  else
-    log "Skipping OpenClaw cleanup (~/.openclaw missing)."
-  fi
-
-  # Remove command links + installed script.
-  rm -f "${LOCAL_BIN_DIR}/wkanban" >/dev/null 2>&1 || true
-  rm -f "${BIN_DIR}/wkanban" >/dev/null 2>&1 || true
-
-  # Remove workspace tree.
-  rm -rf "$WORKSPACE_DIR" >/dev/null 2>&1 || true
-
-  log "Uninstalled. Workspace removed."
-}
-
-# After init, ask OpenClaw to run one turn for the lead agent so the gateway creates a session.
-# Requires the ``openclaw`` CLI on the host PATH and a running OpenClaw gateway; see https://docs.openclaw.ai/cli/agent
 openclaw_lead_intro() {
   if [ "${WAWA_SKIP_OPENCLAW_LEAD_INTRO:-0}" = "1" ]; then
     log "Skipping OpenClaw lead intro (WAWA_SKIP_OPENCLAW_LEAD_INTRO=1)."
@@ -227,6 +157,59 @@ update() {
   log "Update complete."
 }
 
+uninstall() {
+  force="0"
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --force|-f)
+        force="1"
+        shift
+        ;;
+      *)
+        die "Unknown uninstall option: $1"
+        ;;
+    esac
+  done
+
+  log "Uninstalling..."
+  docker_stop_remove
+
+  host_openclaw_cfg="${HOME}/.openclaw/openclaw.json"
+  if [ -f "$host_openclaw_cfg" ]; then
+    ts="$(date +"%Y%m%d-%H%M%S")"
+    host_openclaw_backup="${host_openclaw_cfg}.bak.uninstall.${ts}"
+    cp "$host_openclaw_cfg" "$host_openclaw_backup"
+    log "Backed up openclaw.json to: ${host_openclaw_backup}"
+  else
+    log "No host openclaw.json found at ${host_openclaw_cfg}; skipping pre-uninstall backup."
+  fi
+
+  if [ -d "${HOME}/.openclaw" ]; then
+    log "Analyzing potential uninstall residuals (inside one-shot container)..."
+    analyze_rc="0"
+    if ephemeral_kanban_run uv run wkanban agent analyze-uninstall --state-dir "${CONTAINER_APP_HOME}/.openclaw"; then
+      analyze_rc="0"
+    else
+      analyze_rc="$?"
+    fi
+    if [ "$analyze_rc" -eq 3 ] && [ "$force" != "1" ]; then
+      die "Possible residual detected. Aborting uninstall. Re-run with: wkanban uninstall --force"
+    elif [ "$analyze_rc" -ne 0 ]; then
+      die "Uninstall analyze failed with exit code: $analyze_rc"
+    fi
+
+    log "Cleaning up agents from openclaw.json (inside one-shot container)..."
+    ephemeral_kanban_run uv run wkanban agent uninstall-all --state-dir "${CONTAINER_APP_HOME}/.openclaw"
+  else
+    log "Skipping OpenClaw cleanup (~/.openclaw missing)."
+  fi
+
+  rm -f "${LOCAL_BIN_DIR}/wkanban" >/dev/null 2>&1 || true
+  rm -f "${BIN_DIR}/wkanban" >/dev/null 2>&1 || true
+  rm -rf "$WORKSPACE_DIR" >/dev/null 2>&1 || true
+  log "Uninstalled. Workspace removed."
+}
+
 require_uv_and_repo() {
   _ctx="$1"
   if ! command -v uv >/dev/null 2>&1; then
@@ -241,20 +224,12 @@ require_uv_and_repo() {
   fi
 }
 
-openclaw_via_uv() {
-  subcmd="$1"
-  shift
-  require_uv_and_repo "${subcmd}"
-  (cd "$root" && uv run "$subcmd" "$@")
-}
-
 wkanban_py_via_uv() {
   require_uv_and_repo "agent|project|…"
   (cd "$root" && uv run wkanban "$@")
 }
 
 cmd="${1:-}"
-
 case "$cmd" in
   init)
     init
@@ -269,23 +244,8 @@ case "$cmd" in
   agent|project)
     wkanban_py_via_uv "$@"
     ;;
-  openclaw-agent-add)
-    shift
-    wkanban_py_via_uv agent add "$@"
-    ;;
-  openclaw-agent-remove)
-    shift
-    wkanban_py_via_uv agent remove "$@"
-    ;;
-  openclaw-init-agents)
-    shift
-    openclaw_via_uv openclaw-init-agents "$@"
-    ;;
-  openclaw-uninstall-agents)
-    shift
-    openclaw_via_uv openclaw-uninstall-agents "$@"
-    ;;
   *)
-    die "Usage: wkanban {init|update|uninstall|agent|project|openclaw-agent-add|openclaw-agent-remove|openclaw-init-agents|openclaw-uninstall-agents} ..."
+    die "Usage: wkanban {init|update|uninstall|agent|project} ..."
     ;;
 esac
+
