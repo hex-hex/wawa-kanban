@@ -100,6 +100,8 @@ def cmd_project_add(
     # Mirror ``mkdir -p .../todos .../waiting_for_verification .../finished`` (init layout).
     for sub in _INIT_PROJECT_COLUMN_DIRS:
         (target / sub).mkdir(parents=True, exist_ok=True)
+    # Keep parity with documented workspace shape: create an empty project.md.
+    (target / "project.md").touch(exist_ok=True)
     print(f"Created {target}")
     return 0
 
