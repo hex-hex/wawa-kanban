@@ -229,8 +229,10 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Execute file moves. Default is dry-run (print plan only).",
     )
 
-    # --- todo ---
-    todo_p = sub.add_parser(
+    # --- ticket ---
+    ticket_p = sub.add_parser("ticket", help="Ticket helpers.")
+    ticket_sub = ticket_p.add_subparsers(dest="ticket_cmd", required=True)
+    todo_p = ticket_sub.add_parser(
         "todo",
         help="List todo tickets from all projects (projects/*/todos/*.md, excluding .lock).",
     )
@@ -244,10 +246,6 @@ def _build_parser() -> argparse.ArgumentParser:
             "Default: WAWA_WORKSPACE_PATH or ~/.wawa-kanban/workspace."
         ),
     )
-
-    # --- ticket ---
-    ticket_p = sub.add_parser("ticket", help="Ticket helpers.")
-    ticket_sub = ticket_p.add_subparsers(dest="ticket_cmd", required=True)
     locate_p = ticket_sub.add_parser(
         "locate",
         help="Locate one ticket by <project>.<slug> and output structured info for shell workflows.",
@@ -334,10 +332,9 @@ def main(argv: list[str] | None = None) -> int:
             )
         raise AssertionError(f"unexpected project_cmd: {args.project_cmd!r}")
 
-    if args.command == "todo":
-        return todo_commands.cmd_todo_list(workspace=getattr(args, "workspace", None))
-
     if args.command == "ticket":
+        if args.ticket_cmd == "todo":
+            return todo_commands.cmd_todo_list(workspace=getattr(args, "workspace", None))
         if args.ticket_cmd == "locate":
             return ticket_commands.cmd_ticket_locate(
                 args.target,

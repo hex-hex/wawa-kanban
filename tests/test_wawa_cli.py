@@ -166,7 +166,7 @@ def test_todo_lists_md_tickets_with_created_time_and_location(tmp_path, capsys):
     (p1 / "todos" / "wawa.proj.alpha.design.locked.md.lock").write_text("x", encoding="utf-8")
     (p2 / "todos" / "wawa.proj.beta.websearch.research-topic.md").write_text("b", encoding="utf-8")
 
-    rc = main(["todo", "--workspace", str(ws)])
+    rc = main(["ticket", "todo", "--workspace", str(ws)])
     assert rc == 0
     lines = capsys.readouterr().out.strip().splitlines()
     assert len(lines) == 2

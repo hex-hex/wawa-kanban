@@ -116,6 +116,7 @@ uv run wkanban project list --workspace ~/.wawa-kanban/workspace
 
 **Tickets**
 
+- **`ticket todo`**: list all unlocked todo tickets (`projects/*/todos/*.md`) with created time and optional `.project.location` value.
 - **`ticket locate <project>.<slug>`**: locate one ticket and print structured info (JSON by default) including ticket path, mode, `.project.location` file path, repo path, and computed worktree plan fields.
 - **`ticket worktree <project>.<slug>`**: host-side worktree planner/creator in the installed shell.
   - default = dry-run (prints plan only)
@@ -123,6 +124,7 @@ uv run wkanban project list --workspace ~/.wawa-kanban/workspace
   - only `implementation` tickets create worktrees; non-implementation or invalid repo conditions print warning info and exit without creation
 
 ```bash
+uv run wkanban ticket todo
 uv run wkanban ticket locate default.setup-project-structure
 wkanban ticket worktree default.setup-project-structure
 wkanban ticket worktree default.setup-project-structure --exec
