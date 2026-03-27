@@ -33,6 +33,10 @@ Use `.md.lock` when creating a new ticket. Keep `.md` for explicitly unlocked ti
 
 Every ticket must include all of the following:
 
+- **Project context block at top (required):** Near the beginning of the ticket body, include a structured section that lists:
+  - Ticket project directory: `{{ host_projects_root_hint }}/{project_id}/`
+  - Project metadata file path: `{{ host_projects_root_hint }}/{project_id}/project.md`
+  - Real source/project location: must be read from `project.md` and copied into the ticket (do not guess)
 - **Brief background/context:** A short, concrete context summary (why this exists now). Keep it concise.
 - **Requirement intent (why/what):** Clear problem statement, target outcome, and core user/business intent.
 - **Boundaries:** Explicit in-scope and out-of-scope items, including nearby/similar requests that are not part of this ticket.
@@ -103,6 +107,11 @@ Then the markdown body with description, approach, boundaries, or user stories a
 Use this as a baseline for all modes (adapt as needed):
 
 ```markdown
+## Project Context
+- Ticket project directory: `{{ host_projects_root_hint }}/{project_id}/`
+- Project metadata file: `{{ host_projects_root_hint }}/{project_id}/project.md`
+- Real source/project location (from `project.md`): `<ABSOLUTE_PATH_OR_CANONICAL_URI>`
+
 # Requirement intent
 - Problem:
 - Target outcome:
