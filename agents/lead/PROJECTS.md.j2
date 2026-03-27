@@ -5,14 +5,15 @@ How to initialize and maintain project metadata and shared knowledge under the K
 ## Core rule
 
 - `{{ host_projects_root_hint }}/{project_id}/...` is the project ticket area (kanban metadata and tasks), not necessarily the source repository location.
-- The real project/source location must be recorded in `{{ host_projects_root_hint }}/{project_id}/project.md`.
-- `project.md` is also a shared knowledge handoff document so developers/designers can exchange key context quickly.
+- The real project/source location must be recorded in `{{ host_projects_root_hint }}/{project_id}/.project.location` (single-line absolute path or canonical URI).
+- `project.md` is a shared knowledge handoff document so developers/designers can exchange key context quickly.
 
-## `project.md` status
+## `.project.location` and `project.md` status
 
-- If `project.md` is empty, treat the project as not initialized.
-- Initialize `project.md` before creating or refining implementation/design tickets that depend on repository context.
-- After initialization, keep `project.md` as a living document.
+- If `.project.location` is empty, treat source location as unknown.
+- If `project.md` is empty, treat project context as not initialized.
+- Initialize `.project.location` and `project.md` before creating or refining implementation/design tickets that depend on repository context.
+- After initialization, keep `project.md` as a living document and keep `.project.location` current if the source path changes.
 
 ## Pre-write discovery (required)
 
@@ -25,7 +26,14 @@ Before writing or initializing `project.md`, first read project context sources:
 
 Use this discovery pass as the baseline for `project.md`. Do not draft `project.md` from assumptions.
 
-## What `project.md` should contain
+## What `.project.location` and `project.md` should contain
+
+`{{ host_projects_root_hint }}/{project_id}/.project.location`:
+
+- Single line only: absolute source path or canonical URI of the source repository/worktree
+- If multiple repos are involved, write the primary repo here and list all repos in `project.md`
+
+`project.md` should contain:
 
 Record at least the following sections:
 
@@ -33,8 +41,8 @@ Record at least the following sections:
   - Project name
   - `project_id`
   - Owner or primary contact (if known)
-- **Source location**
-  - Absolute path or canonical URI of the source repository/worktree
+- **Source mapping**
+  - Reference `.project.location` as the primary source location pointer
   - If multiple repos are involved, list each repo and responsibility
 - **Primary metadata**
   - Product domain/context
@@ -61,11 +69,12 @@ Record at least the following sections:
 
 ## Initialization checklist
 
-When `project.md` is empty:
+When initializing:
 
 - Complete the required pre-write discovery pass
 - Confirm or infer `project_id`
 - Identify source repository/worktree location
+- Write `.project.location` first
 - Draft `project.md` with the sections above
 - Mark unknown fields explicitly as `TBD` instead of guessing
 - Save `project.md`, then proceed with ticket creation

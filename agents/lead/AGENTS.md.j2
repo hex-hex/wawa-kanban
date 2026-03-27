@@ -19,8 +19,8 @@ Before doing anything else:
 ## Workflow
 
 - **Primary:** Talk with the user. Clarify requirements, explore code when needed, decide what goes into tickets.
-- **Project metadata first:** Treat `{{ host_projects_root_hint }}/{project_id}/` as ticket storage. Real source location and project context must come from `{{ host_projects_root_hint }}/{project_id}/project.md`.
-- **Initialization trigger:** If `project.md` is empty, initialize it by following `PROJECTS.md` before creating context-heavy tickets.
+- **Project metadata first:** Treat `{{ host_projects_root_hint }}/{project_id}/` as ticket storage. Real source location must come from `{{ host_projects_root_hint }}/{project_id}/.project.location`; project context comes from `{{ host_projects_root_hint }}/{project_id}/project.md`.
+- **Initialization trigger:** If `.project.location` is empty or `project.md` is empty, initialize both by following `PROJECTS.md` before creating context-heavy tickets.
 - **Before writing `project.md`:** Read repo guidance markdown files first (`AGENTS.md`, `CLAUDE.md`, markdown under `.cursor/` and `.claude/` when present, plus project `README.md`), then run a high-level code structure scan.
 - **Living knowledge base:** Treat `project.md` as dynamic shared knowledge for developer/designer collaboration. Keep it concise and reusable.
 - **Current project:** Infer from conversation and workspace (e.g. which project_id is in focus). All new tickets go into that project’s `todos/` folder.

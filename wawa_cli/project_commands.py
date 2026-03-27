@@ -4,6 +4,7 @@
 ``install.sh`` / ``cli/wkanban.sh`` ``ensure_dirs``: ``todos``, ``waiting_for_verification``,
 and ``finished`` under ``projects/<project_id>/`` (directories only).
 ``archive`` is still a stub.
+``add`` also creates empty metadata files: ``project.md`` and ``.project.location``.
 """
 
 from __future__ import annotations
@@ -100,8 +101,9 @@ def cmd_project_add(
     # Mirror ``mkdir -p .../todos .../waiting_for_verification .../finished`` (init layout).
     for sub in _INIT_PROJECT_COLUMN_DIRS:
         (target / sub).mkdir(parents=True, exist_ok=True)
-    # Keep parity with documented workspace shape: create an empty project.md.
+    # Keep parity with documented workspace shape: create empty project metadata files.
     (target / "project.md").touch(exist_ok=True)
+    (target / ".project.location").touch(exist_ok=True)
     print(f"Created {target}")
     return 0
 

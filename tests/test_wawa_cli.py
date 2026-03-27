@@ -76,6 +76,7 @@ def test_project_add_creates_layout(tmp_path, capsys):
     proj = ws / "projects" / "wawa.proj.my-beta"
     assert proj.is_dir()
     assert (proj / "project.md").is_file()
+    assert (proj / ".project.location").is_file()
     for sub in ("todos", "waiting_for_verification", "finished"):
         assert (proj / sub).is_dir()
     assert str(proj) in out
