@@ -108,6 +108,7 @@ def build_agent_template_context(
         "kanban_agents_base": "workspace/agents",
         "kanban_type_folder": plural or "",
         "kanban_ticket_folder": ticket_folder,
+        "host_projects_root_hint": "~/.wawa-kanban/workspace/projects",
     }
 
 
