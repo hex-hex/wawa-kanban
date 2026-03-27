@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from wawa_cli import agent_commands, project_commands, todo_commands
+from wawa_cli import agent_commands, project_commands, ticket_commands, todo_commands
 from wawa_openclaw.cli import add_agent_add_arguments, add_agent_remove_arguments, run_add, run_remove
 
 
@@ -245,6 +245,31 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
 
+    # --- ticket ---
+    ticket_p = sub.add_parser("ticket", help="Ticket helpers.")
+    ticket_sub = ticket_p.add_subparsers(dest="ticket_cmd", required=True)
+    locate_p = ticket_sub.add_parser(
+        "locate",
+        help="Locate one ticket by <project>.<slug> and output structured info for shell workflows.",
+    )
+    locate_p.add_argument("target", help="Ticket target in form <project>.<slug> (project may include dots).")
+    locate_p.add_argument(
+        "--workspace",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help=(
+            "Wawa workspace root (contains projects/). "
+            "Default: WAWA_WORKSPACE_PATH or ~/.wawa-kanban/workspace."
+        ),
+    )
+    locate_p.add_argument(
+        "--format",
+        choices=("json", "shell"),
+        default="json",
+        help="Output format for automation. 'shell' prints key<TAB>value lines.",
+    )
+
     return parser
 
 
@@ -311,5 +336,14 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "todo":
         return todo_commands.cmd_todo_list(workspace=getattr(args, "workspace", None))
+
+    if args.command == "ticket":
+        if args.ticket_cmd == "locate":
+            return ticket_commands.cmd_ticket_locate(
+                args.target,
+                workspace=getattr(args, "workspace", None),
+                fmt=getattr(args, "format", "json"),
+            )
+        raise AssertionError(f"unexpected ticket_cmd: {args.ticket_cmd!r}")
 
     raise AssertionError(f"unexpected command: {args.command!r}")

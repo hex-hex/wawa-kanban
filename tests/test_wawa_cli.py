@@ -2,6 +2,7 @@
 
 import io
 import json
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -171,6 +172,100 @@ def test_todo_lists_md_tickets_with_created_time_and_location(tmp_path, capsys):
     assert len(lines) == 2
     assert any(line.startswith("alpha.first-task\t") and line.endswith("\t/repo/alpha") for line in lines)
     assert any(line.startswith("beta.research-topic\t") and line.count("\t") == 1 for line in lines)
+
+
+def test_ticket_locate_ok_for_implementation_git_repo(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    project = ws / "projects" / "wawa.proj.demo"
+    todos = project / "todos"
+    todos.mkdir(parents=True)
+
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    subprocess.run(["git", "init", str(repo)], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    (project / ".project.location").write_text(str(repo), encoding="utf-8")
+
+    ticket = todos / "wawa.proj.demo.implementation.sample-task.md"
+    ticket.write_text("x", encoding="utf-8")
+
+    rc = main(["ticket", "locate", "demo.sample-task", "--workspace", str(ws), "--format", "json"])
+    assert rc == 0
+    data = json.loads(capsys.readouterr().out.strip())
+    assert data["status"] == "ok"
+    assert data["mode"] == "implementation"
+    assert data["project_id"] == "wawa.proj.demo"
+    assert data["slug"] == "sample-task"
+    assert data["ticket_path"].endswith(ticket.name)
+    assert data["repo_path"] == str(repo.resolve())
+    assert data["target_worktree"].endswith("/.wawa/worktrees/sample-task")
+    assert data["target_branch"] == "worktree-sample-task"
+
+
+def test_ticket_locate_warning_for_non_implementation(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    project = ws / "projects" / "wawa.proj.demo"
+    todos = project / "todos"
+    todos.mkdir(parents=True)
+    (project / ".project.location").write_text(str(tmp_path / "repo"), encoding="utf-8")
+    (todos / "wawa.proj.demo.design.sample-task.md").write_text("x", encoding="utf-8")
+
+    rc = main(["ticket", "locate", "demo.sample-task", "--workspace", str(ws), "--format", "json"])
+    assert rc == 0
+    data = json.loads(capsys.readouterr().out.strip())
+    assert data["status"] == "warning"
+    assert "not implementation" in data["message"]
+
+
+def test_ticket_locate_warning_for_missing_or_non_git_repo(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    project = ws / "projects" / "wawa.proj.demo"
+    todos = project / "todos"
+    todos.mkdir(parents=True)
+    (todos / "wawa.proj.demo.implementation.sample-task.md").write_text("x", encoding="utf-8")
+
+    # Missing repo path
+    missing = tmp_path / "missing-repo"
+    (project / ".project.location").write_text(str(missing), encoding="utf-8")
+    rc = main(["ticket", "locate", "demo.sample-task", "--workspace", str(ws), "--format", "json"])
+    assert rc == 0
+    data = json.loads(capsys.readouterr().out.strip())
+    assert data["status"] == "warning"
+    assert "does not exist" in data["message"]
+
+    # Existing but not git
+    repo = tmp_path / "plain-dir"
+    repo.mkdir()
+    (project / ".project.location").write_text(str(repo), encoding="utf-8")
+    rc = main(["ticket", "locate", "demo.sample-task", "--workspace", str(ws), "--format", "json"])
+    assert rc == 0
+    data = json.loads(capsys.readouterr().out.strip())
+    assert data["status"] == "warning"
+    assert "not a git repository" in data["message"]
+
+
+def test_ticket_locate_errors_on_duplicate_slug(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    project = ws / "projects" / "wawa.proj.demo"
+    todos = project / "todos"
+    waiting = project / "waiting_for_verification"
+    todos.mkdir(parents=True)
+    waiting.mkdir(parents=True)
+    (project / ".project.location").write_text(str(tmp_path / "repo"), encoding="utf-8")
+
+    (todos / "wawa.proj.demo.implementation.same-slug.md").write_text("a", encoding="utf-8")
+    (waiting / "wawa.proj.demo.implementation.same-slug.md").write_text("b", encoding="utf-8")
+
+    rc = main(["ticket", "locate", "demo.same-slug", "--workspace", str(ws), "--format", "json"])
+    assert rc == 1
+    assert "multiple tickets" in capsys.readouterr().err
 
 
 def test_project_procress_default_is_dry_run_and_prints_plan(tmp_path, capsys):

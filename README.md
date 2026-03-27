@@ -81,9 +81,9 @@ Tickets are markdown files with YAML frontmatter; filename pattern includes proj
 
 **Agent role docs** in this repo live under `agents/<role>/`: **`*.md.j2`** → rendered to `*.md` in the OpenClaw workspace; **`agent.json.j2`** → full **`openclaw.json`** `agents.list[]` entry (Jinja + **`| tojson`**; use **`workspace_path`** / **`agent_dir_path`** in the template). Roles include `developer`, `designer`, `info-officer`, `code-verifier`, `general-verifier`, `lead`, and `project-manager`.
 
-### CLI: `wkanban` (agents + projects)
+### CLI: `wkanban` (agents + projects + tickets)
 
-From the repo (after `uv sync`), use **`uv run wkanban …`**. The installed shell `wkanban` runs **`init` / `update` / `uninstall`** without a clone; for **`agent`** / **`project`** it needs **`WAWA_KANBAN_ROOT`** pointing at this repo plus **`uv`** on the host (see `cli/wkanban.sh`).
+From the repo (after `uv sync`), use **`uv run wkanban …`**. The installed shell `wkanban` runs **`init` / `update` / `uninstall`** without a clone; for **`agent`** / **`project`** / **`ticket`** it needs **`WAWA_KANBAN_ROOT`** pointing at this repo plus **`uv`** on the host (see `cli/wkanban.sh`).
 
 **Agents**
 
@@ -114,6 +114,20 @@ uv run wkanban project add my-app --workspace ~/.wawa-kanban/workspace -y
 uv run wkanban project list --workspace ~/.wawa-kanban/workspace
 ```
 
+**Tickets**
+
+- **`ticket locate <project>.<slug>`**: locate one ticket and print structured info (JSON by default) including ticket path, mode, `.project.location` file path, repo path, and computed worktree plan fields.
+- **`ticket worktree <project>.<slug>`**: host-side worktree planner/creator in the installed shell.
+  - default = dry-run (prints plan only)
+  - add **`--exec`** to actually run `git worktree add`
+  - only `implementation` tickets create worktrees; non-implementation or invalid repo conditions print warning info and exit without creation
+
+```bash
+uv run wkanban ticket locate default.setup-project-structure
+wkanban ticket worktree default.setup-project-structure
+wkanban ticket worktree default.setup-project-structure --exec
+```
+
 #### OpenClaw paths and config
 
 - **Fixture config (dev/tests only):** `fixtures/openclaw/openclaw.json` — sample tree for local dev/tests. **Installers and the Docker image do not copy this into your real OpenClaw home.** Mount `~/.openclaw` (or set `OPENCLAW_STATE_DIR`) to the directory you actually use. See `fixtures/openclaw/README.md`. Do not commit secrets.
@@ -122,7 +136,7 @@ uv run wkanban project list --workspace ~/.wawa-kanban/workspace
 - **Per-agent state:** under `OPENCLAW_STATE_DIR`. Each **`agent add`** creates `workspace-<agent_id>/` (for Wawa agents this is `workspace-wawa-<role-slug>/`, e.g. `workspace-wawa-lead/`) and `agents/<id>/agent/` and appends **`agents.list`**.
 - **Templates:** `--role` must match a folder under `agents/` (see roles above). Repo root defaults to the parent of `wawa_openclaw/`; override with **`WAWA_KANBAN_ROOT`**.
 
-The installed **`wkanban`** script: **`init`** / **`update`** / **`uninstall`** need no clone or **`uv`**. For **`agent`** / **`project`** subcommands, set **`WAWA_KANBAN_ROOT`** to a git clone and install **`uv`**.
+The installed **`wkanban`** script: **`init`** / **`update`** / **`uninstall`** need no clone or **`uv`**. For **`agent`** / **`project`** / **`ticket`** subcommands, set **`WAWA_KANBAN_ROOT`** to a git clone and install **`uv`**.
 
 **Uninstall ownership model (strict, state-based):** `wkanban agent uninstall-all` identifies removable Wawa agents only when each `agents.list[]` entry has `id` starting with `wawa-` **and** `workspace == <state_dir>/workspace-<id>` (normalized path equality; for default Wawa ids this is `.../workspace-wawa-<role-slug>`). This replaces the old workspace-prefix ownership check and avoids false positives/false negatives caused by passing the wrong workspace root.
 

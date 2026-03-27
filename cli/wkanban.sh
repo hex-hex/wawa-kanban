@@ -229,6 +229,122 @@ wkanban_py_via_uv() {
   (cd "$root" && uv run wkanban "$@")
 }
 
+ticket_worktree() {
+  target=""
+  exec_move="0"
+  workspace_arg=""
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --exec)
+        exec_move="1"
+        shift
+        ;;
+      --workspace)
+        [ "$#" -ge 2 ] || die "ticket worktree: --workspace requires a value"
+        workspace_arg="$2"
+        shift 2
+        ;;
+      -*)
+        die "ticket worktree: unknown option: $1"
+        ;;
+      *)
+        if [ -z "$target" ]; then
+          target="$1"
+          shift
+        else
+          die "ticket worktree: unexpected extra argument: $1"
+        fi
+        ;;
+    esac
+  done
+  [ -n "$target" ] || die "Usage: wkanban ticket worktree <project.slug> [--workspace DIR] [--exec]"
+
+  require_uv_and_repo "ticket worktree"
+
+  if [ -n "$workspace_arg" ]; then
+    locate_out="$(cd "$root" && uv run wkanban ticket locate "$target" --format shell --workspace "$workspace_arg")" || die "ticket locate failed for: $target"
+  else
+    locate_out="$(cd "$root" && uv run wkanban ticket locate "$target" --format shell)" || die "ticket locate failed for: $target"
+  fi
+
+  status=""
+  message=""
+  project_id=""
+  slug=""
+  mode=""
+  ticket_path=""
+  project_dir=""
+  project_location_file=""
+  repo_path=""
+  target_worktree=""
+  target_branch=""
+  tab="$(printf '\t')"
+  while IFS="$tab" read -r k v; do
+    case "$k" in
+      status) status="$v" ;;
+      message) message="$v" ;;
+      project_id) project_id="$v" ;;
+      slug) slug="$v" ;;
+      mode) mode="$v" ;;
+      ticket_path) ticket_path="$v" ;;
+      project_dir) project_dir="$v" ;;
+      project_location_file) project_location_file="$v" ;;
+      repo_path) repo_path="$v" ;;
+      target_worktree) target_worktree="$v" ;;
+      target_branch) target_branch="$v" ;;
+    esac
+  done <<EOF
+$locate_out
+EOF
+
+  if [ "$status" = "warning" ]; then
+    log "WARNING: $message"
+    [ -n "$ticket_path" ] && log "ticket: $ticket_path"
+    [ -n "$project_location_file" ] && log "project location file: $project_location_file"
+    [ -n "$repo_path" ] && log "repo: $repo_path"
+    return 0
+  fi
+  [ "$status" = "ok" ] || die "ticket locate returned unexpected status: ${status:-<empty>}"
+
+  log "Plan:"
+  log "  ticket:         $ticket_path"
+  log "  project:        $project_id"
+  log "  mode:           $mode"
+  log "  project dir:    $project_dir"
+  log "  repo:           $repo_path"
+  log "  worktree dir:   $target_worktree"
+  log "  worktree branch:$target_branch"
+  if [ "$exec_move" != "1" ]; then
+    log "Dry-run only. Re-run with --exec to create worktree."
+    return 0
+  fi
+
+  have_cmd git || die "ticket worktree requires git on host PATH."
+  [ -n "$target_worktree" ] || die "ticket worktree: missing target worktree path."
+  [ -n "$target_branch" ] || die "ticket worktree: missing target branch."
+  [ -n "$repo_path" ] || die "ticket worktree: missing repo path."
+
+  if [ -e "$target_worktree" ]; then
+    die "Target worktree already exists: $target_worktree"
+  fi
+  mkdir -p "$(dirname "$target_worktree")"
+  git -C "$repo_path" worktree add "$target_worktree" -b "$target_branch"
+  log "Created worktree: $target_worktree (branch: $target_branch)"
+}
+
+ticket_cmd() {
+  sub="${1:-}"
+  case "$sub" in
+    worktree)
+      shift
+      ticket_worktree "$@"
+      ;;
+    *)
+      wkanban_py_via_uv ticket "$@"
+      ;;
+  esac
+}
+
 cmd="${1:-}"
 case "$cmd" in
   init)
@@ -244,8 +360,12 @@ case "$cmd" in
   agent|project)
     wkanban_py_via_uv "$@"
     ;;
+  ticket)
+    shift
+    ticket_cmd "$@"
+    ;;
   *)
-    die "Usage: wkanban {init|update|uninstall|agent|project} ..."
+    die "Usage: wkanban {init|update|uninstall|agent|project|ticket} ..."
     ;;
 esac
 
