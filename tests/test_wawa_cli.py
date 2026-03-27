@@ -148,6 +148,31 @@ def test_project_list_uses_fixtures_workspace(monkeypatch, capsys):
     assert set(lines) == {"wawa.proj.another", "wawa.proj.default"}
 
 
+def test_todo_lists_md_tickets_with_created_time_and_location(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    p1 = ws / "projects" / "wawa.proj.alpha"
+    p2 = ws / "projects" / "wawa.proj.beta"
+    (p1 / "todos").mkdir(parents=True)
+    (p2 / "todos").mkdir(parents=True)
+
+    (p1 / ".project.location").write_text("/repo/alpha\n", encoding="utf-8")
+    # beta has empty .project.location (or missing) -> no third column.
+    (p2 / ".project.location").write_text("\n", encoding="utf-8")
+
+    (p1 / "todos" / "wawa.proj.alpha.implementation.first-task.md").write_text("a", encoding="utf-8")
+    (p1 / "todos" / "wawa.proj.alpha.design.locked.md.lock").write_text("x", encoding="utf-8")
+    (p2 / "todos" / "wawa.proj.beta.websearch.research-topic.md").write_text("b", encoding="utf-8")
+
+    rc = main(["todo", "--workspace", str(ws)])
+    assert rc == 0
+    lines = capsys.readouterr().out.strip().splitlines()
+    assert len(lines) == 2
+    assert any(line.startswith("alpha.first-task\t") and line.endswith("\t/repo/alpha") for line in lines)
+    assert any(line.startswith("beta.research-topic\t") and line.count("\t") == 1 for line in lines)
+
+
 def test_project_procress_default_is_dry_run_and_prints_plan(tmp_path, capsys):
     from wawa_cli.main import main
 

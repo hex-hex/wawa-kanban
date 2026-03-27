@@ -6,7 +6,7 @@ import argparse
 import sys
 from pathlib import Path
 
-from wawa_cli import agent_commands, project_commands
+from wawa_cli import agent_commands, project_commands, todo_commands
 from wawa_openclaw.cli import add_agent_add_arguments, add_agent_remove_arguments, run_add, run_remove
 
 
@@ -229,6 +229,22 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Execute file moves. Default is dry-run (print plan only).",
     )
 
+    # --- todo ---
+    todo_p = sub.add_parser(
+        "todo",
+        help="List todo tickets from all projects (projects/*/todos/*.md, excluding .lock).",
+    )
+    todo_p.add_argument(
+        "--workspace",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help=(
+            "Wawa workspace root (contains projects/). "
+            "Default: WAWA_WORKSPACE_PATH or ~/.wawa-kanban/workspace."
+        ),
+    )
+
     return parser
 
 
@@ -292,5 +308,8 @@ def main(argv: list[str] | None = None) -> int:
                 exec_move=bool(getattr(args, "exec_move", False)),
             )
         raise AssertionError(f"unexpected project_cmd: {args.project_cmd!r}")
+
+    if args.command == "todo":
+        return todo_commands.cmd_todo_list(workspace=getattr(args, "workspace", None))
 
     raise AssertionError(f"unexpected command: {args.command!r}")
