@@ -555,6 +555,24 @@ def _role_for_agent_entry(agent: dict, agent_id: str) -> str | None:
     return None
 
 
+def _workspace_dir_for_sync(state: Path, agent_id: str, ws_raw: object) -> Path:
+    """Resolve agent workspace directory for sync.
+
+    If ``openclaw.json`` stores an absolute path from another machine or user (for example,
+    ``/home/<user>/.openclaw/...``) but sync runs inside Docker with a different ``HOME``,
+    that path does not exist in the container. Fall back to
+    :func:`~wawa_openclaw.agents_ops.agent_workspace_state_path` under the current
+    ``--state-dir``.
+    """
+    canonical = agent_workspace_state_path(state, agent_id)
+    if isinstance(ws_raw, str) and ws_raw.strip():
+        stored = Path(ws_raw).expanduser().resolve()
+        if stored.is_dir():
+            return stored
+        return canonical
+    return canonical
+
+
 def run_sync_agents(
     *,
     config: Path | None = None,
@@ -583,12 +601,7 @@ def run_sync_agents(
             skipped += 1
             continue
 
-        ws_raw = agent.get("workspace")
-        workspace = (
-            Path(ws_raw).expanduser().resolve()
-            if isinstance(ws_raw, str) and ws_raw.strip()
-            else agent_workspace_state_path(state, aid)
-        )
+        workspace = _workspace_dir_for_sync(state, aid, agent.get("workspace"))
         role_src = root / "agents" / role
         display_name = agent.get("name") if isinstance(agent.get("name"), str) and agent.get("name") else aid
         try:

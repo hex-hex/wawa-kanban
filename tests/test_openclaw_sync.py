@@ -49,3 +49,40 @@ def test_run_sync_agents_rerenders_and_skips_memory(tmp_path: Path) -> None:
     assert (ws / "HEARTBEAT.md").read_text(encoding="utf-8").strip() == "# HEARTBEAT designer"
     assert (ws / "MEMORY.md").read_text(encoding="utf-8") == "user memory keep me\n"
 
+
+def test_run_sync_agents_ignores_foreign_absolute_workspace_when_missing(
+    tmp_path: Path,
+) -> None:
+    """Docker: openclaw.json may list host paths; use state_dir workspace-<id> instead."""
+    repo = tmp_path / "repo"
+    role_src = repo / "agents" / "designer"
+    role_src.mkdir(parents=True)
+    (role_src / "AGENTS.md.j2").write_text("# Agent {{ identity_agent_call_name }}\n", encoding="utf-8")
+
+    state = tmp_path / "openclaw_state"
+    aid = "wawa-designer"
+    canonical = state / f"workspace-{aid}"
+    canonical.mkdir(parents=True)
+    (canonical / "AGENTS.md").write_text("old\n", encoding="utf-8")
+
+    cfg_path = tmp_path / "openclaw.json"
+    _write_json(
+        cfg_path,
+        {
+            "agents": {
+                "defaults": {},
+                "list": [
+                    {
+                        "id": aid,
+                        "name": "wawa-designer",
+                        "workspace": "/other-host/home/.openclaw/workspace-wawa-designer",
+                    }
+                ],
+            }
+        },
+    )
+
+    rc = run_sync_agents(config=cfg_path, state_dir=state, repo=repo)
+    assert rc == 0
+    assert (canonical / "AGENTS.md").read_text(encoding="utf-8").strip() == "# Agent Default Designer"
+
