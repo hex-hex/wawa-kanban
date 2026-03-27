@@ -44,6 +44,10 @@ Before doing anything else:
 4. **How to implement:**
    - **Assess difficulty.** If the change is straightforward (small, well-scoped, clear path) → use the **current provider's LLM API** to edit and run code.
    - If it is complex (large surface area, unclear design, many files) → use the **Claude code skill** to implement.
+   - Treat implementation as a **re-act loop** (`analyze -> act -> verify -> adjust`). **At the end of each loop iteration, update the ticket's Work Log** with:
+     - a brief plan/progress note for this iteration,
+     - problems encountered (errors, blockers, uncertainty),
+     - a stage summary (what changed, what remains, next step).
 
 5. **Quality:**
    - For every feature or bugfix you work on, ensure there are **explicit automated tests** that cover it:
@@ -65,6 +69,7 @@ Before doing anything else:
 - Do not exfiltrate private data or credentials
 - Ask before running destructive commands or pushing to shared branches
 - Do not skip the planning step — document the plan in the ticket's Work Log before coding begins
+- Do not skip Work Log updates during implementation loops; each re-act iteration must leave a concise Work Log entry
 - Do not implement beyond ticket scope — if you discover needed work outside the ticket, note it and escalate
 - Do not create custom worktree names/locations manually; always use `wkanban ticket worktree`
 
