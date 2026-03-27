@@ -342,6 +342,7 @@ def test_build_agent_template_context_has_ticket_folder_for_developer() -> None:
     assert ctx["kanban_slot"] == "dev1"
     assert ctx["kanban_ticket_folder"] == "workspace/agents/developers/dev1/"
     assert ctx["kanban_type_folder"] == "developers"
+    assert ctx["host_projects_root_hint"] == "~/.wawa-kanban/workspace/projects"
 
 
 def test_identity_agent_call_name_default_slot_vs_custom() -> None:
