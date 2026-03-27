@@ -22,23 +22,24 @@ Before doing anything else:
 
 2. **If there is a ticket file:**
    - Read the full ticket (description, implementation approach, context, boundaries, acceptance criteria).
-   - **Discover project source location:** Infer project_id from the ticket filename; read `{{ host_projects_root_hint }}`/`{project_id}`/.project.location to find the real repo path.
-   - **Prepare a dedicated worktree** in that repo:
-     - Derive a worktree name **based only on the ticket** (e.g. `wt-{ticket_id}` or `wt-{ticket_slug}` from the filename/frontmatter), without including your own name so other developers can easily take over the same worktree later.
-     - If a worktree with that name already exists, switch into it and continue development there.
-     - If it does not exist, create it (branch name and location should follow the project's conventions; do not reuse or modify shared branches directly).
-   - **Sync with main:** Before you start coding in this worktree, update the main branch from remote (e.g. `origin/main`) and bring those changes into your worktree branch using the project's standard workflow (rebase/merge as appropriate). Do not develop on a stale branch.
+   - **Discover project/source info via command (do not hand-parse paths):**
+     - Run `wkanban ticket locate <project>.<slug>` using the ticket filename parts.
+     - If locate returns warning/error, report blocker to PM/user and stop.
+   - **Prepare a dedicated worktree via command:**
+     - Run `wkanban ticket worktree <project>.<slug>` first (dry-run) and review the plan.
+     - Run `wkanban ticket worktree <project>.<slug> --exec` to create/reuse the canonical worktree.
+     - Use the command-provided canonical location (`<repo>/.wawa/worktrees/<ticket-slug>`) and branch (`worktree-<ticket-slug>`); do not invent custom `wt-*` names.
    - All code changes for this ticket must be made **inside this per-ticket worktree**, not on the main working copy.
-   - In the ticket file's body, append a short note with the worktree name and branch (e.g. "Dev worktree: wt-{ticket_id} on branch {branch_name}") so that the Verifier and other developers can directly locate and reuse the same worktree.
+   - In the ticket file's body, append a short note with the worktree path and branch (from command output) so verifier/developers can reuse the same workspace.
 
-3. **制定周密计划：**
-   在开始编码之前，基于 ticket 的内容制定详细的实现计划：
-   - 列出需要修改/新增的文件
-   - 确定模块边界和接口改动
-   - 预判可能的难点和依赖
-   - 确认测试策略（哪些可量化测试，哪些需要人工 review）
-   - 如果计划阶段发现 ticket 描述不清晰或有遗漏，在 ticket 中记录你的问题和假设，然后继续
-   - 将计划大纲记录在 ticket 文件的 Work Log 小节中
+3. **Make a thorough plan:**
+   Before writing any code, develop a detailed implementation plan based on the ticket:
+   - List files to modify or create
+   - Define module boundaries and interface changes
+   - Anticipate potential difficulties and dependencies
+   - Confirm test strategy (which criteria are automatable, which need manual review)
+   - If the ticket is unclear or missing information, document your questions and assumptions in the ticket, then proceed with your best interpretation
+   - Record the plan outline in the ticket's Work Log section
 
 4. **How to implement:**
    - **Assess difficulty.** If the change is straightforward (small, well-scoped, clear path) → use the **current provider's LLM API** to edit and run code.
@@ -65,10 +66,11 @@ Before doing anything else:
 - Ask before running destructive commands or pushing to shared branches
 - Do not skip the planning step — document the plan in the ticket's Work Log before coding begins
 - Do not implement beyond ticket scope — if you discover needed work outside the ticket, note it and escalate
+- Do not create custom worktree names/locations manually; always use `wkanban ticket worktree`
 
 ## Heartbeat
 
 - Check this agent's folder for a ticket
 - If no ticket → no op
-- If ticket present → run the workflow above (discover project/repo, prepare worktree, plan, implement, test, append summary, self-review, mv to waiting_for_verification)
+- If ticket present → run the workflow above (locate via command, prepare worktree via command, plan, implement, test, append summary, self-review, mv to waiting_for_verification)
 - Note today's work and any blockers in `memory/YYYY-MM-DD.md`

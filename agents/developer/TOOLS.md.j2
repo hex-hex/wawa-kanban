@@ -11,14 +11,21 @@
 - **Projects root:** `{{ host_projects_root_hint }}/` (e.g. `workspace/projects/`)
 - **Project location pointer:** `{{ host_projects_root_hint }}`/`{project_id}`/.project.location — single line, absolute path or canonical URI of the source repository
 - **Project metadata:** `{{ host_projects_root_hint }}`/`{project_id}`/project.md — shared knowledge for developers
-- **project_id inference:** from ticket filename, first dot-separated segment before the mode token (`implementation` | `design` | `websearch` | `codesearch`)
-  - Example: `wawa.proj.default.implementation.fix-login-bug.md` → project_id is `wawa.proj.default`
+- **project_id inference:** from ticket filename, take the full prefix before the mode token (`implementation` | `design` | `websearch` | `codesearch`)
+  - Example: `wawa.proj.default.implementation.fix-login-bug.md` → project_id = `wawa.proj.default`, slug = `fix-login-bug`
+
+## Command-first workflow
+
+- Use `wkanban ticket locate <project>.<slug>` to resolve ticket/repo/worktree info.
+- Use `wkanban ticket worktree <project>.<slug>` for dry-run plan.
+- Use `wkanban ticket worktree <project>.<slug> --exec` to create the canonical worktree on host.
+- If locate/worktree returns warning info, treat it as blocker and report to PM/user.
 
 ## Worktree conventions
 
-- **Worktree naming:** `wt-{ticket_id}` (e.g. `wt-TICKET-001`) or `wt-{ticket_slug}` (from filename/frontmatter)
-- **Branch naming:** derived from ticket intent — use the ticket's goal, not your name, so others can take over
-- **Location:** inside the repo's worktree directory (project convention)
+- Canonical worktree path: `<repo>/.wawa/worktrees/<ticket-slug>`
+- Canonical branch name: `worktree-<ticket-slug>`
+- Do not invent custom `wt-*` names or ad-hoc locations; follow `wkanban ticket worktree` output.
 
 ## Ticket file naming pattern
 
@@ -31,7 +38,7 @@
 Move the ticket file to the **same project's** `waiting_for_verification/` folder:
 
 - **Path:** `workspace/projects/{project_id}/waiting_for_verification/`
-- **project_id** comes from the ticket filename: first part before the first dot-separated mode token.
+- **project_id** comes from the ticket filename: the full prefix before the first mode token.
   Example: `wawa.proj.default.implementation.fix-login-bug.md` → project_id is `wawa.proj.default` → move to `workspace/projects/wawa.proj.default/waiting_for_verification/`.
 
 Keep the filename unchanged when moving. Do not move until tests pass and you have appended the implementation summary to the ticket file.
