@@ -1,0 +1,46 @@
+# TICKETS.md — Developer Ticket Reference
+
+Reference for understanding ticket structure and content as a developer.
+
+## Ticket file naming
+
+**Locked-first format (default for new tickets):** `{project_id}.{mode}.{slug}.md.lock`
+
+| Part       | Description |
+|-----------|-------------|
+| project_id | e.g. `wawa.proj.default` |
+| mode       | `implementation` \| `design` \| `websearch` \| `codesearch` |
+| slug       | Lowercase, hyphen-separated phrase (no dots) |
+| suffix     | `.md.lock` for locked; `.md` for unlocked |
+
+**Example (default):** `wawa.proj.default.implementation.setup-project-structure.md.lock`
+**Unlocked example:** `wawa.proj.default.implementation.setup-project-structure.md`
+
+## Ticket structure
+
+Every ticket contains these sections (see the actual ticket for which are marked required):
+
+- **Project context block:** Project directory path, project.md path, .project.location pointer, real source path
+- **Brief background:** Why this task exists now
+- **Requirement intent:** Problem statement, target outcome, core user/business intent
+- **Scope boundaries:** In-scope vs out-of-scope, including similar but excluded requests
+- **Implementation principles:** Non-negotiable rules, quality constraints, architecture guardrails
+- **Verification / acceptance points:** Checkable criteria for done (automated tests or manual review)
+- **Work Log:** Your planning notes and progress entries (developer fills this)
+- **Verification Log:** Reserved for verifier notes
+
+## What to extract from a ticket
+
+As a developer, you care most about:
+
+1. **Requirement intent** — what problem does this solve and for whom
+2. **Scope boundaries** — what is explicitly in and out
+3. **Implementation principles** — the hard constraints you must follow
+4. **Acceptance criteria** — how you and the verifier know it's done
+5. **Context and background** — why this matters now
+
+## If a ticket is unclear
+
+- Document your assumptions in the ticket's Work Log section before coding
+- Note the ambiguity and your interpretation
+- Proceed with your best interpretation if you can, otherwise surface to lead/PM

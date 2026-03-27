@@ -1,0 +1,36 @@
+# PROJECTS.md — Developer Project Reference
+
+How to discover project source location and navigate multi-project workspaces.
+
+## Core rule
+
+- `{{ host_projects_root_hint }}`/`{project_id}/...` is the project ticket area (kanban metadata and tasks), not necessarily the source repository location.
+- The real project/source location must be read from `{{ host_projects_root_hint }}`/`{project_id}`/.project.location (single-line absolute path or canonical URI).
+- Always read `.project.location` before touching any source code.
+
+## Finding project source location
+
+1. Infer `project_id` from the ticket filename (see TICKETS.md)
+2. Read `{{ host_projects_root_hint }}`/`{project_id}`/.project.location
+   - This file contains a single line: absolute path or canonical URI of the source repository
+3. Navigate to that location for all code work
+
+## Project metadata
+
+- `{{ host_projects_root_hint }}`/`{project_id}`/project.md — shared knowledge from lead/team
+  - Contains: project identity, tech stack, architecture notes, code standards, working knowledge
+  - Read this before diving into implementation for context on conventions and constraints
+
+## Pre-implementation check
+
+Before writing any code:
+
+1. Read `project.md` for the project context
+2. Read `.project.location` to confirm the source path
+3. Scan the repo structure at a high level (main entrypoints, key modules, test conventions)
+
+## Worktree setup
+
+- Always work in a per-ticket worktree (see TOOLS.md "Worktree conventions")
+- Sync with main branch before starting work
+- Name worktree by ticket id/slug, not by your name
