@@ -3,6 +3,7 @@
 import io
 import json
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -145,6 +146,99 @@ def test_project_list_uses_fixtures_workspace(monkeypatch, capsys):
     assert main(["project", "list"]) == 0
     lines = capsys.readouterr().out.strip().splitlines()
     assert set(lines) == {"wawa.proj.another", "wawa.proj.default"}
+
+
+def test_project_procress_default_is_dry_run_and_prints_plan(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    proj = ws / "projects" / "wawa.proj.demo"
+    todos = proj / "todos"
+    waiting = proj / "waiting_for_verification"
+    finished = proj / "finished"
+    for d in (todos, waiting, finished):
+        d.mkdir(parents=True, exist_ok=True)
+
+    # Agent slots: one busy developer + two free developers.
+    dev_busy = ws / "agents" / "developers" / "busy"
+    dev_default = ws / "agents" / "developers" / "default"
+    dev_free2 = ws / "agents" / "developers" / "free2"
+    des_default = ws / "agents" / "designers" / "default"
+    ver_code_default = ws / "agents" / "code-verifiers" / "default"
+    for d in (dev_busy, dev_default, dev_free2, des_default, ver_code_default):
+        d.mkdir(parents=True, exist_ok=True)
+
+    (dev_busy / "wawa.proj.other.implementation.existing.md").write_text("x", encoding="utf-8")
+
+    t_old = todos / "wawa.proj.demo.implementation.oldest.md"
+    t_old.write_text("old", encoding="utf-8")
+    time.sleep(0.02)  # Ensure ctime order is deterministic.
+    t_new = todos / "wawa.proj.demo.implementation.newer.md"
+    t_new.write_text("new", encoding="utf-8")
+    (todos / "wawa.proj.demo.design.ui.md").write_text("design", encoding="utf-8")
+    (todos / "wawa.proj.demo.websearch.skip-lock.md.lock").write_text("lock", encoding="utf-8")
+    (waiting / "wawa.proj.demo.implementation.verify.md").write_text("verify", encoding="utf-8")
+
+    rc = main(["project", "procress", "demo", "--workspace", str(ws)])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "dry_run=yes" in out
+    assert "planned=4" in out
+    assert "moved=0" in out
+    assert "PLAN:" in out
+
+    # Dry-run should not move files.
+    assert t_old.is_file()
+    assert t_new.is_file()
+    assert (todos / "wawa.proj.demo.design.ui.md").is_file()
+    assert (waiting / "wawa.proj.demo.implementation.verify.md").is_file()
+    assert not (dev_default / t_old.name).exists()
+    assert not (dev_free2 / t_new.name).exists()
+    assert not (des_default / "wawa.proj.demo.design.ui.md").exists()
+    assert not (ver_code_default / "wawa.proj.demo.implementation.verify.md").exists()
+    # Lock ticket is ignored and remains in source dir.
+    assert (todos / "wawa.proj.demo.websearch.skip-lock.md.lock").is_file()
+
+
+def test_project_procress_exec_moves_pending_tickets_by_mode_and_ctime(tmp_path, capsys):
+    from wawa_cli.main import main
+
+    ws = tmp_path / "ws"
+    proj = ws / "projects" / "wawa.proj.demo"
+    todos = proj / "todos"
+    waiting = proj / "waiting_for_verification"
+    finished = proj / "finished"
+    for d in (todos, waiting, finished):
+        d.mkdir(parents=True, exist_ok=True)
+
+    dev_busy = ws / "agents" / "developers" / "busy"
+    dev_default = ws / "agents" / "developers" / "default"
+    dev_free2 = ws / "agents" / "developers" / "free2"
+    des_default = ws / "agents" / "designers" / "default"
+    ver_code_default = ws / "agents" / "code-verifiers" / "default"
+    for d in (dev_busy, dev_default, dev_free2, des_default, ver_code_default):
+        d.mkdir(parents=True, exist_ok=True)
+    (dev_busy / "wawa.proj.other.implementation.existing.md").write_text("x", encoding="utf-8")
+
+    t_old = todos / "wawa.proj.demo.implementation.oldest.md"
+    t_old.write_text("old", encoding="utf-8")
+    time.sleep(0.02)
+    t_new = todos / "wawa.proj.demo.implementation.newer.md"
+    t_new.write_text("new", encoding="utf-8")
+    (todos / "wawa.proj.demo.design.ui.md").write_text("design", encoding="utf-8")
+    (waiting / "wawa.proj.demo.implementation.verify.md").write_text("verify", encoding="utf-8")
+
+    rc = main(["project", "procress", "demo", "--workspace", str(ws), "--exec"])
+    assert rc == 0
+    out = capsys.readouterr().out
+    assert "dry_run=no" in out
+    assert "planned=4" in out
+    assert "moved=4" in out
+
+    assert (dev_default / t_old.name).is_file()
+    assert (dev_free2 / t_new.name).is_file()
+    assert (des_default / "wawa.proj.demo.design.ui.md").is_file()
+    assert (ver_code_default / "wawa.proj.demo.implementation.verify.md").is_file()
 
 
 def _write_openclaw_config(path: Path, data: dict) -> None:

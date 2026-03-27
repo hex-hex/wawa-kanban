@@ -198,6 +198,36 @@ def _build_parser() -> argparse.ArgumentParser:
             "Default: WAWA_WORKSPACE_PATH or ~/.wawa-kanban/workspace."
         ),
     )
+    procress_p = proj_sub.add_parser(
+        "procress",
+        help=(
+            "Scan todos + waiting_for_verification and move unlocked .md tickets to free agent slots "
+            "(one ticket per agent directory)."
+        ),
+    )
+    procress_p.add_argument(
+        "name",
+        help=(
+            "Project slug or full id (e.g. my-app -> wawa.proj.my-app, "
+            "or pass wawa.proj.my-app)."
+        ),
+    )
+    procress_p.add_argument(
+        "--workspace",
+        type=Path,
+        default=None,
+        metavar="DIR",
+        help=(
+            "Wawa workspace root (contains projects/ and agents/). "
+            "Default: WAWA_WORKSPACE_PATH or ~/.wawa-kanban/workspace."
+        ),
+    )
+    procress_p.add_argument(
+        "--exec",
+        dest="exec_move",
+        action="store_true",
+        help="Execute file moves. Default is dry-run (print plan only).",
+    )
 
     return parser
 
@@ -255,6 +285,12 @@ def main(argv: list[str] | None = None) -> int:
             return project_commands.cmd_project_archive()
         if args.project_cmd == "list":
             return project_commands.cmd_project_list(workspace=getattr(args, "workspace", None))
+        if args.project_cmd == "procress":
+            return project_commands.cmd_project_procress(
+                args.name,
+                workspace=getattr(args, "workspace", None),
+                exec_move=bool(getattr(args, "exec_move", False)),
+            )
         raise AssertionError(f"unexpected project_cmd: {args.project_cmd!r}")
 
     raise AssertionError(f"unexpected command: {args.command!r}")

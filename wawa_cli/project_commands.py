@@ -1,4 +1,4 @@
-"""Workspace project subcommands (add / archive / list).
+"""Workspace project subcommands (add / archive / list / procress).
 
 ``add`` creates the same per-project directory tree as ``wkanban init`` /
 ``install.sh`` / ``cli/wkanban.sh`` ``ensure_dirs``: ``todos``, ``waiting_for_verification``,
@@ -10,6 +10,7 @@ and ``finished`` under ``projects/<project_id>/`` (directories only).
 from __future__ import annotations
 
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -26,6 +27,76 @@ _PROJECT_ID_PREFIX = "wawa.proj."
 
 STUB_EXIT_CODE = 3
 STUB_PREFIX = "[wkanban] project "
+
+_MODE_TO_TODO_AGENT_TYPE: dict[str, str] = {
+    "implementation": "developers",
+    "codesearch": "developers",
+    "design": "designers",
+    "websearch": "info-officers",
+}
+
+_MODE_TO_VERIFY_AGENT_TYPE: dict[str, str] = {
+    "implementation": "code-verifiers",
+    "codesearch": "code-verifiers",
+    "design": "general-verifiers",
+    "websearch": "general-verifiers",
+}
+
+
+def _iter_ticket_files_sorted_by_ctime(directory: Path) -> list[Path]:
+    """Return unlocked ``.md`` ticket files sorted by create/change time then name."""
+    if not directory.is_dir():
+        return []
+    items = [
+        p
+        for p in directory.iterdir()
+        if p.is_file()
+        and p.name.endswith(".md")
+        and not p.name.endswith(".md.lock")
+        and p.name.startswith(_PROJECT_ID_PREFIX)
+    ]
+    return sorted(items, key=lambda p: (p.stat().st_ctime, p.name))
+
+
+def _ticket_mode_from_filename(path: Path) -> str | None:
+    # Format: {project_id}.{mode}.{slug}.md, where project_id contains two dots.
+    name = path.name
+    if not name.endswith(".md"):
+        return None
+    parts = name[:-3].split(".")
+    if len(parts) < 4:
+        return None
+    # wawa.proj.<name>.<mode>.<slug...>
+    return parts[3]
+
+
+def _is_agent_slot_busy(slot_dir: Path) -> bool:
+    if not slot_dir.is_dir():
+        return False
+    return any(
+        p.is_file()
+        and p.name.startswith(_PROJECT_ID_PREFIX)
+        and (p.name.endswith(".md") or p.name.endswith(".md.lock"))
+        for p in slot_dir.iterdir()
+    )
+
+
+def _move_one_ticket_to_first_free_slot(
+    agents_root: Path,
+    target_type: str,
+    reserved_slots: set[Path] | None = None,
+) -> Path | None:
+    reserved_slots = reserved_slots or set()
+    type_root = agents_root / target_type
+    if not type_root.is_dir():
+        return None
+    for slot in sorted([p for p in type_root.iterdir() if p.is_dir()], key=lambda p: p.name):
+        if slot in reserved_slots:
+            continue
+        if _is_agent_slot_busy(slot):
+            continue
+        return slot
+    return None
 
 
 def _project_id_from_arg(name: str) -> str:
@@ -135,4 +206,78 @@ def cmd_project_list(workspace: Path | None = None) -> int:
         return 0
     for name in names:
         print(name)
+    return 0
+
+
+def cmd_project_procress(name: str, *, workspace: Path | None = None, exec_move: bool = False) -> int:
+    """Dispatch unlocked tickets from project pending columns to free agent slot dirs."""
+    try:
+        project_id = _project_id_from_arg(name)
+    except ValueError as e:
+        print(f"{STUB_PREFIX}procress: {e}", file=sys.stderr)
+        return 1
+
+    root = workspace_base(override=workspace)
+    if not root.is_dir():
+        print(f"{STUB_PREFIX}procress: Workspace not found: {root}", file=sys.stderr)
+        return 1
+
+    project_root = projects_dir(root) / project_id
+    if not project_root.is_dir():
+        print(f"{STUB_PREFIX}procress: Project not found: {project_root}", file=sys.stderr)
+        return 1
+
+    agents_root = root / "agents"
+    if not agents_root.is_dir():
+        print(f"{STUB_PREFIX}procress: Agents directory not found: {agents_root}", file=sys.stderr)
+        return 1
+
+    planned = 0
+    moved = 0
+    skipped_unknown_mode = 0
+    skipped_no_free_slot = 0
+    reserved_slots: set[Path] = set()
+
+    # 1) todos -> working agents by ticket mode
+    for ticket in _iter_ticket_files_sorted_by_ctime(project_root / "todos"):
+        mode = _ticket_mode_from_filename(ticket)
+        target_type = _MODE_TO_TODO_AGENT_TYPE.get(mode or "")
+        if target_type is None:
+            skipped_unknown_mode += 1
+            continue
+        slot = _move_one_ticket_to_first_free_slot(agents_root, target_type, reserved_slots)
+        if slot is None:
+            skipped_no_free_slot += 1
+            continue
+        planned += 1
+        reserved_slots.add(slot)
+        dest = slot / ticket.name
+        print(f"PLAN: {ticket} -> {dest}")
+        if exec_move:
+            shutil.move(str(ticket), str(dest))
+            moved += 1
+
+    # 2) waiting_for_verification -> verifier agents by ticket mode
+    for ticket in _iter_ticket_files_sorted_by_ctime(project_root / "waiting_for_verification"):
+        mode = _ticket_mode_from_filename(ticket)
+        target_type = _MODE_TO_VERIFY_AGENT_TYPE.get(mode or "")
+        if target_type is None:
+            skipped_unknown_mode += 1
+            continue
+        slot = _move_one_ticket_to_first_free_slot(agents_root, target_type, reserved_slots)
+        if slot is None:
+            skipped_no_free_slot += 1
+            continue
+        planned += 1
+        reserved_slots.add(slot)
+        dest = slot / ticket.name
+        print(f"PLAN: {ticket} -> {dest}")
+        if exec_move:
+            shutil.move(str(ticket), str(dest))
+            moved += 1
+
+    print(
+        f"Processed {project_id}: dry_run={'no' if exec_move else 'yes'} planned={planned} moved={moved} "
+        f"skipped_unknown_mode={skipped_unknown_mode} skipped_no_free_slot={skipped_no_free_slot}"
+    )
     return 0
