@@ -31,18 +31,21 @@ def _ticket_card(ticket: Ticket, editable: bool = False, agent_badge=None):
         else None
     )
     badges = [b for b in (mode_badge, editing_badge, agent_badge) if b is not None]
-    right_badges = Div(*badges, cls="flex items-center gap-1.5 flex-wrap") if len(badges) > 1 else badges[0]
+    right_badges = Div(*badges, cls="shrink-0 flex items-center gap-1.5 flex-wrap")
     return Div(
         Div(
-            Span(ticket["id"], cls="text-xs font-mono text-slate-500 shrink-0"),
+            Span(
+                ticket["id"],
+                cls="min-w-0 flex-1 text-xs font-mono text-slate-500 break-all",
+            ),
             right_badges,
-            cls="flex flex-wrap gap-x-2 gap-y-1 items-center mb-2",
+            cls="flex flex-wrap gap-x-2 gap-y-1 items-start mb-2 min-w-0",
         ),
         Div(
             md_to_safe_html(ticket["title"]),
             cls="font-semibold text-sm mb-2 line-clamp-2 text-slate-100 prose prose-invert prose-sm prose-p:my-1 prose-headings:my-1 prose-headings:text-slate-100 max-w-none",
         ),
-        cls="bg-slate-700/95 border border-slate-600/80 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-slate-500 cursor-pointer transition-all duration-200",
+        cls="min-w-0 bg-slate-700/95 border border-slate-600/80 rounded-lg p-4 shadow-sm hover:shadow-md hover:-translate-y-0.5 hover:border-slate-500 cursor-pointer transition-all duration-200",
         hx_get=url,
         hx_target="#ticket-modal",
         hx_swap="innerHTML",
